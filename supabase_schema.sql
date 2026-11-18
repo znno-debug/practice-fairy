@@ -94,8 +94,18 @@ CREATE TABLE IF NOT EXISTS public.fairy_sessions_v1 (
 );
 
 -- ============================================================================
--- 🔓 RLS (Row Level Security) 설정: 별도 로그인 없이 anon 키로 읽기/쓰기 허용
+-- 🔓 테이블 권한(GRANT) 및 RLS (Row Level Security) 설정
+-- 별도 로그인 없이 anon(Publishable) 키로 읽기/쓰기 허용
 -- ============================================================================
+GRANT USAGE ON SCHEMA public TO anon, authenticated;
+GRANT ALL ON TABLE public.fairy_teacher_profile_v1 TO anon, authenticated;
+GRANT ALL ON TABLE public.fairy_students_v1 TO anon, authenticated;
+GRANT ALL ON TABLE public.fairy_lessons_v1 TO anon, authenticated;
+GRANT ALL ON TABLE public.fairy_notes_v1 TO anon, authenticated;
+GRANT ALL ON TABLE public.fairy_practice_v1 TO anon, authenticated;
+GRANT ALL ON TABLE public.fairy_questions_v1 TO anon, authenticated;
+GRANT ALL ON TABLE public.fairy_sessions_v1 TO anon, authenticated;
+
 ALTER TABLE public.fairy_teacher_profile_v1 ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.fairy_students_v1 ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.fairy_lessons_v1 ENABLE ROW LEVEL SECURITY;
