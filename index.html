@@ -72,7 +72,7 @@
         <div>
           <div class="flex items-center space-x-1.5 sm:space-x-2">
             <h1 class="text-lg font-black tracking-tight text-slate-900">연습요정 <span class="hidden sm:inline text-xs font-semibold px-2 py-0.5 rounded-full bg-brand-50 text-brand-600 border border-brand-100">스마트 과외노트</span></h1>
-            <span id="cloud-sync-badge" class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-500 border border-slate-200 transition">💾 로컬 저장</span>
+            <button type="button" id="cloud-sync-badge" onclick="pullAllFromSupabase(true)" title="클릭하여 클라우드 DB 최신 상태 동기화" class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-500 border border-slate-200 transition cursor-pointer">💾 로컬 저장</button>
           </div>
           <p class="text-xs text-slate-500">출석체크 · 레슨일지 · 맞춤 수강료 안내</p>
         </div>
@@ -1409,8 +1409,8 @@
     // =========================================================================
     // ☁️ Supabase 클라우드 DB 연동 설정 (발급받은 Project URL과 anon key 입력 위치)
     // =========================================================================
-    const SUPABASE_URL = '';      // 예: 'https://xxxxxxxxxxxx.supabase.co'
-    const SUPABASE_ANON_KEY = ''; // 예: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'
+    const SUPABASE_URL = 'https://zpfcocrqvmrotuiwpkru.supabase.co';
+    const SUPABASE_ANON_KEY = 'sb_publishable_atDrdw_lkZhpBH-M3cNoGg_2fE3aHi5';
     let supabaseClient = null;
 
     // 초기 더미 데이터 (로컬 스토리지 키 관리 - Supabase 7개 테이블명과 1:1 매칭)
@@ -1624,16 +1624,16 @@
       const badge = document.getElementById('cloud-sync-badge');
       if (!badge) return;
       if (status === 'synced') {
-        badge.className = 'text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 transition';
+        badge.className = 'text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 transition cursor-pointer';
         badge.innerText = label || '☁️ 클라우드 동기화됨';
       } else if (status === 'syncing') {
-        badge.className = 'text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-600 border border-indigo-200 animate-pulse transition';
+        badge.className = 'text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-600 border border-indigo-200 animate-pulse transition cursor-pointer';
         badge.innerText = label || '☁️ 동기화 중...';
       } else if (status === 'error') {
-        badge.className = 'text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-50 text-rose-600 border border-rose-200 transition';
+        badge.className = 'text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-50 text-rose-600 border border-rose-200 hover:bg-rose-100 transition cursor-pointer';
         badge.innerText = label || '⚠️ 클라우드 연결 확인 필요';
       } else {
-        badge.className = 'text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-500 border border-slate-200 transition';
+        badge.className = 'text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-500 border border-slate-200 transition cursor-pointer';
         badge.innerText = label || '💾 로컬 저장';
       }
     }
@@ -1652,9 +1652,9 @@
       }
     }
 
-    async function syncTableToSupabase(storageKey, data) {
-      if (!supabaseClient) return;
-      setCloudSyncBadge('syncing');
+    async function syncTableToSupabase(storageKey, data, silentBadge = false) {
+      if (!supabaseClient) return false;
+      if (!silentBadge) setCloudSyncBadge('syncing');
       const nowIso = new Date().toISOString();
       try {
         if (storageKey === STORAGE_KEY_TEACHER) {
@@ -1688,30 +1688,42 @@
             if (error) throw error;
           }
         }
-        setCloudSyncBadge('synced');
+        if (!silentBadge) setCloudSyncBadge('synced');
+        return true;
       } catch (err) {
         console.error(`Supabase 동기화 실패 (${storageKey}):`, err);
-        setCloudSyncBadge('error');
+        if (!silentBadge) setCloudSyncBadge('error');
+        return false;
       }
     }
 
     async function pushAllLocalToSupabase() {
       if (!supabaseClient) return;
       setCloudSyncBadge('syncing', '☁️ 초기 업로드 중...');
-      await Promise.all([
-        syncTableToSupabase(STORAGE_KEY_TEACHER, getTeacherProfile()),
-        syncTableToSupabase(STORAGE_KEY_STUDENTS, getStudents()),
-        syncTableToSupabase(STORAGE_KEY_LESSONS, getLessons()),
-        syncTableToSupabase(STORAGE_KEY_NOTES, getNotes()),
-        syncTableToSupabase(STORAGE_KEY_PRACTICE, getPracticeChecklists()),
-        syncTableToSupabase(STORAGE_KEY_QUESTIONS, getQuestions()),
-        syncTableToSupabase(STORAGE_KEY_SESSIONS, getPracticeSessions())
+      const results = await Promise.all([
+        syncTableToSupabase(STORAGE_KEY_TEACHER, getTeacherProfile(), true),
+        syncTableToSupabase(STORAGE_KEY_STUDENTS, getStudents(), true),
+        syncTableToSupabase(STORAGE_KEY_LESSONS, getLessons(), true),
+        syncTableToSupabase(STORAGE_KEY_NOTES, getNotes(), true),
+        syncTableToSupabase(STORAGE_KEY_PRACTICE, getPracticeChecklists(), true),
+        syncTableToSupabase(STORAGE_KEY_QUESTIONS, getQuestions(), true),
+        syncTableToSupabase(STORAGE_KEY_SESSIONS, getPracticeSessions(), true)
       ]);
-      setCloudSyncBadge('synced');
+      if (results.every(Boolean)) {
+        setCloudSyncBadge('synced');
+      } else {
+        setCloudSyncBadge('error');
+      }
     }
 
-    async function pullAllFromSupabase() {
-      if (!supabaseClient) return;
+    async function pullAllFromSupabase(isManual = false) {
+      if (!supabaseClient) {
+        if (SUPABASE_URL && SUPABASE_ANON_KEY && window.supabase) {
+          supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        } else {
+          return;
+        }
+      }
       setCloudSyncBadge('syncing', '☁️ 데이터 불러오는 중...');
       try {
         const [
@@ -1744,6 +1756,7 @@
 
         if (isCloudEmpty) {
           await pushAllLocalToSupabase();
+          if (isManual) showToast('로컬 데이터가 클라우드 DB에 최초 업로드되었습니다! ☁️');
           return;
         }
 
@@ -1793,9 +1806,11 @@
         }
         updateBackupStatusSummary();
         setCloudSyncBadge('synced');
+        if (isManual) showToast('클라우드 DB와 최신 상태로 동기화되었습니다! ☁️');
       } catch (err) {
         console.error('Supabase 데이터 불러오기 실패:', err);
         setCloudSyncBadge('error');
+        if (isManual) showToast('클라우드 연결을 확인해 주세요 (SQL 테이블 생성 여부 등).');
       }
     }
 

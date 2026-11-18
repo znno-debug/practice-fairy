@@ -1,9 +1,9 @@
 # 연습요정 (Practice Fairy) 인수인계 문서
 
-> **최종 수정**: 2026-11-18 (스마트폰 실기기 테스트 환경 및 정적 호스팅 배포 준비 완료)  
+> **최종 수정**: 2026-11-18 (Supabase 7개 테이블 클라우드 DB 실시간 연동 및 JSON 백업/복원 완료)  
 > **한 줄 요약**: 음악 1:1 레슨 선생님을 위한 출결·수강료·레슨노트 관리 + 수강생 연습일지 웹앱(PWA).  
-> **현재 단계**: 뮬(Mule) 설문 14명 분석 완료 ➔ 5대 출결 체계 & 수강료 골든타임(카톡 즉시 공유) & 보강 대기 관리 위젯 v3 구현 완료 ➔ **스마트폰 실기기 접속 테스트 및 무료 웹 호스팅(GitHub Pages / Vercel) 배포 세팅 단계**.  
-> **기술 스택**: HTML5, Vanilla JavaScript, Tailwind CSS(CDN), Web Audio API, Service Worker(v3), LocalStorage  
+> **현재 단계**: 뮬(Mule) 설문 14명 분석 완료 ➔ 5대 출결 체계 & 수강료 골든타임(카톡 즉시 공유) & 보강 대기 관리 위젯 구현 ➔ **Supabase 클라우드 DB 동기화 & JSON 백업/복원 완료** ➔ **스마트폰 실기기 접속 테스트 및 호스팅 배포 단계**.  
+> **기술 스택**: HTML5, Vanilla JavaScript, Tailwind CSS(CDN), Supabase(PostgreSQL + JS SDK v2), Web Audio API, Service Worker(v6), LocalStorage  
 
 ---
 
@@ -24,7 +24,7 @@
 | 영역 | 상태 | 비고 |
 | :--- | :--- | :--- |
 | **기능 시제품** (`index.html`, `share.html`, PWA) | **완성 (v3 고도화)** | 5대 출결체계, 수강료 골든타임 모달 & 카톡 공유, 보강 위젯 반영 완료 |
-| **데이터 저장** | LocalStorage + **JSON 백업/복원** + **Supabase 연동 준비 완료** | `supabase_schema.sql` 및 `index.html` 7개 테이블 실시간 동기화 엔진 탑재 |
+| **데이터 저장** | LocalStorage + **JSON 백업/복원** + **Supabase 클라우드 DB 연동 완료** | 7개 테이블 실시간 양방향 동기화 (`zpfcocrqvmrotuiwpkru.supabase.co`) |
 | **시장 검증** | **1차 설문 완료 (N=14)** | 뮬(Mule) 배포 완료, 핵심 고충(수강료 누락, 보강 눈치) 검증 완료 |
 | **제품 전략** | **포지셔닝 피봇 확정** | 단순 관리 도구 ❌ → 수금 누락 방지 및 재등록 촉진 솔루션 ⭕ |
 | **다음 단계** | **스마트폰 모바일 실기기 검증** | PWA 홈 화면 추가를 통한 모바일 터치감 및 카톡 공유 실제 테스트 |

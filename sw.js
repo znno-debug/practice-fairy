@@ -1,5 +1,5 @@
-// 연습요정 (Practice Fairy) Service Worker - v5.0.0 (Supabase 7개 테이블 클라우드 동기화 엔진 준비)
-const CACHE_NAME = 'fairy-cache-v5';
+// 연습요정 (Practice Fairy) Service Worker - v6.0.0 (Supabase 클라우드 DB 실키 연동 완료)
+const CACHE_NAME = 'fairy-cache-v6';
 const STATIC_ASSETS = [
   './',
   './index.html',
