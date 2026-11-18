@@ -1,5 +1,5 @@
-// 연습요정 (Practice Fairy) Service Worker - v3.0.0 (설문 피드백 반영: 5대 출결체계 & 카톡 공유 & 보강위젯)
-const CACHE_NAME = 'fairy-cache-v3';
+// 연습요정 (Practice Fairy) Service Worker - v4.0.0 (설문 피드백 반영 + JSON 백업/복원 기능 추가)
+const CACHE_NAME = 'fairy-cache-v4';
 const STATIC_ASSETS = [
   './',
   './index.html',
