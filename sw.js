@@ -1,5 +1,5 @@
-// 연습요정 (Practice Fairy) Service Worker - v4.0.0 (설문 피드백 반영 + JSON 백업/복원 기능 추가)
-const CACHE_NAME = 'fairy-cache-v4';
+// 연습요정 (Practice Fairy) Service Worker - v5.0.0 (Supabase 7개 테이블 클라우드 동기화 엔진 준비)
+const CACHE_NAME = 'fairy-cache-v5';
 const STATIC_ASSETS = [
   './',
   './index.html',
