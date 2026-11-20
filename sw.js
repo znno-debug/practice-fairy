@@ -1,5 +1,5 @@
-// 연습요정 (Practice Fairy) Service Worker - v11.0.0 (Kakao SDK 카드 메시지 공유 & 모바일 인앱 리포트 UI 업그레이드)
-const CACHE_NAME = 'fairy-cache-v11';
+// 연습요정 (Practice Fairy) Service Worker - v12.0.0 (카카오톡 공유 카드 상세보기 버튼 & 가로형 썸네일 & 리포트 직행 연결)
+const CACHE_NAME = 'fairy-cache-v12';
 const STATIC_ASSETS = [
   './',
   './index.html',

@@ -347,8 +347,46 @@
         const match = hash.match(/[#&]d=([^&]+)/);
         const raw = match ? decodeURIComponent(match[1]) : getParam('d');
         if (!raw) return null;
-        const jsonStr = decodeURIComponent(escape(atob(raw)));
-        return JSON.parse(jsonStr);
+        let b64 = raw.replace(/-/g, '+').replace(/_/g, '/');
+        while (b64.length % 4 !== 0) {
+          b64 += '=';
+        }
+        const jsonStr = decodeURIComponent(escape(atob(b64)));
+        const parsed = JSON.parse(jsonStr);
+        if (Array.isArray(parsed)) {
+          return {
+            note: {
+              studentName: parsed[0] || '수강생',
+              subject: parsed[1] || '피아노',
+              date: parsed[2] || '',
+              sessionNum: parsed[3] || 1,
+              totalPass: parsed[4] || 8,
+              piece: parsed[5] || '',
+              technique: parsed[6] || '',
+              badge: parsed[7] || '🎹 터치감 & 소리 최고',
+              feedback: parsed[8] || '',
+              homework: parsed[9] || '',
+              parentMsg: parsed[10] || '',
+              youtubeUrl: parsed[11] || '',
+              attendanceStatus: parsed[12] || '출석'
+            },
+            student: {
+              name: parsed[0] || '수강생',
+              subject: parsed[1] || '피아노',
+              totalPass: parsed[4] || 8,
+              usedPass: parsed[3] || 1,
+              type: parsed[13] || 'child',
+              fee: parsed[14] || 350000
+            },
+            teacher: {
+              name: parsed[15] || '김민주',
+              bankName: parsed[16] || '카카오뱅크',
+              accountNumber: parsed[17] || '',
+              accountHolder: parsed[18] || parsed[15] || '김민주'
+            }
+          };
+        }
+        return parsed;
       } catch (e) {
         console.warn('Embedded report decode failed:', e);
         return null;
