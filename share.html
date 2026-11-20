@@ -328,15 +328,30 @@
 
     let globalTeacher = defaultTeacher;
 
+    function getEmbeddedPayload() {
+      try {
+        const hash = window.location.hash || '';
+        const match = hash.match(/[#&]d=([^&]+)/);
+        const raw = match ? decodeURIComponent(match[1]) : getParam('d');
+        if (!raw) return null;
+        const jsonStr = decodeURIComponent(escape(atob(raw)));
+        return JSON.parse(jsonStr);
+      } catch (e) {
+        console.warn('Embedded report decode failed:', e);
+        return null;
+      }
+    }
+
     function loadReport() {
+      const embedded = getEmbeddedPayload();
       const noteId = getParam('id');
       const notes = JSON.parse(localStorage.getItem(STORAGE_KEY_NOTES) || localStorage.getItem('clef_notes_v1') || '[]');
       const students = JSON.parse(localStorage.getItem(STORAGE_KEY_STUDENTS) || localStorage.getItem('clef_students_v1') || '[]');
-      const teacher = JSON.parse(localStorage.getItem(STORAGE_KEY_TEACHER) || JSON.stringify(defaultTeacher));
+      const teacher = (embedded && embedded.teacher) || JSON.parse(localStorage.getItem(STORAGE_KEY_TEACHER) || JSON.stringify(defaultTeacher));
       globalTeacher = teacher;
 
-      let note = null;
-      if (noteId) {
+      let note = (embedded && embedded.note) || null;
+      if (!note && noteId) {
         note = notes.find(n => n.id === noteId);
       }
       if (!note && notes.length > 0) {
@@ -356,7 +371,7 @@
       document.getElementById('report-teacher-name').innerText = `${teacher.name} 선생님`;
 
       // 수강권 및 수강생 정보 매칭
-      const student = students.find(s => s.id === note.studentId) || { totalPass: 8, usedPass: note.sessionNum, fee: 350000 };
+      const student = (embedded && embedded.student) || students.find(s => s.id === note.studentId) || { totalPass: 8, usedPass: note.sessionNum, fee: 350000 };
       const isAdult = student.type === 'adult' || (student.grade && (student.grade.includes('성인') || student.grade.includes('취미')));
 
       // 성인/학생 맞춤형 호칭 & 타이틀

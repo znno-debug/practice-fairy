@@ -62,6 +62,62 @@
 </head>
 <body class="bg-slate-50 text-slate-900 min-h-screen pb-32 md:pb-12">
 
+  <!-- ================= 🔐 선생님 로그인 / 회원가입 전용 화면 (비로그인 시 노출) ================= -->
+  <div id="auth-overlay" class="fixed inset-0 z-[60] bg-gradient-to-br from-rose-50 via-white to-indigo-50 flex items-center justify-center p-4 overflow-y-auto">
+    <div class="w-full max-w-md bg-white rounded-3xl shadow-2xl border border-slate-200/80 overflow-hidden p-6 sm:p-8 space-y-6">
+      <!-- 브랜드 로고 & 소개 -->
+      <div class="text-center space-y-2">
+        <div class="w-14 h-14 mx-auto rounded-2xl bg-gradient-to-tr from-brand-500 via-rose-400 to-amber-300 flex items-center justify-center text-white shadow-lg shadow-brand-500/25 text-2xl">
+          🧚‍♀️
+        </div>
+        <div class="inline-flex items-center space-x-1.5 px-2.5 py-0.5 rounded-full bg-brand-50 text-brand-600 border border-brand-100 text-[11px] font-bold">
+          <span>음악 1:1 레슨 프로페셔널 패키지</span>
+        </div>
+        <h1 class="text-2xl font-black tracking-tight text-slate-900">연습요정 스마트 과외노트</h1>
+        <p class="text-xs text-slate-500 leading-relaxed">수강료 누락 방지 · 5대 출결/보강 관리 · 카카오톡 학부모 리포트<br>선생님 전용 클라우드 계정으로 안전하게 관리하세요.</p>
+      </div>
+
+      <!-- 로그인 / 회원가입 탭 전환 -->
+      <div class="grid grid-cols-2 p-1 bg-slate-100 rounded-2xl text-xs font-bold border border-slate-200/70">
+        <button type="button" id="auth-tab-login" onclick="switchAuthMode('login')" class="py-2.5 rounded-xl bg-white text-brand-600 shadow-xs transition cursor-pointer">
+          🔑 로그인
+        </button>
+        <button type="button" id="auth-tab-signup" onclick="switchAuthMode('signup')" class="py-2.5 rounded-xl text-slate-500 hover:text-slate-900 transition cursor-pointer">
+          ✨ 새 선생님 회원가입
+        </button>
+      </div>
+
+      <!-- 안내 / 에러 메시지 박스 -->
+      <div id="auth-alert-box" class="hidden p-3 rounded-xl text-xs font-medium leading-relaxed"></div>
+
+      <!-- 이메일 / 비밀번호 입력 폼 -->
+      <form id="auth-form" onsubmit="handleAuthSubmit(event)" class="space-y-4">
+        <div id="auth-name-field" class="hidden">
+          <label class="block text-xs font-bold text-slate-700 mb-1">선생님 성함 (선택)</label>
+          <input type="text" id="auth-teacher-name" placeholder="예: 김민주" class="w-full text-sm border border-slate-200 rounded-xl p-3 focus:ring-2 focus:ring-brand-500 focus:outline-none">
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">이메일 주소 *</label>
+          <input type="email" id="auth-email" required autocomplete="email" placeholder="teacher@example.com" class="w-full text-sm border border-slate-200 rounded-xl p-3 focus:ring-2 focus:ring-brand-500 focus:outline-none">
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">비밀번호 * <span class="text-[11px] font-normal text-slate-400">(6자 이상)</span></label>
+          <input type="password" id="auth-password" required minlength="6" autocomplete="current-password" placeholder="••••••••" class="w-full text-sm border border-slate-200 rounded-xl p-3 focus:ring-2 focus:ring-brand-500 focus:outline-none">
+        </div>
+        <button type="submit" id="auth-submit-btn" class="w-full py-3.5 bg-brand-500 hover:bg-brand-600 text-white font-bold text-sm rounded-xl shadow-md shadow-brand-500/20 transition cursor-pointer">
+          이메일로 로그인하기
+        </button>
+      </form>
+
+      <!-- 하단 모드 전환 링크 -->
+      <div class="pt-3 border-t border-slate-100 text-center">
+        <button type="button" id="auth-switch-link" onclick="toggleAuthMode()" class="text-xs font-semibold text-slate-600 hover:text-brand-600 transition cursor-pointer">
+          아직 계정이 없으신가요? <span class="text-brand-600 font-bold underline">새 선생님 회원가입</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- 상단 네비게이션 헤더 -->
   <header class="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200">
     <div class="max-w-6xl mx-auto px-3 sm:px-4 h-14 sm:h-16 flex items-center justify-between gap-2">
@@ -104,16 +160,39 @@
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
           <span>새 레슨노트 작성</span>
         </button>
-        <button onclick="openTeacherProfileModal()" class="relative flex items-center space-x-2 pl-1.5 sm:pl-2 border-l border-slate-200 hover:opacity-80 transition cursor-pointer group text-left shrink-0" title="프로필 · 계좌 · 백업 설정">
-          <div class="relative">
-            <img id="header-teacher-img" src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80" alt="선생님 프로필" class="w-8 h-8 rounded-full object-cover ring-2 ring-brand-100 group-hover:ring-brand-400 transition">
-            <span class="md:hidden absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-white border border-slate-200 flex items-center justify-center text-[9px] shadow-2xs">⚙️</span>
-          </div>
-          <div class="hidden md:block whitespace-nowrap">
-            <span id="header-teacher-name" class="text-xs font-bold text-slate-800 block leading-tight">김민주 선생님</span>
-            <span class="text-[10px] text-brand-600 font-medium">설정 · 계좌 · 백업 ⚙️</span>
-          </div>
-        </button>
+
+        <!-- 선생님 프로필 영역 + 현재 로그인 이메일 + 로그아웃 버튼 -->
+        <div class="flex items-center space-x-2 pl-1.5 sm:pl-2 border-l border-slate-200 shrink-0">
+          <button onclick="openTeacherProfileModal()" class="relative flex items-center space-x-2 hover:opacity-80 transition cursor-pointer group text-left shrink-0" title="프로필 · 계좌 · 백업 설정">
+            <div class="relative">
+              <img id="header-teacher-img" src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80" alt="선생님 프로필" class="w-8 h-8 rounded-full object-cover ring-2 ring-brand-100 group-hover:ring-brand-400 transition">
+              <span class="md:hidden absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-white border border-slate-200 flex items-center justify-center text-[9px] shadow-2xs">⚙️</span>
+            </div>
+            <div class="hidden md:block whitespace-nowrap">
+              <div class="flex items-center space-x-1.5">
+                <span id="header-teacher-name" class="text-xs font-bold text-slate-800 leading-tight">김민주 선생님</span>
+                <span class="text-[10px] text-brand-600 font-semibold">⚙️</span>
+              </div>
+              <span id="header-user-email" class="text-[10px] text-slate-500 font-medium block leading-tight max-w-[160px] truncate">로그인 대기 중</span>
+            </div>
+          </button>
+          <button type="button" id="header-logout-btn" onclick="handleLogout()" class="hidden md:inline-flex items-center px-2 py-1 text-[11px] font-bold text-slate-600 hover:text-rose-600 bg-slate-100 hover:bg-rose-50 border border-slate-200 hover:border-rose-200 rounded-lg transition cursor-pointer whitespace-nowrap">
+            로그아웃
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 모바일 전용 상단 로그인 계정 & 로그아웃 슬림 바 (타이틀 찌그러짐 방지) -->
+    <div id="mobile-auth-bar" class="md:hidden bg-slate-50/90 border-t border-slate-100 px-3 py-1 flex items-center justify-between text-[11px]">
+      <div class="flex items-center space-x-1.5 min-w-0">
+        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0"></span>
+        <span id="header-user-email-mobile" class="text-slate-600 font-medium truncate">로그인 확인 중...</span>
+      </div>
+      <div class="flex items-center space-x-2 shrink-0 ml-2">
+        <button type="button" onclick="openTeacherProfileModal()" class="text-slate-600 hover:text-slate-900 font-semibold cursor-pointer">계좌·설정 ⚙️</button>
+        <span class="text-slate-300">|</span>
+        <button type="button" onclick="handleLogout()" class="text-rose-600 hover:text-rose-700 font-bold cursor-pointer">로그아웃</button>
       </div>
     </div>
 
@@ -978,6 +1057,17 @@
       </div>
 
       <form id="teacher-profile-form" onsubmit="handleSaveTeacherProfile(event)" class="p-6 space-y-4 max-h-[80vh] overflow-y-auto custom-scrollbar">
+        <!-- 현재 로그인 계정 정보 & 로그아웃 -->
+        <div class="p-3 bg-indigo-50/70 rounded-xl border border-indigo-100 flex items-center justify-between">
+          <div class="min-w-0">
+            <span class="text-[10px] font-bold text-indigo-600 block">🔐 클라우드 로그인 계정</span>
+            <span id="modal-user-email" class="text-xs font-bold text-slate-800 truncate block">teacher@example.com</span>
+          </div>
+          <button type="button" onclick="handleLogout()" class="px-3 py-1.5 text-xs font-bold text-rose-600 bg-white hover:bg-rose-50 border border-rose-200 rounded-lg shadow-2xs transition cursor-pointer shrink-0">
+            로그아웃
+          </button>
+        </div>
+
         <!-- 기본 정보 -->
         <div class="grid grid-cols-2 gap-3">
           <div>
@@ -1598,6 +1688,25 @@
     ];
 
     // LocalStorage 초기화
+    const STORAGE_KEY_LAST_UID = 'fairy_last_auth_uid_v1';
+    let currentAuthUser = null;
+    let currentAuthMode = 'login'; // 'login' | 'signup'
+
+    function resetLocalDataToDefault(customTeacherName = '') {
+      const prof = { ...defaultTeacherProfile };
+      if (customTeacherName) {
+        prof.name = customTeacherName;
+        prof.accountHolder = customTeacherName;
+      }
+      localStorage.setItem(STORAGE_KEY_TEACHER, JSON.stringify(prof));
+      localStorage.setItem(STORAGE_KEY_STUDENTS, JSON.stringify(defaultStudents));
+      localStorage.setItem(STORAGE_KEY_LESSONS, JSON.stringify(defaultLessons));
+      localStorage.setItem(STORAGE_KEY_NOTES, JSON.stringify(defaultNotes));
+      localStorage.setItem(STORAGE_KEY_PRACTICE, JSON.stringify(defaultChecklists));
+      localStorage.setItem(STORAGE_KEY_QUESTIONS, JSON.stringify(defaultQuestions));
+      localStorage.setItem(STORAGE_KEY_SESSIONS, JSON.stringify(defaultSessions));
+    }
+
     function initData() {
       if (!localStorage.getItem(STORAGE_KEY_TEACHER)) {
         localStorage.setItem(STORAGE_KEY_TEACHER, JSON.stringify(defaultTeacherProfile));
@@ -1623,16 +1732,213 @@
       renderTeacherProfileHeader();
     }
 
-    // ================= ☁️ Supabase 7개 테이블 실시간 동기화 엔진 =================
+    // ================= 🔐 Supabase Auth (이메일/비밀번호 로그인 & 회원가입) =================
+    function switchAuthMode(mode) {
+      currentAuthMode = mode === 'signup' ? 'signup' : 'login';
+      const tabLogin = document.getElementById('auth-tab-login');
+      const tabSignup = document.getElementById('auth-tab-signup');
+      const nameField = document.getElementById('auth-name-field');
+      const submitBtn = document.getElementById('auth-submit-btn');
+      const switchLink = document.getElementById('auth-switch-link');
+      const alertBox = document.getElementById('auth-alert-box');
+      if (alertBox) alertBox.classList.add('hidden');
+
+      if (currentAuthMode === 'signup') {
+        if (tabLogin) tabLogin.className = 'py-2.5 rounded-xl text-slate-500 hover:text-slate-900 transition cursor-pointer';
+        if (tabSignup) tabSignup.className = 'py-2.5 rounded-xl bg-white text-brand-600 shadow-xs transition cursor-pointer';
+        if (nameField) nameField.classList.remove('hidden');
+        if (submitBtn) submitBtn.innerText = '새 선생님 계정으로 가입하기';
+        if (switchLink) switchLink.innerHTML = '이미 계정이 있으신가요? <span class="text-brand-600 font-bold underline">로그인하기</span>';
+      } else {
+        if (tabLogin) tabLogin.className = 'py-2.5 rounded-xl bg-white text-brand-600 shadow-xs transition cursor-pointer';
+        if (tabSignup) tabSignup.className = 'py-2.5 rounded-xl text-slate-500 hover:text-slate-900 transition cursor-pointer';
+        if (nameField) nameField.classList.add('hidden');
+        if (submitBtn) submitBtn.innerText = '이메일로 로그인하기';
+        if (switchLink) switchLink.innerHTML = '아직 계정이 없으신가요? <span class="text-brand-600 font-bold underline">새 선생님 회원가입</span>';
+      }
+    }
+
+    function toggleAuthMode() {
+      switchAuthMode(currentAuthMode === 'login' ? 'signup' : 'login');
+    }
+
+    function showAuthAlert(message, type = 'error') {
+      const box = document.getElementById('auth-alert-box');
+      if (!box) return;
+      box.classList.remove('hidden');
+      if (type === 'success') {
+        box.className = 'p-3 rounded-xl text-xs font-medium leading-relaxed bg-emerald-50 text-emerald-800 border border-emerald-200';
+      } else {
+        box.className = 'p-3 rounded-xl text-xs font-medium leading-relaxed bg-rose-50 text-rose-700 border border-rose-200';
+      }
+      box.innerText = message;
+    }
+
+    function translateAuthError(err) {
+      const msg = (err?.message || String(err)).toLowerCase();
+      if (msg.includes('invalid login credentials')) return '이메일 또는 비밀번호가 일치하지 않습니다.';
+      if (msg.includes('user already registered')) return '이미 가입된 이메일입니다. 로그인 탭에서 로그인해 주세요.';
+      if (msg.includes('password should be at least 6 characters')) return '비밀번호는 최소 6자 이상 입력해 주세요.';
+      if (msg.includes('email not confirmed')) return '이메일 인증이 완료되지 않았습니다. 받은편지함을 확인해 주세요.';
+      if (msg.includes('rate limit')) return '요청이 너무 많습니다. 잠시 후 다시 시도해 주세요.';
+      return err?.message || '인증 처리 중 오류가 발생했습니다.';
+    }
+
+    function updateAuthHeaderUI(user) {
+      const emailText = user?.email || '비로그인';
+      const desktopEmail = document.getElementById('header-user-email');
+      const mobileEmail = document.getElementById('header-user-email-mobile');
+      const modalEmail = document.getElementById('modal-user-email');
+      const logoutBtn = document.getElementById('header-logout-btn');
+      if (desktopEmail) desktopEmail.innerText = emailText;
+      if (mobileEmail) mobileEmail.innerText = emailText;
+      if (modalEmail) modalEmail.innerText = emailText;
+      if (logoutBtn) {
+        if (user) logoutBtn.classList.remove('hidden');
+        else logoutBtn.classList.add('hidden');
+      }
+    }
+
+    async function handleAuthSubmit(e) {
+      e.preventDefault();
+      if (!supabaseClient) {
+        supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+      }
+      const email = document.getElementById('auth-email').value.trim();
+      const password = document.getElementById('auth-password').value;
+      const teacherName = (document.getElementById('auth-teacher-name')?.value || '').trim();
+      const submitBtn = document.getElementById('auth-submit-btn');
+
+      if (!email || !password) return;
+      submitBtn.disabled = true;
+      const prevBtnText = submitBtn.innerText;
+      submitBtn.innerText = '처리 중...';
+
+      try {
+        if (currentAuthMode === 'signup') {
+          const { data, error } = await supabaseClient.auth.signUp({
+            email,
+            password,
+            options: {
+              data: { teacher_name: teacherName }
+            }
+          });
+          if (error) throw error;
+
+          if (data?.session) {
+            await onAuthSessionEstablished(data.session, teacherName);
+            showToast('회원가입 및 로그인이 완료되었습니다! 환영합니다 🎉');
+          } else {
+            // 이메일 인증이 꺼져있지 않은 경우 바로 로그인 시도해보고 안 되면 안내
+            const loginTry = await supabaseClient.auth.signInWithPassword({ email, password });
+            if (!loginTry.error && loginTry.data?.session) {
+              await onAuthSessionEstablished(loginTry.data.session, teacherName);
+              showToast('회원가입 및 로그인이 완료되었습니다! 환영합니다 🎉');
+            } else {
+              switchAuthMode('login');
+              showAuthAlert('회원가입이 접수되었습니다! 이메일 인증 링크를 확인하신 후 로그인해 주세요.', 'success');
+            }
+          }
+        } else {
+          const { data, error } = await supabaseClient.auth.signInWithPassword({
+            email,
+            password
+          });
+          if (error) throw error;
+          if (data?.session) {
+            await onAuthSessionEstablished(data.session);
+            showToast(`${data.session.user.email} 계정으로 로그인되었습니다! 🧚‍♀️`);
+          }
+        }
+      } catch (err) {
+        console.error('Auth error:', err);
+        showAuthAlert(translateAuthError(err), 'error');
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.innerText = prevBtnText;
+      }
+    }
+
+    async function onAuthSessionEstablished(session, signupTeacherName = '') {
+      currentAuthUser = session.user;
+      updateAuthHeaderUI(currentAuthUser);
+
+      const overlay = document.getElementById('auth-overlay');
+      if (overlay) overlay.classList.add('hidden');
+
+      const lastUid = localStorage.getItem(STORAGE_KEY_LAST_UID);
+      const metaName = signupTeacherName || currentAuthUser.user_metadata?.teacher_name || '';
+
+      // 다른 선생님 계정으로 로그인한 경우 이전 계정의 로컬 캐시 초기화
+      if (lastUid && lastUid !== currentAuthUser.id) {
+        resetLocalDataToDefault(metaName);
+      } else {
+        initData();
+        if (metaName) {
+          const prof = getTeacherProfile();
+          if (prof.name === '김민주' && metaName !== '김민주') {
+            prof.name = metaName;
+            prof.accountHolder = metaName;
+            localStorage.setItem(STORAGE_KEY_TEACHER, JSON.stringify(prof));
+          }
+        }
+      }
+      localStorage.setItem(STORAGE_KEY_LAST_UID, currentAuthUser.id);
+
+      renderTeacherProfileHeader();
+      renderCalendar();
+      renderDashboardStats();
+      renderMakeupQueue();
+      renderNotesList();
+      renderStudentsList();
+      if (typeof renderPracticePortal === 'function') {
+        renderPracticePortal();
+      }
+      await pullAllFromSupabase();
+    }
+
+    async function handleLogout() {
+      try {
+        if (supabaseClient) {
+          await supabaseClient.auth.signOut();
+        }
+      } catch (err) {
+        console.error('로그아웃 오류:', err);
+      }
+      currentAuthUser = null;
+      updateAuthHeaderUI(null);
+      closeModal('modal-teacher-profile');
+      const overlay = document.getElementById('auth-overlay');
+      if (overlay) overlay.classList.remove('hidden');
+      const pwInput = document.getElementById('auth-password');
+      if (pwInput) pwInput.value = '';
+      showToast('로그아웃되었습니다.');
+    }
+
+    // ================= ☁️ Supabase 7개 테이블 유저별(user_id) 실시간 동기화 엔진 =================
     let lastCloudErrorMsg = '';
 
     const SUPABASE_TABLE_COLUMNS = {
-      [STORAGE_KEY_TEACHER]: ['id', 'name', 'subject', 'phone', 'bio', 'bankName', 'accountNumber', 'accountHolder', 'avatarUrl', 'updated_at'],
-      [STORAGE_KEY_STUDENTS]: ['id', 'type', 'name', 'subject', 'grade', 'totalPass', 'usedPass', 'fee', 'phone', 'schedule', 'currentPiece', 'updated_at'],
-      [STORAGE_KEY_LESSONS]: ['id', 'studentId', 'date', 'time', 'type', 'status', 'sessionNum', 'makeupResolved', 'updated_at'],
-      [STORAGE_KEY_NOTES]: ['id', 'lessonId', 'studentId', 'studentName', 'subject', 'date', 'sessionNum', 'totalPass', 'piece', 'technique', 'badge', 'feedback', 'homework', 'parentMsg', 'youtubeUrl', 'createdAt', 'updated_at'],
-      [STORAGE_KEY_QUESTIONS]: ['id', 'studentId', 'text', 'category', 'date', 'answered', 'updated_at']
+      [STORAGE_KEY_TEACHER]: ['id', 'user_id', 'name', 'subject', 'phone', 'bio', 'bankName', 'accountNumber', 'accountHolder', 'avatarUrl', 'updated_at'],
+      [STORAGE_KEY_STUDENTS]: ['id', 'user_id', 'type', 'name', 'subject', 'grade', 'totalPass', 'usedPass', 'fee', 'phone', 'schedule', 'currentPiece', 'updated_at'],
+      [STORAGE_KEY_LESSONS]: ['id', 'user_id', 'studentId', 'date', 'time', 'type', 'status', 'sessionNum', 'makeupResolved', 'updated_at'],
+      [STORAGE_KEY_NOTES]: ['id', 'user_id', 'lessonId', 'studentId', 'studentName', 'subject', 'date', 'sessionNum', 'totalPass', 'piece', 'technique', 'badge', 'feedback', 'homework', 'parentMsg', 'youtubeUrl', 'createdAt', 'updated_at'],
+      [STORAGE_KEY_QUESTIONS]: ['id', 'user_id', 'studentId', 'text', 'category', 'date', 'answered', 'updated_at']
     };
+
+    function toCloudId(localId) {
+      if (!currentAuthUser || !localId) return localId;
+      const prefix = currentAuthUser.id.slice(0, 8) + '_';
+      const str = String(localId);
+      return str.startsWith(prefix) ? str : (prefix + str);
+    }
+
+    function fromCloudId(cloudId) {
+      if (!currentAuthUser || !cloudId) return cloudId;
+      const prefix = currentAuthUser.id.slice(0, 8) + '_';
+      const str = String(cloudId);
+      return str.startsWith(prefix) ? str.slice(prefix.length) : str;
+    }
 
     function pickTableColumns(tableKey, obj) {
       const allowed = SUPABASE_TABLE_COLUMNS[tableKey];
@@ -1655,7 +1961,7 @@
         badge.innerText = label || '☁️ 동기화중';
       } else if (status === 'error') {
         badge.className = 'text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-50 text-rose-600 border border-rose-200 hover:bg-rose-100 transition cursor-pointer whitespace-nowrap shrink-0';
-        badge.innerText = label || '⚠️ 권한확인';
+        badge.innerText = label || '⚠️ 동기화오류';
       } else {
         badge.className = 'text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-500 border border-slate-200 transition cursor-pointer whitespace-nowrap shrink-0';
         badge.innerText = label || '💾 로컬';
@@ -1669,7 +1975,16 @@
       }
       try {
         supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-        await pullAllFromSupabase();
+        const { data: { session }, error } = await supabaseClient.auth.getSession();
+        if (error) throw error;
+
+        if (session && session.user) {
+          await onAuthSessionEstablished(session);
+        } else {
+          // 비로그인 상태: 로그인/회원가입 화면 표시
+          const overlay = document.getElementById('auth-overlay');
+          if (overlay) overlay.classList.remove('hidden');
+        }
       } catch (err) {
         console.error('Supabase 초기화 오류:', err);
         lastCloudErrorMsg = err?.message || String(err);
@@ -1678,17 +1993,24 @@
     }
 
     async function syncTableToSupabase(storageKey, data, silentBadge = false) {
-      if (!supabaseClient) return false;
+      if (!supabaseClient || !currentAuthUser) return false;
+      const uid = currentAuthUser.id;
       if (!silentBadge) setCloudSyncBadge('syncing');
       const nowIso = new Date().toISOString();
       try {
         if (storageKey === STORAGE_KEY_TEACHER) {
-          const row = pickTableColumns(STORAGE_KEY_TEACHER, { id: 'default', ...data, updated_at: nowIso });
+          const row = pickTableColumns(STORAGE_KEY_TEACHER, {
+            id: uid,
+            user_id: uid,
+            ...data,
+            updated_at: nowIso
+          });
           const { error } = await supabaseClient.from(STORAGE_KEY_TEACHER).upsert(row);
           if (error) throw error;
         } else if (storageKey === STORAGE_KEY_PRACTICE) {
           const rows = Object.entries(data || {}).map(([studentId, items]) => ({
-            studentId,
+            studentId: toCloudId(studentId),
+            user_id: uid,
             items: Array.isArray(items) ? items : [],
             updated_at: nowIso
           }));
@@ -1698,7 +2020,8 @@
           }
         } else if (storageKey === STORAGE_KEY_SESSIONS) {
           const rows = Object.entries(data || {}).map(([studentId, sessions]) => ({
-            studentId,
+            studentId: toCloudId(studentId),
+            user_id: uid,
             sessions: Array.isArray(sessions) ? sessions : [],
             updated_at: nowIso
           }));
@@ -1707,7 +2030,12 @@
             if (error) throw error;
           }
         } else if (Array.isArray(data)) {
-          const rows = data.map(item => pickTableColumns(storageKey, { ...item, updated_at: nowIso }));
+          const rows = data.map(item => pickTableColumns(storageKey, {
+            ...item,
+            id: toCloudId(item.id),
+            user_id: uid,
+            updated_at: nowIso
+          }));
           if (rows.length > 0) {
             const { error } = await supabaseClient.from(storageKey).upsert(rows);
             if (error) throw error;
@@ -1725,7 +2053,7 @@
     }
 
     async function pushAllLocalToSupabase() {
-      if (!supabaseClient) return;
+      if (!supabaseClient || !currentAuthUser) return;
       setCloudSyncBadge('syncing', '☁️ 업로드중');
       const results = await Promise.all([
         syncTableToSupabase(STORAGE_KEY_TEACHER, getTeacherProfile(), true),
@@ -1751,6 +2079,17 @@
           return;
         }
       }
+      if (!currentAuthUser) {
+        const { data: { session } } = await supabaseClient.auth.getSession();
+        if (session?.user) {
+          currentAuthUser = session.user;
+        } else {
+          const overlay = document.getElementById('auth-overlay');
+          if (overlay) overlay.classList.remove('hidden');
+          return;
+        }
+      }
+      const uid = currentAuthUser.id;
       setCloudSyncBadge('syncing', '☁️ 동기화중');
       try {
         const [
@@ -1762,20 +2101,20 @@
           resQuestions,
           resSessions
         ] = await Promise.all([
-          supabaseClient.from(STORAGE_KEY_TEACHER).select('*'),
-          supabaseClient.from(STORAGE_KEY_STUDENTS).select('*'),
-          supabaseClient.from(STORAGE_KEY_LESSONS).select('*'),
-          supabaseClient.from(STORAGE_KEY_NOTES).select('*'),
-          supabaseClient.from(STORAGE_KEY_PRACTICE).select('*'),
-          supabaseClient.from(STORAGE_KEY_QUESTIONS).select('*'),
-          supabaseClient.from(STORAGE_KEY_SESSIONS).select('*')
+          supabaseClient.from(STORAGE_KEY_TEACHER).select('*').eq('user_id', uid),
+          supabaseClient.from(STORAGE_KEY_STUDENTS).select('*').eq('user_id', uid),
+          supabaseClient.from(STORAGE_KEY_LESSONS).select('*').eq('user_id', uid),
+          supabaseClient.from(STORAGE_KEY_NOTES).select('*').eq('user_id', uid),
+          supabaseClient.from(STORAGE_KEY_PRACTICE).select('*').eq('user_id', uid),
+          supabaseClient.from(STORAGE_KEY_QUESTIONS).select('*').eq('user_id', uid),
+          supabaseClient.from(STORAGE_KEY_SESSIONS).select('*').eq('user_id', uid)
         ]);
 
         const firstError = [resTeacher, resStudents, resLessons, resNotes, resPractice, resQuestions, resSessions]
           .find(r => r.error)?.error;
         if (firstError) throw firstError;
 
-        // 클라우드 DB가 완전히 비어있는 최초 연결 상태면 로컬 데이터를 클라우드로 자동 시드 업로드
+        // 해당 선생님의 클라우드 DB가 비어있는 최초 로그인 상태면 현재 로컬 데이터를 본인 user_id로 클라우드에 자동 시드 업로드
         const isCloudEmpty =
           (!resStudents.data || resStudents.data.length === 0) &&
           (!resLessons.data || resLessons.data.length === 0) &&
@@ -1783,41 +2122,53 @@
 
         if (isCloudEmpty) {
           await pushAllLocalToSupabase();
-          if (isManual) showToast('로컬 데이터가 클라우드 DB에 최초 업로드되었습니다! ☁️');
+          if (isManual) showToast('선생님 계정의 초기 데이터가 클라우드 DB에 저장되었습니다! ☁️');
           return;
         }
 
         if (resTeacher.data && resTeacher.data.length > 0) {
-          const { id, updated_at, ...profData } = resTeacher.data[0];
+          const { id, user_id, updated_at, ...profData } = resTeacher.data[0];
           localStorage.setItem(STORAGE_KEY_TEACHER, JSON.stringify(profData));
         }
         if (resStudents.data && resStudents.data.length > 0) {
-          const cleanStudents = resStudents.data.map(({ updated_at, ...rest }) => rest);
+          const cleanStudents = resStudents.data.map(({ user_id, updated_at, ...rest }) => ({
+            ...rest,
+            id: fromCloudId(rest.id)
+          }));
           localStorage.setItem(STORAGE_KEY_STUDENTS, JSON.stringify(cleanStudents));
         }
         if (resLessons.data && resLessons.data.length > 0) {
-          const cleanLessons = resLessons.data.map(({ updated_at, ...rest }) => rest);
+          const cleanLessons = resLessons.data.map(({ user_id, updated_at, ...rest }) => ({
+            ...rest,
+            id: fromCloudId(rest.id)
+          }));
           localStorage.setItem(STORAGE_KEY_LESSONS, JSON.stringify(cleanLessons));
         }
         if (resNotes.data && resNotes.data.length > 0) {
-          const cleanNotes = resNotes.data.map(({ updated_at, ...rest }) => rest);
+          const cleanNotes = resNotes.data.map(({ user_id, updated_at, ...rest }) => ({
+            ...rest,
+            id: fromCloudId(rest.id)
+          }));
           localStorage.setItem(STORAGE_KEY_NOTES, JSON.stringify(cleanNotes));
         }
         if (resPractice.data && resPractice.data.length > 0) {
           const practiceMap = {};
           resPractice.data.forEach(row => {
-            practiceMap[row.studentId] = row.items || [];
+            practiceMap[fromCloudId(row.studentId)] = row.items || [];
           });
           localStorage.setItem(STORAGE_KEY_PRACTICE, JSON.stringify(practiceMap));
         }
         if (resQuestions.data && resQuestions.data.length > 0) {
-          const cleanQuestions = resQuestions.data.map(({ updated_at, ...rest }) => rest);
+          const cleanQuestions = resQuestions.data.map(({ user_id, updated_at, ...rest }) => ({
+            ...rest,
+            id: fromCloudId(rest.id)
+          }));
           localStorage.setItem(STORAGE_KEY_QUESTIONS, JSON.stringify(cleanQuestions));
         }
         if (resSessions.data && resSessions.data.length > 0) {
           const sessionsMap = {};
           resSessions.data.forEach(row => {
-            sessionsMap[row.studentId] = row.sessions || [];
+            sessionsMap[fromCloudId(row.studentId)] = row.sessions || [];
           });
           localStorage.setItem(STORAGE_KEY_SESSIONS, JSON.stringify(sessionsMap));
         }
@@ -1840,11 +2191,7 @@
         lastCloudErrorMsg = err?.message || err?.hint || String(err);
         setCloudSyncBadge('error');
         if (isManual) {
-          if (err?.code === '42501') {
-            alert('Supabase 테이블 접근 권한(GRANT) 설정이 필요합니다.\n\nSupabase SQL Editor에서 아래 한 줄을 실행해 주세요:\nGRANT ALL ON ALL TABLES IN SCHEMA public TO anon, authenticated;');
-          } else {
-            showToast(`클라우드 오류: ${lastCloudErrorMsg}`);
-          }
+          showToast(`클라우드 동기화 오류: ${lastCloudErrorMsg}`);
         }
       }
     }
@@ -3516,11 +3863,26 @@
     }
 
     // ================= 학부모 및 수강생 공유 링크 복사 & 모바일 카카오톡 바로 공유 =================
+    function buildShareReportUrl(noteId) {
+      const note = getNotes().find(n => n.id === noteId);
+      const student = note ? getStudents().find(s => s.id === note.studentId) : null;
+      const teacher = getTeacherProfile();
+      const basePath = `${window.location.origin}${window.location.pathname.replace('index.html', '')}share.html?id=${encodeURIComponent(noteId)}`;
+      if (!note) return basePath;
+      try {
+        const payload = { note, student, teacher };
+        const encoded = btoa(unescape(encodeURIComponent(JSON.stringify(payload))));
+        return `${basePath}#d=${encodeURIComponent(encoded)}`;
+      } catch (e) {
+        return basePath;
+      }
+    }
+
     async function copyParentShareLink(noteId) {
       const note = getNotes().find(n => n.id === noteId);
       const student = note ? getStudents().find(s => s.id === note.studentId) : null;
       const isAdult = student && student.type === 'adult';
-      const shareUrl = `${window.location.origin}${window.location.pathname.replace('index.html', '')}share.html?id=${noteId}`;
+      const shareUrl = buildShareReportUrl(noteId);
       const title = isAdult ? `[연습요정] ${student ? student.name : ''}님의 1:1 레슨 리포트 🎵` : `[연습요정] ${student ? student.name : ''} 학생의 레슨 알림장 🎵`;
 
       // 1. 모바일 환경 Web Share API 시도 (카카오톡 바로 연결)
@@ -3555,7 +3917,7 @@
     }
 
     function previewShareReport(noteId) {
-      window.open(`share.html?id=${noteId}`, '_blank');
+      window.open(buildShareReportUrl(noteId), '_blank');
     }
 
     function showToast(msg) {

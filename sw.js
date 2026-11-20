@@ -1,5 +1,5 @@
-// 연습요정 (Practice Fairy) Service Worker - v8.0.0 (Supabase JWT anon public key 교체 반영)
-const CACHE_NAME = 'fairy-cache-v8';
+// 연습요정 (Practice Fairy) Service Worker - v9.0.0 (Supabase Auth 이메일/비밀번호 로그인 & user_id 멀티유저 격리 반영)
+const CACHE_NAME = 'fairy-cache-v9';
 const STATIC_ASSETS = [
   './',
   './index.html',

@@ -1,9 +1,9 @@
 # 연습요정 (Practice Fairy) 인수인계 문서
 
-> **최종 수정**: 2026-11-18 (Supabase 7개 테이블 클라우드 DB 실시간 연동 및 JSON 백업/복원 완료)  
+> **최종 수정**: 2026-11-20 (Supabase Auth 이메일/비밀번호 회원가입·로그인 및 `user_id` 멀티유저 데이터 격리 완료)  
 > **한 줄 요약**: 음악 1:1 레슨 선생님을 위한 출결·수강료·레슨노트 관리 + 수강생 연습일지 웹앱(PWA).  
-> **현재 단계**: 뮬(Mule) 설문 14명 분석 완료 ➔ 5대 출결 체계 & 수강료 골든타임(카톡 즉시 공유) & 보강 대기 관리 위젯 구현 ➔ **Supabase 클라우드 DB 동기화 & JSON 백업/복원 완료** ➔ **스마트폰 실기기 접속 테스트 및 호스팅 배포 단계**.  
-> **기술 스택**: HTML5, Vanilla JavaScript, Tailwind CSS(CDN), Supabase(PostgreSQL + JS SDK v2), Web Audio API, Service Worker(v6), LocalStorage  
+> **현재 단계**: 뮬(Mule) 설문 14명 분석 완료 ➔ 5대 출결 체계 & 수강료 골든타임(카톡 즉시 공유) & 보강 대기 관리 위젯 구현 ➔ **Supabase Auth 로그인/회원가입 & 7개 테이블 `user_id` 격리 동기화 완료** ➔ **스마트폰 실기기 접속 테스트 및 호스팅 배포 단계**.  
+> **기술 스택**: HTML5, Vanilla JavaScript, Tailwind CSS(CDN), Supabase(Auth + PostgreSQL RLS + JS SDK v2), Web Audio API, Service Worker(v9), LocalStorage  
 
 ---
 
@@ -24,7 +24,7 @@
 | 영역 | 상태 | 비고 |
 | :--- | :--- | :--- |
 | **기능 시제품** (`index.html`, `share.html`, PWA) | **완성 (v3 고도화)** | 5대 출결체계, 수강료 골든타임 모달 & 카톡 공유, 보강 위젯 반영 완료 |
-| **데이터 저장** | LocalStorage + **JSON 백업/복원** + **Supabase 클라우드 DB 연동 완료** | 7개 테이블 실시간 양방향 동기화 (`zpfcocrqvmrotuiwpkru.supabase.co`) |
+| **데이터 저장 & 인증** | LocalStorage + **JSON 백업/복원** + **Supabase Auth & RLS 클라우드 연동** | 이메일/비밀번호 로그인·회원가입 및 7개 테이블 `user_id` 본인 데이터 격리 동기화 |
 | **시장 검증** | **1차 설문 완료 (N=14)** | 뮬(Mule) 배포 완료, 핵심 고충(수강료 누락, 보강 눈치) 검증 완료 |
 | **제품 전략** | **포지셔닝 피봇 확정** | 단순 관리 도구 ❌ → 수금 누락 방지 및 재등록 촉진 솔루션 ⭕ |
 | **다음 단계** | **스마트폰 모바일 실기기 검증** | PWA 홈 화면 추가를 통한 모바일 터치감 및 카톡 공유 실제 테스트 |
@@ -140,6 +140,7 @@
 
 | 날짜 | 변경 내용 |
 | :--- | :--- |
+| 2026-11-20 | **Supabase Auth 로그인/회원가입 및 멀티유저(`user_id`) 데이터 격리 완료**: `supabase.auth.getSession()` 기반 로그인/회원가입 화면(`#auth-overlay`) 구현, 상단 헤더(모바일/데스크톱) 및 설정 모달에 로그인 이메일·로그아웃 버튼 추가, 7개 테이블 `user_id` RLS 동기화 및 유저별 Primary Key 네임스페이스 적용, 학부모용 `share.html#d=` 무로그인 링크 데이터 내장 강화, `sw.js` `fairy-cache-v9` 갱신 |
 | 2026-11-18 | **전체 데이터 JSON 백업/복원 기능 구현 및 배포 준비**: 상단 헤더 및 설정 모달에 JSON 백업 다운로드 / 업로드 복원 기능 추가, `sw.js` `fairy-cache-v4` 갱신, `server.py` 로컬 Wi-Fi IP 자동 감지 추가, `manifest.json` 상대경로 정비 및 Git 초기화 |
 | 2026-11-13 | **설문 피드백 핵심 3대 기능 개발 완료**: 5대 출결 상태 체계 정립, **수강료 골든타임 모달 & 카카오톡 바로 공유(Web Share API)** 연동, **보강 대기 관리 위젯(Make-up Lesson Queue)** 구현, `share.html` 출결 상세 연동, `sw.js` v3 갱신 |
 | 2026-11-13 | **설문 14명 응답 분석 완료**, 핵심 페인포인트 규명, **포지셔닝 전환(수강료 누락 방지 & 재등록 촉진 패키지)** 및 다음 할 일 갱신 |
