@@ -1,5 +1,5 @@
-// 연습요정 (Practice Fairy) Service Worker - v16.0.0 (sendKakaoReportCard 단일화 & 상세보기 버튼 링크 보강)
-const CACHE_NAME = 'fairy-cache-v16';
+// 연습요정 (Practice Fairy) Service Worker - v17.0.0 (공유 리포트 단축 URL + Supabase 스냅샷 조회)
+const CACHE_NAME = 'fairy-cache-v17';
 const STATIC_ASSETS = [
   './',
   './index.html',

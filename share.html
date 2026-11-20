@@ -393,9 +393,53 @@
       }
     }
 
-    function loadReport() {
-      const embedded = getEmbeddedPayload();
+    const SUPABASE_URL = 'https://zpfcocrqvmrotuiwpkru.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpwZmNvY3Jxdm1yb3R1aXdwa3J1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTQ5OTQ3NDQsImV4cCI6MjExMDU3MDc0NH0.QqxPoJodkVQNCa8HW96F5e5-GHMVIR0nLFMHof9gDbU';
+
+    async function fetchSharedReportFromSupabase(reportId) {
+      if (!reportId) return null;
+      const headers = {
+        apikey: SUPABASE_ANON_KEY,
+        Authorization: `Bearer ${SUPABASE_ANON_KEY}`
+      };
+      try {
+        const res = await fetch(
+          `${SUPABASE_URL}/rest/v1/fairy_shared_reports_v1?id=eq.${encodeURIComponent(reportId)}&select=payload`,
+          { headers }
+        );
+        if (res.ok) {
+          const rows = await res.json();
+          if (Array.isArray(rows) && rows.length > 0 && rows[0].payload) {
+            return rows[0].payload;
+          }
+        }
+      } catch (e) {
+        console.warn('Supabase shared report fetch failed:', e);
+      }
+      // 폴백: 기존 fairy_notes_v1 직접 조회 시도
+      try {
+        const res = await fetch(
+          `${SUPABASE_URL}/rest/v1/fairy_notes_v1?id=eq.${encodeURIComponent(reportId)}&select=*`,
+          { headers }
+        );
+        if (res.ok) {
+          const rows = await res.json();
+          if (Array.isArray(rows) && rows.length > 0) {
+            return { note: rows[0] };
+          }
+        }
+      } catch (e) {
+        console.warn('Supabase note fallback fetch failed:', e);
+      }
+      return null;
+    }
+
+    async function loadReport() {
       const noteId = getParam('id');
+      let embedded = getEmbeddedPayload();
+      if (!embedded && noteId) {
+        embedded = await fetchSharedReportFromSupabase(noteId);
+      }
       const notes = JSON.parse(localStorage.getItem(STORAGE_KEY_NOTES) || localStorage.getItem('clef_notes_v1') || '[]');
       const students = JSON.parse(localStorage.getItem(STORAGE_KEY_STUDENTS) || localStorage.getItem('clef_students_v1') || '[]');
       const teacher = (embedded && embedded.teacher) || JSON.parse(localStorage.getItem(STORAGE_KEY_TEACHER) || JSON.stringify(defaultTeacher));

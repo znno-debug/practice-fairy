@@ -141,3 +141,18 @@ CREATE POLICY "Allow public access to fairy_questions_v1"
 DROP POLICY IF EXISTS "Allow public access to fairy_sessions_v1" ON public.fairy_sessions_v1;
 CREATE POLICY "Allow public access to fairy_sessions_v1"
   ON public.fairy_sessions_v1 FOR ALL TO anon, authenticated USING (true) WITH CHECK (true);
+
+-- 8. 학부모/수강생 공유용 1:1 리포트 단축 URL 스냅샷 (fairy_shared_reports_v1)
+CREATE TABLE IF NOT EXISTS public.fairy_shared_reports_v1 (
+  id TEXT PRIMARY KEY,
+  user_id UUID,
+  payload JSONB NOT NULL,
+  updated_at TIMESTAMPTZ DEFAULT now()
+);
+
+GRANT ALL ON TABLE public.fairy_shared_reports_v1 TO anon, authenticated;
+ALTER TABLE public.fairy_shared_reports_v1 ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Allow public access to fairy_shared_reports_v1" ON public.fairy_shared_reports_v1;
+CREATE POLICY "Allow public access to fairy_shared_reports_v1"
+  ON public.fairy_shared_reports_v1 FOR ALL TO anon, authenticated USING (true) WITH CHECK (true);

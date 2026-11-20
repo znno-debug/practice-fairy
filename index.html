@@ -3283,6 +3283,9 @@
     function saveNotes(data) {
       localStorage.setItem(STORAGE_KEY_NOTES, JSON.stringify(data));
       syncTableToSupabase(STORAGE_KEY_NOTES, data);
+      if (Array.isArray(data) && data.length > 0 && data[0] && data[0].id) {
+        syncSharedReportToSupabase(data[0].id);
+      }
     }
 
     // 캘린더 상태 변수
@@ -4319,48 +4322,94 @@
       showToast(`${name} ${type === 'adult' ? '수강생님이' : '학생이'} 새로 등록되었습니다. (수강권: ${totalPass}회)`);
     }
 
-    // ================= 학부모 및 수강생 공유 통합 로직 (sendKakaoReportCard 단일화) =================
+    // ================= 학부모 및 수강생 공유 통합 로직 (sendKakaoReportCard 단일화 + Supabase 단축 URL) =================
+    const SHARED_REPORT_TABLE = 'fairy_shared_reports_v1';
     let currentShareModalData = { noteId: '', url: '', title: '', text: '' };
 
-    function buildShareReportUrl(noteId) {
+    function resolveShareNoteContext(noteId) {
       const targetId = noteId || currentShareModalData.noteId || '';
       const note = getNotes().find(n => n.id === targetId) || getNotes()[0];
       const student = note ? getStudents().find(s => s.id === note.studentId) : null;
       const teacher = getTeacherProfile();
       const resolvedId = String((note && note.id) || targetId || 'n1');
+      const cloudId = String(toCloudId(resolvedId) || resolvedId);
+      return { targetId, note, student, teacher, resolvedId, cloudId };
+    }
 
-      const basePath = `https://znno-debug.github.io/practice-fairy/share.html?id=${encodeURIComponent(resolvedId)}`;
-      if (!note) return basePath;
+    function buildReportSnapshot(noteId) {
+      const { note, student, teacher } = resolveShareNoteContext(noteId);
+      if (!note) return null;
+      const totalPass = (student && student.totalPass) || note.totalPass || 8;
+      const sessionNum = note.sessionNum || (student && student.usedPass) || 1;
+      const studentName = note.studentName || (student && student.name) || '수강생';
+      const subject = note.subject || (student && student.subject) || '피아노';
+      const teacherName = (teacher && teacher.name) || '김민주';
+      return {
+        note: {
+          id: note.id,
+          studentId: note.studentId || '',
+          studentName,
+          subject,
+          date: note.date || todayStr,
+          sessionNum,
+          totalPass,
+          piece: note.piece || '',
+          technique: note.technique || '',
+          badge: note.badge || '🎹 터치감 & 소리 최고',
+          feedback: note.feedback || '',
+          homework: note.homework || '',
+          parentMsg: note.parentMsg || '',
+          youtubeUrl: note.youtubeUrl || '',
+          attendanceStatus: note.attendanceStatus || '출석'
+        },
+        student: {
+          name: studentName,
+          subject,
+          totalPass,
+          usedPass: sessionNum,
+          type: (student && student.type) || 'child',
+          fee: (student && student.fee) || 350000
+        },
+        teacher: {
+          name: teacherName,
+          bankName: (teacher && teacher.bankName) || '카카오뱅크',
+          accountNumber: (teacher && teacher.accountNumber) || '',
+          accountHolder: (teacher && teacher.accountHolder) || teacherName
+        }
+      };
+    }
+
+    async function syncSharedReportToSupabase(noteId) {
       try {
-        const compactPayload = [
-          note.studentName || (student && student.name) || '수강생',
-          note.subject || (student && student.subject) || '피아노',
-          note.date || todayStr,
-          note.sessionNum || (student && student.usedPass) || 1,
-          (student && student.totalPass) || note.totalPass || 8,
-          (note.piece || '').slice(0, 100),
-          (note.technique || '').slice(0, 100),
-          note.badge || '🎹 터치감 & 소리 최고',
-          (note.feedback || '').slice(0, 220),
-          (note.homework || '').slice(0, 150),
-          (note.parentMsg || '').slice(0, 150),
-          note.youtubeUrl || '',
-          note.attendanceStatus || '출석',
-          (student && student.type) || 'child',
-          (student && student.fee) || 350000,
-          (teacher && teacher.name) || '김민주',
-          (teacher && teacher.bankName) || '카카오뱅크',
-          (teacher && teacher.accountNumber) || '',
-          (teacher && teacher.accountHolder) || (teacher && teacher.name) || '김민주'
-        ];
-        const b64 = btoa(unescape(encodeURIComponent(JSON.stringify(compactPayload))))
-          .replace(/\+/g, '-')
-          .replace(/\//g, '_')
-          .replace(/=+$/, '');
-        return `${basePath}&d=${encodeURIComponent(b64)}`;
+        if (!supabaseClient && window.supabase) {
+          supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        }
+        if (!supabaseClient) return false;
+        const { note, cloudId } = resolveShareNoteContext(noteId);
+        if (!note) return false;
+        const snapshot = buildReportSnapshot(note.id);
+        if (!snapshot) return false;
+        const row = {
+          id: cloudId,
+          user_id: currentAuthUser ? currentAuthUser.id : null,
+          payload: snapshot,
+          updated_at: new Date().toISOString()
+        };
+        const { error } = await supabaseClient.from(SHARED_REPORT_TABLE).upsert(row);
+        if (error) {
+          console.warn('공유 리포트 스냅샷 저장 실패:', error.message || error);
+          return false;
+        }
+        return true;
       } catch (e) {
-        return basePath;
+        console.warn('syncSharedReportToSupabase error:', e);
+        return false;
       }
+    }
+
+    function buildShareReportUrl(noteId) {
+      const { cloudId } = resolveShareNoteContext(noteId);
+      return `https://znno-debug.github.io/practice-fairy/share.html?id=${encodeURIComponent(cloudId)}`;
     }
 
     function prepareReportCardMeta(noteId) {
@@ -4412,6 +4461,7 @@
     // 단일 통합 카카오톡 피드 카드 전송 함수
     function sendKakaoReportCard(noteId) {
       const meta = prepareReportCardMeta(noteId);
+      syncSharedReportToSupabase(meta.noteId || noteId);
       const shareUrl = meta.url;
       const unifiedLink = { mobileWebUrl: shareUrl, webUrl: shareUrl };
 
@@ -4485,6 +4535,7 @@
 
     function openShareLinkModal(noteId) {
       const meta = prepareReportCardMeta(noteId);
+      syncSharedReportToSupabase(meta.noteId || noteId);
       const shareUrl = meta.url;
       const copied = copyTextWithFallback(shareUrl);
 
@@ -4552,6 +4603,7 @@
     }
 
     function previewShareReport(noteId) {
+      syncSharedReportToSupabase(noteId);
       window.open(buildShareReportUrl(noteId), '_blank');
     }
 
