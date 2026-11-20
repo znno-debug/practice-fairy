@@ -19,6 +19,8 @@
   <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
   <!-- Supabase JS Client v2 (CDN) -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <!-- Kakao JavaScript SDK v2.7.2 -->
+  <script src="https://t1.kakaocdn.net/kakao_js_sdk/2.7.2/kakao.min.js" crossorigin="anonymous"></script>
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
@@ -1552,8 +1554,27 @@
     // ☁️ Supabase 클라우드 DB 연동 설정 (발급받은 Project URL과 anon key 입력 위치)
     // =========================================================================
     const SUPABASE_URL = 'https://zpfcocrqvmrotuiwpkru.supabase.co';
-    const SUPABASE_ANON_KEY = 'sb_publishable_atDrdw_lkZhpBH-M3cNoGg_2fE3aHi5';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpwZmNvY3Jxdm1yb3R1aXdwa3J1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTQ5OTQ3NDQsImV4cCI6MjExMDU3MDc0NH0.QqxPoJodkVQNCa8HW96F5e5-GHMVIR0nLFMHof9gDbU';
     let supabaseClient = null;
+
+    // =========================================================================
+    // 💬 Kakao JavaScript SDK 초기화 (카카오톡 카드 메시지 공유)
+    // =========================================================================
+    const KAKAO_JS_KEY = '9b8ef4b5bd455c26779d5bdb47c913e0';
+    function ensureKakaoInitialized() {
+      if (window.Kakao) {
+        if (!window.Kakao.isInitialized()) {
+          try {
+            window.Kakao.init(KAKAO_JS_KEY);
+          } catch (e) {
+            console.warn('Kakao.init error:', e);
+          }
+        }
+        return window.Kakao.isInitialized();
+      }
+      return false;
+    }
+    ensureKakaoInitialized();
 
     // 초기 더미 데이터 (로컬 스토리지 키 관리 - Supabase 7개 테이블명과 1:1 매칭)
     const STORAGE_KEY_TEACHER = 'fairy_teacher_profile_v1';
@@ -3969,17 +3990,43 @@
     function copyParentShareLink(noteId) {
       const note = getNotes().find(n => n.id === noteId);
       const student = note ? getStudents().find(s => s.id === note.studentId) : null;
+      const teacher = getTeacherProfile();
       const isAdult = student && student.type === 'adult';
       const shareUrl = buildShareReportUrl(noteId);
       const studentName = student ? student.name : (note?.studentName || '수강생');
+      const subject = (note && note.subject) || (student && student.subject) || '음악';
+      const sessionNum = (note && note.sessionNum) || (student && student.usedPass) || 1;
+      const totalPass = (student && student.totalPass) || (note && note.totalPass) || 8;
+      const piece = (note && note.piece) || (student && student.currentPiece) || '오늘의 레슨곡';
+      const badge = (note && note.badge) || '🎹 오늘도 멋진 연주';
+      const homework = (note && note.homework) || '';
+      const feedback = (note && note.feedback) || '';
+      const teacherName = (teacher && teacher.name) ? `${teacher.name} 선생님` : '선생님';
+
       const title = isAdult
-        ? `[연습요정] ${studentName}님의 1:1 레슨 리포트 🎵`
-        : `[연습요정] ${studentName} 학생의 레슨 알림장 🎵`;
+        ? `🧚‍♀️ ${studentName}님 • ${sessionNum}회차 레슨 리포트`
+        : `🧚‍♀️ ${studentName} 학생 • ${sessionNum}회차 레슨 알림장`;
+
+      const summaryLines = [
+        `[${subject}] ${piece}`,
+        `🌟 ${badge}`,
+        homework ? `📝 과제: ${homework}` : (feedback ? `💬 ${feedback}` : '')
+      ].filter(Boolean).join('\n');
 
       currentShareModalData = {
         url: shareUrl,
         title: title,
-        text: `${title}\n오늘 레슨 내용과 맞춤 피드백을 확인해보세요!`
+        text: summaryLines,
+        studentName,
+        isAdult,
+        subject,
+        sessionNum,
+        totalPass,
+        piece,
+        badge,
+        homework,
+        feedback,
+        teacherName
       };
 
       // 클릭 즉시 클립보드 복사 시도 (textarea execCommand 폴백 포함)
@@ -4050,6 +4097,49 @@
     async function triggerNativeWebShareFromModal() {
       const url = currentShareModalData.url || document.getElementById('share-link-input')?.value;
       if (!url) return;
+
+      // 1. Kakao JavaScript SDK 피드형 카드 메시지 전송 (objectType: 'feed')
+      if (ensureKakaoInitialized() && window.Kakao && window.Kakao.Share) {
+        try {
+          const d = currentShareModalData;
+          const imageUrl = 'https://znno-debug.github.io/practice-fairy/icons/icon-512.png';
+          window.Kakao.Share.sendDefault({
+            objectType: 'feed',
+            content: {
+              title: d.title || '🧚‍♀️ 연습요정 레슨 리포트',
+              description: d.text || '오늘의 레슨 내용과 선생님의 코칭 피드백을 확인해 보세요!',
+              imageUrl: imageUrl,
+              link: {
+                mobileWebUrl: url,
+                webUrl: url
+              }
+            },
+            itemContent: {
+              profileText: `${d.teacherName || '선생님'}의 1:1 레슨 노트`,
+              items: [
+                { item: '수강생', itemOp: `${d.studentName || '수강생'} (${d.subject || '음악'})` },
+                { item: '수강 회차', itemOp: `${d.sessionNum || 1}회차 / 총 ${d.totalPass || 8}회` },
+                { item: '칭찬 뱃지', itemOp: `${d.badge || '🌟 최고'}` }
+              ]
+            },
+            buttons: [
+              {
+                title: '레슨 리포트 보기',
+                link: {
+                  mobileWebUrl: url,
+                  webUrl: url
+                }
+              }
+            ]
+          });
+          showToast('카카오톡 카드 메시지 공유 창을 열었습니다! 💬');
+          return;
+        } catch (kakaoErr) {
+          console.warn('Kakao.Share.sendDefault fallback:', kakaoErr);
+        }
+      }
+
+      // 2. Fallback: 모바일 Web Share API 또는 클립보드 복사
       if (navigator.share) {
         try {
           await navigator.share({

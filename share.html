@@ -42,118 +42,119 @@
     body {
       font-family: 'Pretendard', sans-serif;
       -webkit-tap-highlight-color: transparent;
-      background-color: #f8fafc;
+      background-color: #f1f5f9;
+    }
+    .safe-bottom-bar {
+      padding-bottom: calc(0.75rem + env(safe-area-inset-bottom, 0px));
     }
   </style>
 </head>
-<body class="min-h-screen text-slate-900 pb-12 flex justify-center">
+<body class="min-h-screen text-slate-900 pb-28 flex justify-center">
 
-  <!-- 모바일 뷰 최적화 컨테이너 (최대 너비 520px) -->
-  <div class="w-full max-w-[520px] bg-white min-h-screen shadow-xl shadow-slate-200/50 flex flex-col justify-between">
+  <!-- 카카오톡 인앱 브라우저 최적화 모바일 컨테이너 (최대 너비 480px) -->
+  <div class="w-full max-w-[480px] bg-slate-100/80 min-h-screen flex flex-col justify-between">
     
     <!-- 본문 내용 -->
     <div>
-      <!-- 상단 배너 -->
-      <header class="bg-gradient-to-br from-brand-600 via-rose-500 to-amber-500 p-6 text-white relative overflow-hidden">
-        <div class="absolute -right-6 -bottom-8 opacity-15">
-          <svg class="w-40 h-40" fill="currentColor" viewBox="0 0 24 24"><path d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"/></svg>
+      <!-- 상단 인앱 네비게이션 바 -->
+      <div class="sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-slate-200/80 px-4 h-12 flex items-center justify-between">
+        <div class="flex items-center space-x-2">
+          <span class="w-6 h-6 rounded-lg bg-gradient-to-tr from-brand-500 to-amber-400 text-white text-xs flex items-center justify-center shadow-2xs">🧚‍♀️</span>
+          <span class="text-xs font-black text-slate-900 tracking-tight" id="report-banner-badge">연습요정 모바일 레슨 리포트</span>
         </div>
-
-        <div class="relative z-10">
-          <div class="flex items-center justify-between text-xs font-medium text-white/80">
-            <span class="flex items-center space-x-1">
-              <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-              <span id="report-banner-badge">🧚‍♀️ 연습요정 레슨 리포트</span>
-            </span>
-            <span id="report-date" class="bg-black/20 px-2.5 py-1 rounded-full text-[11px]">2026.11.06</span>
-          </div>
-
-          <div class="mt-4">
-            <span id="report-subject" class="inline-block text-[11px] font-bold px-2 py-0.5 rounded-full bg-white/20 backdrop-blur-md mb-1">피아노 전문 레슨</span>
-            <h1 class="text-2xl font-black tracking-tight" id="report-title">
-              <span id="report-student-name">이지우</span> 학생의 레슨 리포트 🎵
-            </h1>
-            <p class="text-xs text-white/90 mt-1 flex items-center space-x-1.5">
-              <span>지도: <strong id="report-teacher-name">김민주 선생님</strong></span>
-              <span>•</span>
-              <span id="report-session-num" class="font-bold underline">5회차 수업</span>
-            </p>
-          </div>
-        </div>
-      </header>
+        <span id="report-date" class="text-[11px] font-bold text-slate-500 bg-slate-100 px-2.5 py-0.5 rounded-full">2026.11.06</span>
+      </div>
 
       <!-- 본문 리포트 카드 영역 -->
-      <main class="p-5 space-y-5" id="report-content">
+      <main class="p-3.5 sm:p-4 space-y-3.5" id="report-content">
 
-        <!-- 1. 오늘의 칭찬 뱃지 -->
-        <div class="bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200/80 rounded-2xl p-4 flex items-center space-x-3.5 shadow-xs">
-          <div class="w-12 h-12 rounded-2xl bg-amber-100 flex items-center justify-center text-2xl shrink-0 shadow-sm">
-            🌟
+        <!-- 0. 상단 히어로 요약 카드 -->
+        <div class="bg-gradient-to-br from-brand-600 via-rose-500 to-amber-500 rounded-3xl p-5 text-white relative overflow-hidden shadow-lg shadow-brand-600/15">
+          <div class="absolute -right-6 -bottom-8 opacity-15 pointer-events-none">
+            <svg class="w-36 h-36" fill="currentColor" viewBox="0 0 24 24"><path d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"/></svg>
           </div>
-          <div>
-            <div class="text-[11px] font-bold text-amber-800">선생님의 칭찬 뱃지</div>
-            <div class="text-sm font-black text-amber-950 mt-0.5" id="report-badge">🎹 터치감 & 소리 최고</div>
-            <p class="text-xs text-amber-700/90 mt-0.5">오늘 레슨에서 가장 돋보인 멋진 성취입니다!</p>
+          <div class="relative z-10 space-y-3">
+            <div class="flex items-center justify-between">
+              <span id="report-subject" class="inline-block text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-white/20 backdrop-blur-md">피아노 전문 레슨</span>
+              <span id="report-session-num" class="text-xs font-extrabold bg-black/20 px-2.5 py-0.5 rounded-full">5회차 수업</span>
+            </div>
+            <div>
+              <h1 class="text-xl font-black tracking-tight leading-snug" id="report-title">
+                <span id="report-student-name">이지우</span> 학생의 레슨 리포트 🎵
+              </h1>
+              <p class="text-xs text-white/90 mt-1 flex items-center space-x-1.5">
+                <span>담당 지도: <strong id="report-teacher-name">김민주 선생님</strong></span>
+              </p>
+            </div>
           </div>
         </div>
 
-        <!-- 2. 오늘 나간 진도곡 -->
-        <div class="bg-white rounded-2xl border border-slate-200 p-4 shadow-xs">
-          <h2 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 flex items-center">
-            <svg class="w-4 h-4 mr-1 text-brand-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"/></svg>
-            오늘 배운 악보 & 테크닉
+        <!-- 1. 오늘의 칭찬 뱃지 카드 -->
+        <div class="bg-white rounded-3xl border border-amber-200/90 p-4 flex items-center space-x-3.5 shadow-xs">
+          <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-amber-100 to-yellow-50 border border-amber-200 flex items-center justify-center text-2xl shrink-0">
+            🌟
+          </div>
+          <div class="min-w-0">
+            <div class="text-[11px] font-bold text-amber-700">오늘의 칭찬 뱃지</div>
+            <div class="text-sm font-black text-slate-900 mt-0.5 truncate" id="report-badge">🎹 터치감 & 소리 최고</div>
+            <p class="text-[11px] text-slate-500 mt-0.5">오늘 수업에서 가장 돋보인 멋진 성취입니다!</p>
+          </div>
+        </div>
+
+        <!-- 2. 출석 & 수강권 잔여 현황 카드 -->
+        <div class="bg-white rounded-3xl border border-slate-200/80 p-4 shadow-xs space-y-2.5">
+          <div class="flex items-center justify-between text-xs">
+            <span class="font-bold text-slate-700">🎟️ 이번 회차 수강권 현황</span>
+            <span class="font-extrabold text-brand-600" id="report-pass-text">5회 완료 / 총 8회</span>
+          </div>
+          <div class="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden">
+            <div id="report-pass-bar" class="bg-gradient-to-r from-brand-500 to-rose-400 h-2.5 rounded-full transition-all duration-500" style="width: 62.5%"></div>
+          </div>
+          <div class="flex flex-wrap justify-between items-center gap-1.5 text-[11px] text-slate-500 pt-0.5">
+            <span>잔여 횟수: <strong class="text-slate-900 font-black" id="report-remain-pass">3회</strong></span>
+            <span id="report-attendance-badge" class="text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-full font-semibold border border-emerald-200">✓ 오늘 수업 출석 완료 (1회 차감)</span>
+          </div>
+        </div>
+
+        <!-- 3. 오늘 나간 진도곡 & 테크닉 카드 -->
+        <div class="bg-white rounded-3xl border border-slate-200/80 p-4 shadow-xs space-y-2.5">
+          <h2 class="text-xs font-bold text-slate-500 flex items-center">
+            <svg class="w-4 h-4 mr-1.5 text-brand-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"/></svg>
+            오늘 배운 곡 & 테크닉
           </h2>
           
           <div class="space-y-2">
-            <div class="p-3 bg-slate-50 rounded-xl border border-slate-100">
-              <div class="text-[11px] font-semibold text-slate-500">메인 레퍼토리</div>
+            <div class="p-3 bg-slate-50 rounded-2xl border border-slate-100">
+              <div class="text-[11px] font-semibold text-slate-400">메인 레퍼토리</div>
               <div class="text-sm font-bold text-slate-900 mt-0.5" id="report-piece">모차르트 소나타 K.545 1악장 (32마디까지)</div>
             </div>
-            <div id="technique-container" class="p-3 bg-slate-50 rounded-xl border border-slate-100">
-              <div class="text-[11px] font-semibold text-slate-500">테크닉 / 연습곡</div>
+            <div id="technique-container" class="p-3 bg-slate-50 rounded-2xl border border-slate-100">
+              <div class="text-[11px] font-semibold text-slate-400">테크닉 / 연습곡</div>
               <div class="text-sm font-bold text-slate-800 mt-0.5" id="report-technique">체르니 30번 No.14, 하농 No.5</div>
             </div>
           </div>
         </div>
 
-        <!-- 3. 수업 연주 영상 클립 (유튜브 일부공개 임베드) -->
-        <div id="video-section" class="bg-white rounded-2xl border border-slate-200 p-4 shadow-xs">
-          <div class="flex items-center justify-between mb-2">
-            <h2 class="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center">
-              <svg class="w-4 h-4 mr-1 text-red-600" fill="currentColor" viewBox="0 0 24 24"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
-              오늘의 수업 연주 클립
-            </h2>
-            <span class="text-[11px] text-red-600 font-semibold flex items-center space-x-1">
-              <span>YouTube</span>
-            </span>
-          </div>
-
-          <div class="rounded-xl overflow-hidden bg-slate-900 aspect-video relative shadow-inner">
-            <iframe id="report-iframe" class="w-full h-full border-0" src="" title="레슨 연주 영상" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-          </div>
-          <p class="text-[11px] text-slate-400 mt-2 text-center">선생님의 코칭과 함께 학생이 연주한 실제 영상입니다.</p>
-        </div>
-
-        <!-- 4. 선생님의 상세 지도 피드백 -->
-        <div class="bg-white rounded-2xl border border-slate-200 p-4 shadow-xs space-y-3">
-          <h2 class="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center">
-            <svg class="w-4 h-4 mr-1 text-brand-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/></svg>
-            선생님 레슨 피드백
+        <!-- 4. 선생님의 상세 지도 피드백 & 과제 카드 -->
+        <div class="bg-white rounded-3xl border border-slate-200/80 p-4 shadow-xs space-y-3">
+          <h2 class="text-xs font-bold text-slate-500 flex items-center">
+            <svg class="w-4 h-4 mr-1.5 text-brand-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/></svg>
+            선생님 레슨 코멘트 & 연습 가이드
           </h2>
-          <div class="p-3.5 bg-rose-50/50 rounded-xl border border-rose-100 text-xs text-slate-700 leading-relaxed" id="report-feedback">
+          <div class="p-3.5 bg-rose-50/50 rounded-2xl border border-rose-100 text-xs text-slate-700 leading-relaxed" id="report-feedback">
             오른손의 알베르티 베이스 반주가 왼손 멜로디를 덮지 않고 아주 맑고 경쾌하게 균형이 잡혔습니다. 28마디의 아르페지오 부분도 손목을 유연하게 사용하여 끊김 없이 잘 연결했습니다.
           </div>
 
-          <div class="p-3.5 bg-indigo-50/60 rounded-xl border border-indigo-100 space-y-1">
+          <div class="p-3.5 bg-indigo-50/60 rounded-2xl border border-indigo-100 space-y-1">
             <div class="text-[11px] font-bold text-indigo-900 flex items-center">
               <span id="report-guide-label">🏠 가정 연습 가이드</span>
             </div>
-            <p class="text-xs text-indigo-800 leading-relaxed" id="report-homework">
+            <p class="text-xs text-indigo-800 leading-relaxed font-medium" id="report-homework">
               메트로놈 ♩=84로 20~32마디 전조되는 부분 3번씩 반복 연습하기
             </p>
           </div>
 
-          <div class="p-3.5 bg-amber-50/50 rounded-xl border border-amber-100 text-xs text-slate-700 space-y-1">
+          <div class="p-3.5 bg-amber-50/50 rounded-2xl border border-amber-100 text-xs text-slate-700 space-y-1">
             <div class="text-[11px] font-bold text-amber-900" id="report-msg-label">💌 선생님의 코칭 메시지</div>
             <p class="text-slate-600 leading-relaxed" id="report-parent-msg">
               어머님, 지우가 오늘 집중력이 정말 대단했습니다! 특히 소리의 균형을 스스로 들어가며 연주하는 모습에 큰 칭찬을 해주었습니다 :)
@@ -161,93 +162,86 @@
           </div>
         </div>
 
-        <!-- 5. 출석 & 수강권 잔여 현황 -->
-        <div class="bg-white rounded-2xl border border-slate-200 p-4 shadow-xs">
-          <div class="flex items-center justify-between text-xs mb-2">
-            <span class="font-bold text-slate-700">이번 달 수강권 현황</span>
-            <span class="font-bold text-brand-600" id="report-pass-text">5회 완료 / 총 8회</span>
+        <!-- 5. 수업 연주 영상 클립 (유튜브 일부공개 임베드) -->
+        <div id="video-section" class="bg-white rounded-3xl border border-slate-200/80 p-4 shadow-xs">
+          <div class="flex items-center justify-between mb-2">
+            <h2 class="text-xs font-bold text-slate-500 flex items-center">
+              <svg class="w-4 h-4 mr-1.5 text-red-600" fill="currentColor" viewBox="0 0 24 24"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
+              오늘의 수업 연주 클립
+            </h2>
+            <span class="text-[10px] text-red-600 font-bold bg-red-50 px-2 py-0.5 rounded-full">YouTube</span>
           </div>
-          <div class="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden">
-            <div id="report-pass-bar" class="bg-brand-500 h-2.5 rounded-full transition-all duration-500" style="width: 62.5%"></div>
+
+          <div class="rounded-2xl overflow-hidden bg-slate-900 aspect-video relative shadow-inner">
+            <iframe id="report-iframe" class="w-full h-full border-0" src="" title="레슨 연주 영상" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
           </div>
-          <div class="flex justify-between items-center text-[11px] text-slate-500 mt-2.5">
-            <span>남은 수업: <strong class="text-slate-800 font-extrabold" id="report-remain-pass">3회</strong></span>
-            <span id="report-attendance-badge" class="text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full font-semibold border border-emerald-200">✓ 오늘 수업 출석 완료 (1회 차감)</span>
-          </div>
+          <p class="text-[11px] text-slate-400 mt-2 text-center">선생님의 코칭과 함께 연주한 실제 레슨 영상입니다.</p>
         </div>
 
-        <!-- 6. 다음 달 수강료 납부 안내 (계좌번호 & 레슨비 안내 카드) -->
-        <div id="tuition-bill-card" class="bg-gradient-to-br from-amber-50 via-rose-50 to-orange-50 rounded-2xl border-2 border-amber-300 p-5 shadow-xs space-y-3">
+        <!-- 6. 다음 회차 수강료 & 입금 계좌 카드 -->
+        <div id="tuition-bill-card" class="bg-gradient-to-br from-amber-50 via-white to-rose-50 rounded-3xl border-2 border-amber-300 p-4 shadow-xs space-y-3">
           <div class="flex items-center justify-between">
             <div class="flex items-center space-x-2">
-              <span class="text-xl">💳</span>
+              <span class="w-8 h-8 rounded-xl bg-amber-100 text-amber-800 flex items-center justify-center text-base">💳</span>
               <div>
-                <h3 class="text-xs font-bold text-amber-950">다음 달 수강료(레슨비) 안내</h3>
-                <p class="text-[11px] text-amber-800">이번 달 수강권이 곧 만료됩니다.</p>
+                <h3 class="text-xs font-bold text-slate-900">다음 회차 수강료(레슨비) 안내</h3>
+                <p class="text-[10px] text-slate-500">하단 [계좌번호 복사] 버튼으로 바로 복사됩니다.</p>
               </div>
             </div>
-            <span class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-amber-200 text-amber-900" id="bill-session-badge">다음 8회 수강</span>
+            <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-900 border border-amber-200" id="bill-session-badge">다음 8회 기준</span>
           </div>
 
-          <div class="p-3 bg-white/95 rounded-xl border border-amber-200/80 flex items-center justify-between">
-            <span class="text-xs font-semibold text-slate-600">수강료 (수업료)</span>
+          <div class="p-3 bg-white rounded-2xl border border-slate-200/80 flex items-center justify-between">
+            <span class="text-xs font-semibold text-slate-600">수강료</span>
             <span class="text-base font-black text-brand-600" id="bill-amount">350,000원</span>
           </div>
 
-          <!-- 계좌 정보 및 복사 버튼 -->
-          <div class="p-3 bg-white/95 rounded-xl border border-amber-200/80 space-y-2">
-            <div class="flex items-center justify-between text-xs">
-              <span class="text-slate-500 font-medium">수강료 입금 계좌</span>
+          <div class="p-3 bg-white rounded-2xl border border-slate-200/80 space-y-1.5">
+            <div class="flex items-center justify-between text-[11px]">
+              <span class="text-slate-500 font-medium">입금 계좌</span>
               <span class="font-bold text-slate-800" id="bill-account-holder">예금주: 김민주</span>
             </div>
-            <div class="flex items-center justify-between bg-slate-50 p-2.5 rounded-lg border border-slate-200">
-              <div class="font-mono text-xs font-bold text-slate-900 tracking-tight" id="bill-bank-info">
+            <div class="flex items-center justify-between bg-slate-50 p-2.5 rounded-xl border border-slate-200">
+              <div class="font-mono text-xs font-bold text-slate-900 tracking-tight truncate" id="bill-bank-info">
                 카카오뱅크 3333-01-2345678
               </div>
-              <button onclick="copyBillAccount()" class="px-3 py-1.5 bg-brand-500 hover:bg-brand-600 text-white rounded-md text-[11px] font-bold transition flex items-center space-x-1 shadow-xs active:scale-95">
-                <span>계좌 복사</span>
+              <button type="button" onclick="copyBillAccount()" class="px-2.5 py-1 bg-slate-900 hover:bg-black text-white rounded-lg text-[11px] font-bold transition shrink-0 ml-2 active:scale-95 cursor-pointer">
+                복사
               </button>
             </div>
           </div>
-          <p class="text-[10px] text-amber-800/80 text-center">💡 계좌번호 복사 후 은행/토스 앱에서 간편하게 송금하실 수 있습니다.</p>
         </div>
 
-        <!-- 7. 학부모 확인 도장 & 감사 댓글 인터랙션 -->
-        <div class="bg-white rounded-2xl border-2 border-brand-100 p-5 shadow-sm text-center space-y-3">
-          <div class="text-xs font-bold text-slate-800">리포트를 확인하셨나요?</div>
-          <p class="text-[11px] text-slate-500">선생님께 확인 스탬프와 응원의 한마디를 보내주세요.</p>
-
-          <div class="flex items-center justify-center space-x-2">
-            <button onclick="stampReaction('👍 확인했어요!')" class="px-3.5 py-2 text-xs font-semibold rounded-xl bg-slate-100 hover:bg-brand-50 hover:text-brand-600 transition flex items-center space-x-1">
-              <span>👍</span>
-              <span>확인했어요!</span>
+        <!-- 7. 학부모 응원 스탬프 & 확인 상태 카드 -->
+        <div class="bg-white rounded-3xl border border-slate-200/80 p-4 shadow-xs text-center space-y-3">
+          <div class="text-xs font-bold text-slate-800">선생님께 응원 스탬프 보내기</div>
+          <div class="grid grid-cols-3 gap-2">
+            <button type="button" onclick="stampReaction('👍 확인했어요!')" class="py-2 px-2 text-[11px] font-bold rounded-xl bg-slate-50 hover:bg-brand-50 hover:text-brand-600 border border-slate-200/80 transition cursor-pointer">
+              👍 확인했어요
             </button>
-            <button onclick="stampReaction('💖 감사합니다!')" class="px-3.5 py-2 text-xs font-semibold rounded-xl bg-slate-100 hover:bg-brand-50 hover:text-brand-600 transition flex items-center space-x-1">
-              <span>💖</span>
-              <span>감사합니다!</span>
+            <button type="button" onclick="stampReaction('💖 감사합니다!')" class="py-2 px-2 text-[11px] font-bold rounded-xl bg-slate-50 hover:bg-brand-50 hover:text-brand-600 border border-slate-200/80 transition cursor-pointer">
+              💖 감사합니다
             </button>
-            <button onclick="stampReaction('👏 칭찬해요!')" class="px-3.5 py-2 text-xs font-semibold rounded-xl bg-slate-100 hover:bg-brand-50 hover:text-brand-600 transition flex items-center space-x-1">
-              <span>👏</span>
-              <span>칭찬해요!</span>
+            <button type="button" onclick="stampReaction('👏 칭찬해요!')" class="py-2 px-2 text-[11px] font-bold rounded-xl bg-slate-50 hover:bg-brand-50 hover:text-brand-600 border border-slate-200/80 transition cursor-pointer">
+              👏 칭찬해요
             </button>
           </div>
 
-          <!-- 확인 완료 상태 표시 -->
-          <div id="stamp-result" class="hidden p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-emerald-800 text-xs font-bold animate-in fade-in">
-            ✓ 선생님께 확인 알림이 전송되었습니다!
+          <div id="stamp-result" class="hidden p-2.5 bg-emerald-50 border border-emerald-200 rounded-xl text-emerald-800 text-xs font-bold">
+            ✓ 선생님께 리포트 확인 알림이 표시되었습니다!
           </div>
         </div>
 
         <!-- 8. 스마트폰 홈 화면 추가 안내 카드 -->
-        <div class="bg-gradient-to-r from-indigo-50/70 via-purple-50/50 to-rose-50/50 rounded-2xl border border-indigo-100 p-4 flex items-center justify-between">
+        <div class="bg-white rounded-3xl border border-indigo-100 p-4 flex items-center justify-between shadow-2xs">
           <div class="flex items-center space-x-3">
-            <img src="icons/icon-192.png" alt="연습요정" class="w-10 h-10 rounded-xl shadow-xs flex-shrink-0">
+            <img src="icons/icon-192.png" alt="연습요정" class="w-9 h-9 rounded-xl shadow-2xs flex-shrink-0">
             <div>
-              <div class="text-xs font-bold text-indigo-900">연습요정 앱 홈 화면에 추가</div>
-              <p class="text-[11px] text-indigo-700/80">다음 레슨 알림장과 영상을 앱으로 바로 확인</p>
+              <div class="text-xs font-bold text-slate-900">연습요정 홈 화면에 추가</div>
+              <p class="text-[11px] text-slate-500">다음 리포트도 앱처럼 편하게 열람</p>
             </div>
           </div>
-          <button onclick="openShareInstallModal()" class="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow-xs transition flex-shrink-0 cursor-pointer">
+          <button type="button" onclick="openShareInstallModal()" class="px-3 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold text-xs rounded-xl border border-indigo-200 transition flex-shrink-0 cursor-pointer">
             추가 방법
           </button>
         </div>
@@ -256,11 +250,30 @@
     </div>
 
     <!-- 하단 푸터 -->
-    <footer class="p-6 text-center text-xs text-slate-400 border-t border-slate-100 bg-slate-50/50">
-      <div class="font-bold text-slate-600">연습요정 (Practice Fairy) 🧚‍♀️</div>
+    <footer class="px-6 py-4 text-center text-xs text-slate-400">
+      <div class="font-bold text-slate-500">연습요정 (Practice Fairy) 🧚‍♀️</div>
       <p class="mt-0.5 text-[11px]">선생님과 수강생이 함께 만들어가는 음악 성장 일지</p>
     </footer>
 
+  </div>
+
+  <!-- ================= 하단 고정 액션 바 ([계좌번호 복사], [확인 완료]) ================= -->
+  <div class="fixed bottom-0 inset-x-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200/90 shadow-lg safe-bottom-bar">
+    <div class="max-w-[480px] mx-auto px-3.5 pt-2.5 flex items-center space-x-2.5">
+      <button type="button" id="bottom-btn-copy-account" onclick="copyBillAccount()" class="flex-1 py-3 px-3 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs border border-slate-200/80 transition flex items-center justify-center space-x-1.5 active:scale-98 cursor-pointer">
+        <span>📋</span>
+        <span id="bottom-btn-copy-text">계좌번호 복사</span>
+      </button>
+      <button type="button" id="bottom-btn-confirm" onclick="confirmReportAction()" class="flex-1 py-3 px-3 rounded-2xl bg-brand-500 hover:bg-brand-600 text-white font-bold text-xs shadow-md shadow-brand-500/20 transition flex items-center justify-center space-x-1.5 active:scale-98 cursor-pointer">
+        <span id="bottom-btn-confirm-icon">✅</span>
+        <span id="bottom-btn-confirm-text">확인 완료</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- 인앱 플로팅 토스트 알림 -->
+  <div id="share-toast" class="fixed bottom-24 left-1/2 -translate-x-1/2 z-50 bg-slate-900/95 text-white text-xs font-semibold px-4 py-2.5 rounded-full shadow-xl transition-all duration-200 opacity-0 pointer-events-none whitespace-nowrap">
+    ✓ 복사되었습니다.
   </div>
 
   <!-- PWA 홈 화면 추가 안내 모달 -->
@@ -468,7 +481,19 @@
       }
     }
 
-    // 계좌번호 복사하기 (모바일 Safari/Chrome execCommand 폴백 지원)
+    function showShareToast(msg) {
+      const toast = document.getElementById('share-toast');
+      if (!toast) return;
+      toast.innerText = msg;
+      toast.classList.remove('opacity-0', 'pointer-events-none');
+      toast.classList.add('opacity-100');
+      setTimeout(() => {
+        toast.classList.remove('opacity-100');
+        toast.classList.add('opacity-0', 'pointer-events-none');
+      }, 2400);
+    }
+
+    // 계좌번호 복사하기 (모바일 Safari/Chrome/카톡 인앱브라우저 execCommand 폴백 지원)
     function copyBillAccount() {
       const textToCopy = `${globalTeacher.bankName} ${globalTeacher.accountNumber} ${globalTeacher.accountHolder}`;
       let copied = false;
@@ -479,6 +504,8 @@
         ta.style.position = 'fixed';
         ta.style.top = '0';
         ta.style.left = '0';
+        ta.style.width = '1px';
+        ta.style.height = '1px';
         ta.style.opacity = '0';
         document.body.appendChild(ta);
         ta.focus();
@@ -495,8 +522,16 @@
         copied = true;
       }
 
+      const btnText = document.getElementById('bottom-btn-copy-text');
+      if (btnText) {
+        btnText.innerText = '계좌 복사 완료 ✓';
+        setTimeout(() => {
+          btnText.innerText = '계좌번호 복사';
+        }, 2000);
+      }
+
       if (copied) {
-        alert(`📋 계좌 정보가 복사되었습니다!\n\n${textToCopy}\n\n은행/토스 앱에서 붙여넣기 하세요.`);
+        showShareToast(`📋 계좌 복사됨: ${textToCopy}`);
       } else {
         prompt('계좌번호를 복사하세요:', textToCopy);
       }
@@ -504,8 +539,21 @@
 
     function stampReaction(msg) {
       const res = document.getElementById('stamp-result');
-      res.innerText = `✓ '${msg}' 반응이 선생님께 전달되었습니다!`;
-      res.classList.remove('hidden');
+      if (res) {
+        res.innerText = `✓ '${msg}' 반응이 선생님께 전달되었습니다!`;
+        res.classList.remove('hidden');
+      }
+      const confirmBtn = document.getElementById('bottom-btn-confirm');
+      const confirmText = document.getElementById('bottom-btn-confirm-text');
+      if (confirmBtn && confirmText) {
+        confirmBtn.className = 'flex-1 py-3 px-3 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-md shadow-emerald-600/20 transition flex items-center justify-center space-x-1.5 cursor-pointer';
+        confirmText.innerText = '리포트 확인됨';
+      }
+      showShareToast(`💌 '${msg}' 확인 도장을 찍었습니다!`);
+    }
+
+    function confirmReportAction() {
+      stampReaction('👍 리포트 확인 완료');
     }
 
     function openShareInstallModal() {
