@@ -1,5 +1,5 @@
-// 연습요정 (Practice Fairy) Service Worker - v14.0.0 (카카오톡 공유 카드 절대경로 URL & 상세보기 버튼 구조 확정)
-const CACHE_NAME = 'fairy-cache-v14';
+// 연습요정 (Practice Fairy) Service Worker - v15.0.0 (sendKakaoReportCard 단일 통합 & 구버전 공유 함수 제거)
+const CACHE_NAME = 'fairy-cache-v15';
 const STATIC_ASSETS = [
   './',
   './index.html',

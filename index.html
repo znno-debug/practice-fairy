@@ -1874,7 +1874,7 @@
             <span>📋</span>
             <span id="btn-share-modal-recopy-text">다시 복사하기</span>
           </button>
-          <button type="button" onclick="triggerNativeWebShareFromModal()"
+          <button type="button" onclick="sendKakaoReportCard()"
             class="py-3 px-3 bg-[#FEE500] hover:bg-[#FDD800] text-[#191919] font-bold text-xs rounded-xl shadow-xs transition flex items-center justify-center space-x-1.5 cursor-pointer">
             <span>💬</span>
             <span>카카오톡 공유</span>
@@ -3079,91 +3079,91 @@
       }
     }
 
-            // 기존 수강생 목록에서 '수강료 안내' 버튼 누를 때도 골든타임 모달 연결
-            function copyTuitionRequestText(studentId) {
-              const students = getStudents();
-              const s = students.find(st => st.id === studentId);
-              if (!s) return;
-              const remain = Math.max(0, (s.totalPass || 8) - (s.usedPass || 0));
-              openTuitionGoldModal(studentId, 'manual', remain);
-            }
+    // 기존 수강생 목록에서 '수강료 안내' 버튼 누를 때도 골든타임 모달 연결
+    function copyTuitionRequestText(studentId) {
+      const students = getStudents();
+      const s = students.find(st => st.id === studentId);
+      if (!s) return;
+      const remain = Math.max(0, (s.totalPass || 8) - (s.usedPass || 0));
+      openTuitionGoldModal(studentId, 'manual', remain);
+    }
 
-            // ================= 설문 1순위 피드백: 대시보드 통계 & 보강 대기 관리 =================
-            function renderDashboardStats() {
-              const lessons = getLessons();
-              const students = getStudents();
+    // ================= 설문 1순위 피드백: 대시보드 통계 & 보강 대기 관리 =================
+    function renderDashboardStats() {
+      const lessons = getLessons();
+      const students = getStudents();
 
-              // 1. 오늘 예정 레슨 건수 & 완료 건수
-              const todayLessons = lessons.filter(l => l.date === todayStr);
-              const todayTotal = todayLessons.length;
-              const todayDone = todayLessons.filter(l => ['출석', '당일취소', '보강'].includes(l.status)).length;
+      // 1. 오늘 예정 레슨 건수 & 완료 건수
+      const todayLessons = lessons.filter(l => l.date === todayStr);
+      const todayTotal = todayLessons.length;
+      const todayDone = todayLessons.filter(l => ['출석', '당일취소', '보강'].includes(l.status)).length;
 
-              const statTodayTotalEl = document.getElementById('stat-today-total');
-              const statTodayDoneDescEl = document.getElementById('stat-today-done-desc');
-              if (statTodayTotalEl) statTodayTotalEl.innerText = todayTotal;
-              if (statTodayDoneDescEl) {
-                statTodayDoneDescEl.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-1.5"></span>완료 ${todayDone}건 / 예정 ${todayTotal}건`;
-              }
+      const statTodayTotalEl = document.getElementById('stat-today-total');
+      const statTodayDoneDescEl = document.getElementById('stat-today-done-desc');
+      if (statTodayTotalEl) statTodayTotalEl.innerText = todayTotal;
+      if (statTodayDoneDescEl) {
+        statTodayDoneDescEl.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-1.5"></span>완료 ${todayDone}건 / 예정 ${todayTotal}건`;
+      }
 
-              // 2. 이번 달 총 수업 건수
-              const parts = todayStr.split('-');
-              const thisMonthPrefix = `${parts[0]}-${parts[1]}`;
-              const monthLessons = lessons.filter(l => l.date && l.date.startsWith(thisMonthPrefix));
-              const monthTotal = monthLessons.length;
-              const monthDone = monthLessons.filter(l => ['출석', '당일취소', '보강'].includes(l.status)).length;
-              const rate = monthTotal > 0 ? Math.round((monthDone / monthTotal) * 100) : 0;
+      // 2. 이번 달 총 수업 건수
+      const parts = todayStr.split('-');
+      const thisMonthPrefix = `${parts[0]}-${parts[1]}`;
+      const monthLessons = lessons.filter(l => l.date && l.date.startsWith(thisMonthPrefix));
+      const monthTotal = monthLessons.length;
+      const monthDone = monthLessons.filter(l => ['출석', '당일취소', '보강'].includes(l.status)).length;
+      const rate = monthTotal > 0 ? Math.round((monthDone / monthTotal) * 100) : 0;
 
-              const statMonthTotalEl = document.getElementById('stat-month-total');
-              const statMonthRateEl = document.getElementById('stat-month-rate');
-              if (statMonthTotalEl) statMonthTotalEl.innerText = monthTotal || 28;
-              if (statMonthRateEl) statMonthRateEl.innerText = `진행률 ${rate}% (${monthDone}회 완료)`;
+      const statMonthTotalEl = document.getElementById('stat-month-total');
+      const statMonthRateEl = document.getElementById('stat-month-rate');
+      if (statMonthTotalEl) statMonthTotalEl.innerText = monthTotal || 28;
+      if (statMonthRateEl) statMonthRateEl.innerText = `진행률 ${rate}% (${monthDone}회 완료)`;
 
-              // 3. 수강료 골든타임 (잔여 0~1회 학생 수)
-              const expiringStudents = students.filter(s => Math.max(0, (s.totalPass || 8) - (s.usedPass || 0)) <= 1);
-              const statExpiringEl = document.getElementById('stat-expiring-count');
-              if (statExpiringEl) statExpiringEl.innerText = expiringStudents.length;
+      // 3. 수강료 골든타임 (잔여 0~1회 학생 수)
+      const expiringStudents = students.filter(s => Math.max(0, (s.totalPass || 8) - (s.usedPass || 0)) <= 1);
+      const statExpiringEl = document.getElementById('stat-expiring-count');
+      if (statExpiringEl) statExpiringEl.innerText = expiringStudents.length;
 
-              // 4. 보강 대기 건수 (결석 중 미해결 건수)
-              const makeupLessons = lessons.filter(l => l.status === '결석' && !l.makeupResolved);
-              const statMakeupEl = document.getElementById('stat-makeup-count');
-              const statMakeupDescEl = document.getElementById('stat-makeup-desc');
-              if (statMakeupEl) statMakeupEl.innerText = makeupLessons.length;
-              if (statMakeupDescEl) {
-                statMakeupDescEl.innerText = makeupLessons.length > 0 ? '보강 일정 잡기 필요' : '밀린 보강 없음 👏';
-              }
-            }
+      // 4. 보강 대기 건수 (결석 중 미해결 건수)
+      const makeupLessons = lessons.filter(l => l.status === '결석' && !l.makeupResolved);
+      const statMakeupEl = document.getElementById('stat-makeup-count');
+      const statMakeupDescEl = document.getElementById('stat-makeup-desc');
+      if (statMakeupEl) statMakeupEl.innerText = makeupLessons.length;
+      if (statMakeupDescEl) {
+        statMakeupDescEl.innerText = makeupLessons.length > 0 ? '보강 일정 잡기 필요' : '밀린 보강 없음 👏';
+      }
+    }
 
-            let isMakeupQueueCollapsed = false;
-            function renderMakeupQueue() {
-              const lessons = getLessons();
-              const students = getStudents();
-              const makeupList = lessons.filter(l => l.status === '결석' && !l.makeupResolved);
+    let isMakeupQueueCollapsed = false;
+    function renderMakeupQueue() {
+      const lessons = getLessons();
+      const students = getStudents();
+      const makeupList = lessons.filter(l => l.status === '결석' && !l.makeupResolved);
 
-              const badgeEl = document.getElementById('makeup-queue-badge');
-              const listEl = document.getElementById('makeup-queue-list');
-              if (!listEl) return;
+      const badgeEl = document.getElementById('makeup-queue-badge');
+      const listEl = document.getElementById('makeup-queue-list');
+      if (!listEl) return;
 
-              if (badgeEl) {
-                badgeEl.innerText = `${makeupList.length}건 대기`;
-                badgeEl.className = makeupList.length > 0
-                  ? 'text-[11px] font-extrabold px-2 py-0.5 rounded-full bg-rose-600 text-white shadow-2xs'
-                  : 'text-[11px] font-bold px-2 py-0.5 rounded-full bg-emerald-600 text-white';
-              }
+      if (badgeEl) {
+        badgeEl.innerText = `${makeupList.length}건 대기`;
+        badgeEl.className = makeupList.length > 0
+          ? 'text-[11px] font-extrabold px-2 py-0.5 rounded-full bg-rose-600 text-white shadow-2xs'
+          : 'text-[11px] font-bold px-2 py-0.5 rounded-full bg-emerald-600 text-white';
+      }
 
-              if (makeupList.length === 0) {
-                listEl.innerHTML = `
+      if (makeupList.length === 0) {
+        listEl.innerHTML = `
           <div class="py-3 px-4 bg-white/70 rounded-xl text-center text-xs text-slate-500 flex items-center justify-center space-x-2 border border-rose-100">
             <span class="text-emerald-500 font-bold">✓</span>
             <span>현재 밀린 보강 수업이 없습니다. 모든 학생의 일정이 깔끔합니다! 👏</span>
           </div>
         `;
-                return;
-              }
+        return;
+      }
 
-              listEl.innerHTML = makeupList.map(l => {
-                const student = students.find(s => s.id === l.studentId) || { id: l.studentId, name: '학생', subject: '레슨' };
-                const remain = Math.max(0, (student.totalPass || 8) - (student.usedPass || 0));
-                return `
+      listEl.innerHTML = makeupList.map(l => {
+        const student = students.find(s => s.id === l.studentId) || { id: l.studentId, name: '학생', subject: '레슨' };
+        const remain = Math.max(0, (student.totalPass || 8) - (student.usedPass || 0));
+        return `
           <div class="p-3 bg-white rounded-xl border border-rose-200/90 shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
             <div class="flex items-center space-x-2.5">
               <div class="w-8 h-8 rounded-full bg-rose-100 text-rose-700 flex items-center justify-center font-black text-xs shrink-0">
@@ -3190,263 +3190,263 @@
             </div>
           </div>
         `;
-              }).join('');
-            }
+      }).join('');
+    }
 
-            function toggleMakeupQueue() {
-              const listEl = document.getElementById('makeup-queue-list');
-              const toggleText = document.getElementById('makeup-toggle-text');
-              const toggleIcon = document.getElementById('makeup-toggle-icon');
-              if (!listEl) return;
-              isMakeupQueueCollapsed = !isMakeupQueueCollapsed;
-              if (isMakeupQueueCollapsed) {
-                listEl.classList.add('hidden');
-                if (toggleText) toggleText.innerText = '목록 펼치기';
-                if (toggleIcon) toggleIcon.classList.remove('rotate-180');
-              } else {
-                listEl.classList.remove('hidden');
-                if (toggleText) toggleText.innerText = '접기';
-                if (toggleIcon) toggleIcon.classList.add('rotate-180');
-              }
-            }
+    function toggleMakeupQueue() {
+      const listEl = document.getElementById('makeup-queue-list');
+      const toggleText = document.getElementById('makeup-toggle-text');
+      const toggleIcon = document.getElementById('makeup-toggle-icon');
+      if (!listEl) return;
+      isMakeupQueueCollapsed = !isMakeupQueueCollapsed;
+      if (isMakeupQueueCollapsed) {
+        listEl.classList.add('hidden');
+        if (toggleText) toggleText.innerText = '목록 펼치기';
+        if (toggleIcon) toggleIcon.classList.remove('rotate-180');
+      } else {
+        listEl.classList.remove('hidden');
+        if (toggleText) toggleText.innerText = '접기';
+        if (toggleIcon) toggleIcon.classList.add('rotate-180');
+      }
+    }
 
-            function scrollToMakeupQueue() {
-              const el = document.getElementById('makeup-queue-section');
-              if (el) {
-                el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                el.classList.add('ring-4', 'ring-rose-400/40');
-                setTimeout(() => el.classList.remove('ring-4', 'ring-rose-400/40'), 1500);
-              }
-            }
+    function scrollToMakeupQueue() {
+      const el = document.getElementById('makeup-queue-section');
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        el.classList.add('ring-4', 'ring-rose-400/40');
+        setTimeout(() => el.classList.remove('ring-4', 'ring-rose-400/40'), 1500);
+      }
+    }
 
-            function openScheduleModalForMakeup(studentId, originalLessonId) {
-              openScheduleModal();
-              setTimeout(() => {
-                const studentSelect = document.getElementById('sched-student');
-                if (studentSelect) studentSelect.value = studentId;
-                const typeSelect = document.getElementById('sched-type');
-                if (typeSelect) typeSelect.value = '보강';
-              }, 100);
-            }
+    function openScheduleModalForMakeup(studentId, originalLessonId) {
+      openScheduleModal();
+      setTimeout(() => {
+        const studentSelect = document.getElementById('sched-student');
+        if (studentSelect) studentSelect.value = studentId;
+        const typeSelect = document.getElementById('sched-type');
+        if (typeSelect) typeSelect.value = '보강';
+      }, 100);
+    }
 
-            function resolveMakeupLesson(lessonId) {
-              const lessons = getLessons();
-              const target = lessons.find(l => l.id === lessonId);
-              if (target) {
-                target.makeupResolved = true;
-                saveLessons(lessons);
-                renderMakeupQueue();
-                renderDashboardStats();
-                showToast('해당 결석의 보강이 해결 완료되었습니다! 👏');
-              }
-            }
+    function resolveMakeupLesson(lessonId) {
+      const lessons = getLessons();
+      const target = lessons.find(l => l.id === lessonId);
+      if (target) {
+        target.makeupResolved = true;
+        saveLessons(lessons);
+        renderMakeupQueue();
+        renderDashboardStats();
+        showToast('해당 결석의 보강이 해결 완료되었습니다! 👏');
+      }
+    }
 
-            function filterByExpiring() {
-              studentFilterPass = 'expiring';
-              renderStudentsList();
-            }
+    function filterByExpiring() {
+      studentFilterPass = 'expiring';
+      renderStudentsList();
+    }
 
-            function getStudents() {
-              const list = JSON.parse(localStorage.getItem(STORAGE_KEY_STUDENTS) || '[]');
-              return list.map(s => {
-                if (!s.type) {
-                  s.type = (s.grade && (s.grade.includes('성인') || s.grade.includes('취미'))) || s.id === 's4' ? 'adult' : 'child';
-                }
-                return s;
-              });
-            }
-            function saveStudents(data) {
-              localStorage.setItem(STORAGE_KEY_STUDENTS, JSON.stringify(data));
-              syncTableToSupabase(STORAGE_KEY_STUDENTS, data);
-            }
-            function getLessons() {
-              return JSON.parse(localStorage.getItem(STORAGE_KEY_LESSONS) || '[]');
-            }
-            function saveLessons(data) {
-              localStorage.setItem(STORAGE_KEY_LESSONS, JSON.stringify(data));
-              syncTableToSupabase(STORAGE_KEY_LESSONS, data);
-            }
-            function getNotes() {
-              let notes = JSON.parse(localStorage.getItem(STORAGE_KEY_NOTES) || '[]');
-              if (notes.length === 0) {
-                notes = defaultNotes;
-                saveNotes(notes);
-              } else if (!notes.some(n => n.studentId === 's4')) {
-                const s4Note = defaultNotes.find(n => n.studentId === 's4');
-                if (s4Note) {
-                  notes.push(s4Note);
-                  saveNotes(notes);
-                }
-              }
-              return notes;
-            }
-            function saveNotes(data) {
-              localStorage.setItem(STORAGE_KEY_NOTES, JSON.stringify(data));
-              syncTableToSupabase(STORAGE_KEY_NOTES, data);
-            }
+    function getStudents() {
+      const list = JSON.parse(localStorage.getItem(STORAGE_KEY_STUDENTS) || '[]');
+      return list.map(s => {
+        if (!s.type) {
+          s.type = (s.grade && (s.grade.includes('성인') || s.grade.includes('취미'))) || s.id === 's4' ? 'adult' : 'child';
+        }
+        return s;
+      });
+    }
+    function saveStudents(data) {
+      localStorage.setItem(STORAGE_KEY_STUDENTS, JSON.stringify(data));
+      syncTableToSupabase(STORAGE_KEY_STUDENTS, data);
+    }
+    function getLessons() {
+      return JSON.parse(localStorage.getItem(STORAGE_KEY_LESSONS) || '[]');
+    }
+    function saveLessons(data) {
+      localStorage.setItem(STORAGE_KEY_LESSONS, JSON.stringify(data));
+      syncTableToSupabase(STORAGE_KEY_LESSONS, data);
+    }
+    function getNotes() {
+      let notes = JSON.parse(localStorage.getItem(STORAGE_KEY_NOTES) || '[]');
+      if (notes.length === 0) {
+        notes = defaultNotes;
+        saveNotes(notes);
+      } else if (!notes.some(n => n.studentId === 's4')) {
+        const s4Note = defaultNotes.find(n => n.studentId === 's4');
+        if (s4Note) {
+          notes.push(s4Note);
+          saveNotes(notes);
+        }
+      }
+      return notes;
+    }
+    function saveNotes(data) {
+      localStorage.setItem(STORAGE_KEY_NOTES, JSON.stringify(data));
+      syncTableToSupabase(STORAGE_KEY_NOTES, data);
+    }
 
-            // 캘린더 상태 변수
-            let currentDate = new Date(2026, 10, 6); // 2026년 11월 6일 기준
-            let selectedDateStr = todayStr;
-            let calendarViewMode = localStorage.getItem('fairy_calendar_view_mode') || 'month'; // 'month' (월간) | 'week' (주간)
+    // 캘린더 상태 변수
+    let currentDate = new Date(2026, 10, 6); // 2026년 11월 6일 기준
+    let selectedDateStr = todayStr;
+    let calendarViewMode = localStorage.getItem('fairy_calendar_view_mode') || 'month'; // 'month' (월간) | 'week' (주간)
 
-            // 탭 전환
-            function switchTab(tab) {
-              const views = ['calendar', 'notes', 'students', 'practice'];
-              views.forEach(v => {
-                const viewEl = document.getElementById(`view-${v}`);
-                if (viewEl) viewEl.classList.add('hidden');
-                const deskBtn = document.getElementById(`tab-btn-${v}`);
-                const mobBtn = document.getElementById(`mobile-tab-${v}`);
-                if (deskBtn) {
-                  deskBtn.classList.remove('border-brand-500', 'text-brand-600', 'border-purple-600', 'text-purple-600');
-                  deskBtn.classList.add('border-transparent', 'text-slate-500');
-                }
-                if (mobBtn) {
-                  mobBtn.classList.remove('text-brand-600', 'text-purple-600');
-                  mobBtn.classList.add('text-slate-500');
-                }
-              });
+    // 탭 전환
+    function switchTab(tab) {
+      const views = ['calendar', 'notes', 'students', 'practice'];
+      views.forEach(v => {
+        const viewEl = document.getElementById(`view-${v}`);
+        if (viewEl) viewEl.classList.add('hidden');
+        const deskBtn = document.getElementById(`tab-btn-${v}`);
+        const mobBtn = document.getElementById(`mobile-tab-${v}`);
+        if (deskBtn) {
+          deskBtn.classList.remove('border-brand-500', 'text-brand-600', 'border-purple-600', 'text-purple-600');
+          deskBtn.classList.add('border-transparent', 'text-slate-500');
+        }
+        if (mobBtn) {
+          mobBtn.classList.remove('text-brand-600', 'text-purple-600');
+          mobBtn.classList.add('text-slate-500');
+        }
+      });
 
-              const activeView = document.getElementById(`view-${tab}`);
-              if (activeView) activeView.classList.remove('hidden');
+      const activeView = document.getElementById(`view-${tab}`);
+      if (activeView) activeView.classList.remove('hidden');
 
-              const activeDesk = document.getElementById(`tab-btn-${tab}`);
-              const activeMob = document.getElementById(`mobile-tab-${tab}`);
-              const isPracticeTab = tab === 'practice';
+      const activeDesk = document.getElementById(`tab-btn-${tab}`);
+      const activeMob = document.getElementById(`mobile-tab-${tab}`);
+      const isPracticeTab = tab === 'practice';
 
-              if (activeDesk) {
-                activeDesk.classList.add(isPracticeTab ? 'border-purple-600' : 'border-brand-500');
-                activeDesk.classList.add(isPracticeTab ? 'text-purple-600' : 'text-brand-600');
-                activeDesk.classList.remove('border-transparent', 'text-slate-500');
-              }
-              if (activeMob) {
-                activeMob.classList.add(isPracticeTab ? 'text-purple-600' : 'text-brand-600');
-                activeMob.classList.remove('text-slate-500');
-              }
+      if (activeDesk) {
+        activeDesk.classList.add(isPracticeTab ? 'border-purple-600' : 'border-brand-500');
+        activeDesk.classList.add(isPracticeTab ? 'text-purple-600' : 'text-brand-600');
+        activeDesk.classList.remove('border-transparent', 'text-slate-500');
+      }
+      if (activeMob) {
+        activeMob.classList.add(isPracticeTab ? 'text-purple-600' : 'text-brand-600');
+        activeMob.classList.remove('text-slate-500');
+      }
 
-              if (tab === 'notes') renderNotesList();
-              if (tab === 'students') renderStudentsList();
-              if (tab === 'calendar') renderCalendar();
-              if (tab === 'practice') renderPracticePortal();
-            }
+      if (tab === 'notes') renderNotesList();
+      if (tab === 'students') renderStudentsList();
+      if (tab === 'calendar') renderCalendar();
+      if (tab === 'practice') renderPracticePortal();
+    }
 
-            // ================= 캘린더 렌더링 & 모드 전환 =================
-            function setCalendarViewMode(mode) {
-              calendarViewMode = mode;
-              localStorage.setItem('fairy_calendar_view_mode', mode);
-              renderCalendar();
-            }
+    // ================= 캘린더 렌더링 & 모드 전환 =================
+    function setCalendarViewMode(mode) {
+      calendarViewMode = mode;
+      localStorage.setItem('fairy_calendar_view_mode', mode);
+      renderCalendar();
+    }
 
-            function updateCalendarViewButtons() {
-              const btnMonth = document.getElementById('btn-view-month');
-              const btnWeek = document.getElementById('btn-view-week');
-              if (btnMonth && btnWeek) {
-                if (calendarViewMode === 'month') {
-                  btnMonth.className = 'px-2.5 py-1 rounded-lg transition font-bold bg-white text-brand-600 shadow-xs cursor-pointer';
-                  btnWeek.className = 'px-2.5 py-1 rounded-lg transition text-slate-600 hover:text-slate-900 cursor-pointer';
-                } else {
-                  btnWeek.className = 'px-2.5 py-1 rounded-lg transition font-bold bg-white text-brand-600 shadow-xs cursor-pointer';
-                  btnMonth.className = 'px-2.5 py-1 rounded-lg transition text-slate-600 hover:text-slate-900 cursor-pointer';
-                }
-              }
-            }
+    function updateCalendarViewButtons() {
+      const btnMonth = document.getElementById('btn-view-month');
+      const btnWeek = document.getElementById('btn-view-week');
+      if (btnMonth && btnWeek) {
+        if (calendarViewMode === 'month') {
+          btnMonth.className = 'px-2.5 py-1 rounded-lg transition font-bold bg-white text-brand-600 shadow-xs cursor-pointer';
+          btnWeek.className = 'px-2.5 py-1 rounded-lg transition text-slate-600 hover:text-slate-900 cursor-pointer';
+        } else {
+          btnWeek.className = 'px-2.5 py-1 rounded-lg transition font-bold bg-white text-brand-600 shadow-xs cursor-pointer';
+          btnMonth.className = 'px-2.5 py-1 rounded-lg transition text-slate-600 hover:text-slate-900 cursor-pointer';
+        }
+      }
+    }
 
-            function navigateCalendar(delta) {
-              if (calendarViewMode === 'month') {
-                currentDate.setMonth(currentDate.getMonth() + delta);
-              } else {
-                currentDate.setDate(currentDate.getDate() + (delta * 7));
-              }
-              renderCalendar();
-            }
+    function navigateCalendar(delta) {
+      if (calendarViewMode === 'month') {
+        currentDate.setMonth(currentDate.getMonth() + delta);
+      } else {
+        currentDate.setDate(currentDate.getDate() + (delta * 7));
+      }
+      renderCalendar();
+    }
 
-            function changeMonth(delta) {
-              navigateCalendar(delta);
-            }
+    function changeMonth(delta) {
+      navigateCalendar(delta);
+    }
 
-            function goToToday() {
-              currentDate = new Date(2026, 10, 6);
-              selectedDateStr = todayStr;
-              renderCalendar();
-            }
+    function goToToday() {
+      currentDate = new Date(2026, 10, 6);
+      selectedDateStr = todayStr;
+      renderCalendar();
+    }
 
-            function selectDate(dateStr) {
-              selectedDateStr = dateStr;
-              renderCalendar();
-            }
+    function selectDate(dateStr) {
+      selectedDateStr = dateStr;
+      renderCalendar();
+    }
 
-            function renderCalendar() {
-              updateCalendarViewButtons();
+    function renderCalendar() {
+      updateCalendarViewButtons();
 
-              if (calendarViewMode === 'month') {
-                renderMonthlyCalendar();
-              } else {
-                renderWeeklyCalendar();
-              }
+      if (calendarViewMode === 'month') {
+        renderMonthlyCalendar();
+      } else {
+        renderWeeklyCalendar();
+      }
 
-              renderSelectedDateLessons();
-            }
+      renderSelectedDateLessons();
+    }
 
-            // 1. 월간 캘린더 렌더링 (한 달 전체 보기)
-            function renderMonthlyCalendar() {
-              const year = currentDate.getFullYear();
-              const month = currentDate.getMonth(); // 0~11
-              document.getElementById('calendar-month-title').innerText = `${year}년 ${month + 1}월`;
-              const badge = document.getElementById('calendar-view-badge');
-              if (badge) badge.innerText = '월간';
-              const desc = document.getElementById('calendar-sub-desc');
-              if (desc) desc.innerText = '날짜를 클릭하면 해당 일자의 수업과 출결을 확인합니다.';
+    // 1. 월간 캘린더 렌더링 (한 달 전체 보기)
+    function renderMonthlyCalendar() {
+      const year = currentDate.getFullYear();
+      const month = currentDate.getMonth(); // 0~11
+      document.getElementById('calendar-month-title').innerText = `${year}년 ${month + 1}월`;
+      const badge = document.getElementById('calendar-view-badge');
+      if (badge) badge.innerText = '월간';
+      const desc = document.getElementById('calendar-sub-desc');
+      if (desc) desc.innerText = '날짜를 클릭하면 해당 일자의 수업과 출결을 확인합니다.';
 
-              const firstDay = new Date(year, month, 1).getDay(); // 0 (일) ~ 6 (토)
-              const lastDate = new Date(year, month + 1, 0).getDate();
+      const firstDay = new Date(year, month, 1).getDay(); // 0 (일) ~ 6 (토)
+      const lastDate = new Date(year, month + 1, 0).getDate();
 
-              const grid = document.getElementById('calendar-days-grid');
-              grid.innerHTML = '';
-              grid.className = 'grid grid-cols-7 gap-1 text-sm';
+      const grid = document.getElementById('calendar-days-grid');
+      grid.innerHTML = '';
+      grid.className = 'grid grid-cols-7 gap-1 text-sm';
 
-              const lessons = getLessons();
+      const lessons = getLessons();
 
-              // 지난 달 빈칸
-              for (let i = 0; i < firstDay; i++) {
-                const emptyCell = document.createElement('div');
-                emptyCell.className = 'h-14 md:h-16 rounded-xl bg-slate-50/50 opacity-40';
-                grid.appendChild(emptyCell);
-              }
+      // 지난 달 빈칸
+      for (let i = 0; i < firstDay; i++) {
+        const emptyCell = document.createElement('div');
+        emptyCell.className = 'h-14 md:h-16 rounded-xl bg-slate-50/50 opacity-40';
+        grid.appendChild(emptyCell);
+      }
 
-              // 이번 달 날짜들
-              for (let d = 1; d <= lastDate; d++) {
-                const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
-                const dayLessons = lessons.filter(l => l.date === dateStr);
-                const isSelected = dateStr === selectedDateStr;
-                const isToday = dateStr === todayStr;
+      // 이번 달 날짜들
+      for (let d = 1; d <= lastDate; d++) {
+        const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+        const dayLessons = lessons.filter(l => l.date === dateStr);
+        const isSelected = dateStr === selectedDateStr;
+        const isToday = dateStr === todayStr;
 
-                const cell = document.createElement('div');
-                cell.className = `h-14 md:h-16 p-1.5 rounded-xl border transition cursor-pointer flex flex-col justify-between ${isSelected
-                  ? 'border-brand-500 bg-brand-50/60 ring-2 ring-brand-500/20 shadow-sm'
-                  : isToday
-                    ? 'border-slate-300 bg-white font-semibold'
-                    : 'border-slate-100 hover:border-slate-200 bg-white'
-                  }`;
-                cell.onclick = () => selectDate(dateStr);
+        const cell = document.createElement('div');
+        cell.className = `h-14 md:h-16 p-1.5 rounded-xl border transition cursor-pointer flex flex-col justify-between ${isSelected
+          ? 'border-brand-500 bg-brand-50/60 ring-2 ring-brand-500/20 shadow-sm'
+          : isToday
+            ? 'border-slate-300 bg-white font-semibold'
+            : 'border-slate-100 hover:border-slate-200 bg-white'
+          }`;
+        cell.onclick = () => selectDate(dateStr);
 
-                // 상단 날짜 숫자 & 출결 도트
-                let badgeHtml = '';
-                if (dayLessons.length > 0) {
-                  const dots = dayLessons.map(l => {
-                    let color = 'bg-slate-300';
-                    if (l.status === '출석') color = 'bg-emerald-500';
-                    else if (l.status === '당일취소') color = 'bg-amber-500';
-                    else if (l.status === '결석') color = 'bg-rose-500';
-                    else if (l.status === '보강') color = 'bg-blue-500';
-                    else if (l.status === '순연' || l.status === '스킵') color = 'bg-slate-400';
-                    else if (l.status && l.status.startsWith('기타')) color = 'bg-purple-500';
-                    return `<span class="w-1.5 h-1.5 rounded-full ${color}"></span>`;
-                  }).join('');
-                  badgeHtml = `<div class="flex items-center space-x-1">${dots}</div>`;
-                }
+        // 상단 날짜 숫자 & 출결 도트
+        let badgeHtml = '';
+        if (dayLessons.length > 0) {
+          const dots = dayLessons.map(l => {
+            let color = 'bg-slate-300';
+            if (l.status === '출석') color = 'bg-emerald-500';
+            else if (l.status === '당일취소') color = 'bg-amber-500';
+            else if (l.status === '결석') color = 'bg-rose-500';
+            else if (l.status === '보강') color = 'bg-blue-500';
+            else if (l.status === '순연' || l.status === '스킵') color = 'bg-slate-400';
+            else if (l.status && l.status.startsWith('기타')) color = 'bg-purple-500';
+            return `<span class="w-1.5 h-1.5 rounded-full ${color}"></span>`;
+          }).join('');
+          badgeHtml = `<div class="flex items-center space-x-1">${dots}</div>`;
+        }
 
-                cell.innerHTML = `
+        cell.innerHTML = `
           <div class="flex items-center justify-between">
             <span class="text-xs ${isToday ? 'px-1.5 py-0.5 rounded-md bg-brand-500 text-white font-bold' : isSelected ? 'text-brand-600 font-bold' : 'text-slate-700'}">${d}</span>
             ${badgeHtml}
@@ -3455,84 +3455,84 @@
             ${dayLessons.length > 0 ? `${dayLessons.length}개 수업` : ''}
           </div>
         `;
-                grid.appendChild(cell);
-              }
-            }
+        grid.appendChild(cell);
+      }
+    }
 
-            // 2. 주간 캘린더 렌더링 (일주일 타임테이블 한눈에 보기)
-            function renderWeeklyCalendar() {
-              const curr = new Date(currentDate);
-              const dayOfWeek = curr.getDay(); // 0(일) ~ 6(토)
-              const sun = new Date(curr);
-              sun.setDate(curr.getDate() - dayOfWeek);
+    // 2. 주간 캘린더 렌더링 (일주일 타임테이블 한눈에 보기)
+    function renderWeeklyCalendar() {
+      const curr = new Date(currentDate);
+      const dayOfWeek = curr.getDay(); // 0(일) ~ 6(토)
+      const sun = new Date(curr);
+      sun.setDate(curr.getDate() - dayOfWeek);
 
-              const sat = new Date(sun);
-              sat.setDate(sun.getDate() + 6);
+      const sat = new Date(sun);
+      sat.setDate(sun.getDate() + 6);
 
-              const sunMonth = sun.getMonth() + 1;
-              const sunDate = sun.getDate();
-              const satMonth = sat.getMonth() + 1;
-              const satDate = sat.getDate();
+      const sunMonth = sun.getMonth() + 1;
+      const sunDate = sun.getDate();
+      const satMonth = sat.getMonth() + 1;
+      const satDate = sat.getDate();
 
-              const weekOfMonth = Math.ceil((sun.getDate() + 6) / 7);
-              const titleText = `${sun.getFullYear()}년 ${sunMonth}월 ${sunDate}일 ~ ${satMonth}월 ${satDate}일 (${sunMonth}월 ${weekOfMonth}주차)`;
+      const weekOfMonth = Math.ceil((sun.getDate() + 6) / 7);
+      const titleText = `${sun.getFullYear()}년 ${sunMonth}월 ${sunDate}일 ~ ${satMonth}월 ${satDate}일 (${sunMonth}월 ${weekOfMonth}주차)`;
 
-              document.getElementById('calendar-month-title').innerText = titleText;
-              const badge = document.getElementById('calendar-view-badge');
-              if (badge) badge.innerText = '주간';
-              const desc = document.getElementById('calendar-sub-desc');
-              if (desc) desc.innerText = '이번 주(일~토) 요일별 수업 스케줄과 출결 상태입니다.';
+      document.getElementById('calendar-month-title').innerText = titleText;
+      const badge = document.getElementById('calendar-view-badge');
+      if (badge) badge.innerText = '주간';
+      const desc = document.getElementById('calendar-sub-desc');
+      if (desc) desc.innerText = '이번 주(일~토) 요일별 수업 스케줄과 출결 상태입니다.';
 
-              const grid = document.getElementById('calendar-days-grid');
-              grid.innerHTML = '';
-              grid.className = 'grid grid-cols-7 gap-1.5 text-sm overflow-x-auto custom-scrollbar';
+      const grid = document.getElementById('calendar-days-grid');
+      grid.innerHTML = '';
+      grid.className = 'grid grid-cols-7 gap-1.5 text-sm overflow-x-auto custom-scrollbar';
 
-              const lessons = getLessons();
-              const students = getStudents();
-              const daysOfWeekNames = ['일', '월', '화', '수', '목', '금', '토'];
+      const lessons = getLessons();
+      const students = getStudents();
+      const daysOfWeekNames = ['일', '월', '화', '수', '목', '금', '토'];
 
-              for (let i = 0; i < 7; i++) {
-                const d = new Date(sun);
-                d.setDate(sun.getDate() + i);
+      for (let i = 0; i < 7; i++) {
+        const d = new Date(sun);
+        d.setDate(sun.getDate() + i);
 
-                const year = d.getFullYear();
-                const month = String(d.getMonth() + 1).padStart(2, '0');
-                const dayNum = String(d.getDate()).padStart(2, '0');
-                const dateStr = `${year}-${month}-${dayNum}`;
+        const year = d.getFullYear();
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        const dayNum = String(d.getDate()).padStart(2, '0');
+        const dateStr = `${year}-${month}-${dayNum}`;
 
-                const dayLessons = lessons.filter(l => l.date === dateStr);
-                dayLessons.sort((a, b) => (a.time || '').localeCompare(b.time || ''));
+        const dayLessons = lessons.filter(l => l.date === dateStr);
+        dayLessons.sort((a, b) => (a.time || '').localeCompare(b.time || ''));
 
-                const isSelected = dateStr === selectedDateStr;
-                const isToday = dateStr === todayStr;
+        const isSelected = dateStr === selectedDateStr;
+        const isToday = dateStr === todayStr;
 
-                const col = document.createElement('div');
-                col.className = `min-h-[160px] md:min-h-[220px] p-2 rounded-xl border transition cursor-pointer flex flex-col justify-between ${isSelected
-                  ? 'border-brand-500 bg-brand-50/40 ring-2 ring-brand-500/20 shadow-sm'
-                  : isToday
-                    ? 'border-slate-300 bg-white font-semibold'
-                    : 'border-slate-100 hover:border-slate-200 bg-white'
-                  }`;
-                col.onclick = () => selectDate(dateStr);
+        const col = document.createElement('div');
+        col.className = `min-h-[160px] md:min-h-[220px] p-2 rounded-xl border transition cursor-pointer flex flex-col justify-between ${isSelected
+          ? 'border-brand-500 bg-brand-50/40 ring-2 ring-brand-500/20 shadow-sm'
+          : isToday
+            ? 'border-slate-300 bg-white font-semibold'
+            : 'border-slate-100 hover:border-slate-200 bg-white'
+          }`;
+        col.onclick = () => selectDate(dateStr);
 
-                let headerColor = 'text-slate-700';
-                if (i === 0) headerColor = 'text-rose-500 font-bold';
-                if (i === 6) headerColor = 'text-blue-500 font-bold';
+        let headerColor = 'text-slate-700';
+        if (i === 0) headerColor = 'text-rose-500 font-bold';
+        if (i === 6) headerColor = 'text-blue-500 font-bold';
 
-                let lessonCardsHtml = '';
-                if (dayLessons.length > 0) {
-                  lessonCardsHtml = dayLessons.map(l => {
-                    const student = students.find(s => s.id === l.studentId) || { name: '학생' };
-                    let chipBg = 'bg-slate-100 text-slate-700 border-slate-200';
-                    let dotColor = 'bg-slate-400';
-                    if (l.status === '출석') { chipBg = 'bg-emerald-50 text-emerald-800 border-emerald-200'; dotColor = 'bg-emerald-500'; }
-                    else if (l.status === '당일취소') { chipBg = 'bg-amber-50 text-amber-800 border-amber-200'; dotColor = 'bg-amber-500'; }
-                    else if (l.status === '결석') { chipBg = 'bg-rose-50 text-rose-800 border-rose-200'; dotColor = 'bg-rose-500'; }
-                    else if (l.status === '보강') { chipBg = 'bg-blue-50 text-blue-800 border-blue-200'; dotColor = 'bg-blue-500'; }
-                    else if (l.status === '순연' || l.status === '스킵') { chipBg = 'bg-slate-100 text-slate-600 border-slate-300'; dotColor = 'bg-slate-400'; }
-                    else if (l.status && l.status.startsWith('기타')) { chipBg = 'bg-purple-50 text-purple-800 border-purple-200'; dotColor = 'bg-purple-500'; }
+        let lessonCardsHtml = '';
+        if (dayLessons.length > 0) {
+          lessonCardsHtml = dayLessons.map(l => {
+            const student = students.find(s => s.id === l.studentId) || { name: '학생' };
+            let chipBg = 'bg-slate-100 text-slate-700 border-slate-200';
+            let dotColor = 'bg-slate-400';
+            if (l.status === '출석') { chipBg = 'bg-emerald-50 text-emerald-800 border-emerald-200'; dotColor = 'bg-emerald-500'; }
+            else if (l.status === '당일취소') { chipBg = 'bg-amber-50 text-amber-800 border-amber-200'; dotColor = 'bg-amber-500'; }
+            else if (l.status === '결석') { chipBg = 'bg-rose-50 text-rose-800 border-rose-200'; dotColor = 'bg-rose-500'; }
+            else if (l.status === '보강') { chipBg = 'bg-blue-50 text-blue-800 border-blue-200'; dotColor = 'bg-blue-500'; }
+            else if (l.status === '순연' || l.status === '스킵') { chipBg = 'bg-slate-100 text-slate-600 border-slate-300'; dotColor = 'bg-slate-400'; }
+            else if (l.status && l.status.startsWith('기타')) { chipBg = 'bg-purple-50 text-purple-800 border-purple-200'; dotColor = 'bg-purple-500'; }
 
-                    return `
+            return `
               <div class="p-1 md:p-1.5 rounded-lg border text-[10px] md:text-[11px] ${chipBg} leading-tight mb-1 shadow-2xs">
                 <div class="font-bold truncate flex items-center space-x-1">
                   <span class="w-1.5 h-1.5 rounded-full ${dotColor} flex-shrink-0"></span>
@@ -3541,12 +3541,12 @@
                 <div class="text-[9px] md:text-[10px] opacity-80 mt-0.5">${l.time || ''}</div>
               </div>
             `;
-                  }).join('');
-                } else {
-                  lessonCardsHtml = `<div class="text-[10px] text-slate-300 text-center py-4 md:py-8">-</div>`;
-                }
+          }).join('');
+        } else {
+          lessonCardsHtml = `<div class="text-[10px] text-slate-300 text-center py-4 md:py-8">-</div>`;
+        }
 
-                col.innerHTML = `
+        col.innerHTML = `
           <div>
             <div class="flex items-center justify-between pb-1.5 mb-1.5 border-b border-slate-100">
               <span class="text-xs ${headerColor}">${daysOfWeekNames[i]}</span>
@@ -3561,57 +3561,57 @@
           </div>
         `;
 
-                grid.appendChild(col);
-              }
-            }
+        grid.appendChild(col);
+      }
+    }
 
-            // 선택된 날짜의 수업 렌더링 & 출석 체크
-            function renderSelectedDateLessons() {
-              const parts = selectedDateStr.split('-');
-              const d = new Date(parts[0], parts[1] - 1, parts[2]);
-              const days = ['일', '월', '화', '수', '목', '금', '토'];
-              document.getElementById('selected-date-title').innerText = `${parts[0]}년 ${parts[1]}월 ${parts[2]}일 (${days[d.getDay()]})`;
+    // 선택된 날짜의 수업 렌더링 & 출석 체크
+    function renderSelectedDateLessons() {
+      const parts = selectedDateStr.split('-');
+      const d = new Date(parts[0], parts[1] - 1, parts[2]);
+      const days = ['일', '월', '화', '수', '목', '금', '토'];
+      document.getElementById('selected-date-title').innerText = `${parts[0]}년 ${parts[1]}월 ${parts[2]}일 (${days[d.getDay()]})`;
 
-              const container = document.getElementById('selected-date-lessons-list');
-              container.innerHTML = '';
+      const container = document.getElementById('selected-date-lessons-list');
+      container.innerHTML = '';
 
-              const lessons = getLessons().filter(l => l.date === selectedDateStr);
-              const students = getStudents();
-              const notes = getNotes();
+      const lessons = getLessons().filter(l => l.date === selectedDateStr);
+      const students = getStudents();
+      const notes = getNotes();
 
-              if (lessons.length === 0) {
-                container.innerHTML = `
+      if (lessons.length === 0) {
+        container.innerHTML = `
           <div class="py-12 text-center text-slate-400">
             <svg class="w-10 h-10 mx-auto text-slate-300 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
             <p class="text-xs">예정된 수업 일정이 없습니다.</p>
             <button onclick="openScheduleModal()" class="mt-2 text-xs font-semibold text-brand-600 hover:underline">+ 새 수업 추가하기</button>
           </div>
         `;
-                return;
-              }
+        return;
+      }
 
-              lessons.forEach(l => {
-                const student = students.find(s => s.id === l.studentId) || { name: '알 수 없음', subject: '레슨', totalPass: 8, usedPass: 0 };
-                const hasNote = notes.some(n => n.lessonId === l.id || (n.studentId === l.studentId && n.date === l.date));
+      lessons.forEach(l => {
+        const student = students.find(s => s.id === l.studentId) || { name: '알 수 없음', subject: '레슨', totalPass: 8, usedPass: 0 };
+        const hasNote = notes.some(n => n.lessonId === l.id || (n.studentId === l.studentId && n.date === l.date));
 
-                const card = document.createElement('div');
-                card.className = 'p-3.5 rounded-xl border border-slate-200 bg-white hover:border-slate-300 transition shadow-xs';
+        const card = document.createElement('div');
+        card.className = 'p-3.5 rounded-xl border border-slate-200 bg-white hover:border-slate-300 transition shadow-xs';
 
-                // 상태별 스타일 (5대 출결 상태)
-                let statusBadge = '<span class="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-slate-100 text-slate-500">예정</span>';
-                if (l.status === '출석') statusBadge = '<span class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">출석 완료 (-1회)</span>';
-                else if (l.status === '당일취소') statusBadge = '<span class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-amber-50 text-amber-800 border border-amber-200" title="학생 사유 당일 취소 (규정 1회 차감)">당일 취소 (규정 차감 -1)</span>';
-                else if (l.status === '결석') statusBadge = '<span class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-rose-50 text-rose-700 border border-rose-200">결석 (보강 필요 ⚠️)</span>';
-                else if (l.status === '보강') statusBadge = '<span class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200">보강 완료 (-1회)</span>';
-                else if (l.status === '순연' || l.status === '스킵') statusBadge = '<span class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 border border-slate-300">순연 (사전 연기)</span>';
-                else if (l.status && l.status.startsWith('기타')) {
-                  const detail = l.status.replace(/^기타(:|\s)?/, '').trim() || '직접입력';
-                  statusBadge = `<span class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-purple-50 text-purple-700 border border-purple-200" title="${l.status}">기타: ${detail}</span>`;
-                }
+        // 상태별 스타일 (5대 출결 상태)
+        let statusBadge = '<span class="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-slate-100 text-slate-500">예정</span>';
+        if (l.status === '출석') statusBadge = '<span class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">출석 완료 (-1회)</span>';
+        else if (l.status === '당일취소') statusBadge = '<span class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-amber-50 text-amber-800 border border-amber-200" title="학생 사유 당일 취소 (규정 1회 차감)">당일 취소 (규정 차감 -1)</span>';
+        else if (l.status === '결석') statusBadge = '<span class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-rose-50 text-rose-700 border border-rose-200">결석 (보강 필요 ⚠️)</span>';
+        else if (l.status === '보강') statusBadge = '<span class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200">보강 완료 (-1회)</span>';
+        else if (l.status === '순연' || l.status === '스킵') statusBadge = '<span class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 border border-slate-300">순연 (사전 연기)</span>';
+        else if (l.status && l.status.startsWith('기타')) {
+          const detail = l.status.replace(/^기타(:|\s)?/, '').trim() || '직접입력';
+          statusBadge = `<span class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-purple-50 text-purple-700 border border-purple-200" title="${l.status}">기타: ${detail}</span>`;
+        }
 
-                const isEtc = l.status && l.status.startsWith('기타');
+        const isEtc = l.status && l.status.startsWith('기타');
 
-                card.innerHTML = `
+        card.innerHTML = `
           <div class="flex items-start justify-between">
             <div class="flex items-center space-x-2.5">
               <div class="w-9 h-9 rounded-full bg-brand-50 border border-brand-100 text-brand-600 flex items-center justify-center font-bold text-xs">
@@ -3648,173 +3648,173 @@
             <!-- 노트 작성 / 보기 링크 -->
             <div>
               ${hasNote
-                    ? `<button onclick="viewExistingNote('${l.studentId}', '${l.date}')" class="text-xs font-semibold text-brand-600 hover:underline flex items-center">
+            ? `<button onclick="viewExistingNote('${l.studentId}', '${l.date}')" class="text-xs font-semibold text-brand-600 hover:underline flex items-center">
                     <span>📖 노트 보기</span>
                    </button>`
-                    : `<button onclick="openNoteForLesson('${l.id}', '${l.studentId}', '${l.date}')" class="text-xs font-bold text-white bg-brand-500 hover:bg-brand-600 px-2.5 py-1 rounded-md transition shadow-xs flex items-center space-x-1">
+            : `<button onclick="openNoteForLesson('${l.id}', '${l.studentId}', '${l.date}')" class="text-xs font-bold text-white bg-brand-500 hover:bg-brand-600 px-2.5 py-1 rounded-md transition shadow-xs flex items-center space-x-1">
                     <span>+ 노트 작성</span>
                    </button>`
-                  }
+          }
             </div>
           </div>
         `;
-                container.appendChild(card);
-              });
-            }
+        container.appendChild(card);
+      });
+    }
 
-            // 출결 업데이트 (차감 룰 연동 & 수강료 골든타임 자동 팝업)
-            function updateAttendance(lessonId, status) {
-              const lessons = getLessons();
-              const target = lessons.find(l => l.id === lessonId);
-              if (!target) return;
+    // 출결 업데이트 (차감 룰 연동 & 수강료 골든타임 자동 팝업)
+    function updateAttendance(lessonId, status) {
+      const lessons = getLessons();
+      const target = lessons.find(l => l.id === lessonId);
+      if (!target) return;
 
-              const prevStatus = target.status;
-              if (prevStatus === status) return; // 동일 상태 클릭 시 무시
-              target.status = status;
+      const prevStatus = target.status;
+      if (prevStatus === status) return; // 동일 상태 클릭 시 무시
+      target.status = status;
 
-              // 횟수 차감 규칙: '출석', '당일취소', '보강'은 1회 차감 / '결석', '순연', '스킵', 기타는 미차감
-              const isDeducted = (st) => ['출석', '당일취소', '보강'].includes(st);
+      // 횟수 차감 규칙: '출석', '당일취소', '보강'은 1회 차감 / '결석', '순연', '스킵', 기타는 미차감
+      const isDeducted = (st) => ['출석', '당일취소', '보강'].includes(st);
 
-              const students = getStudents();
-              const student = students.find(s => s.id === target.studentId);
-              let passChanged = false;
+      const students = getStudents();
+      const student = students.find(s => s.id === target.studentId);
+      let passChanged = false;
 
-              if (student) {
-                const wasDeducted = isDeducted(prevStatus);
-                const willDeduct = isDeducted(status);
+      if (student) {
+        const wasDeducted = isDeducted(prevStatus);
+        const willDeduct = isDeducted(status);
 
-                if (!wasDeducted && willDeduct) {
-                  student.usedPass = Math.min((student.totalPass || 8) + 4, (student.usedPass || 0) + 1);
-                  passChanged = true;
-                } else if (wasDeducted && !willDeduct) {
-                  student.usedPass = Math.max(0, (student.usedPass || 0) - 1);
-                  passChanged = true;
-                }
+        if (!wasDeducted && willDeduct) {
+          student.usedPass = Math.min((student.totalPass || 8) + 4, (student.usedPass || 0) + 1);
+          passChanged = true;
+        } else if (wasDeducted && !willDeduct) {
+          student.usedPass = Math.max(0, (student.usedPass || 0) - 1);
+          passChanged = true;
+        }
 
-                if (passChanged) {
-                  saveStudents(students);
-                  renderStudentsList();
-                }
-              }
+        if (passChanged) {
+          saveStudents(students);
+          renderStudentsList();
+        }
+      }
 
-              saveLessons(lessons);
-              renderCalendar();
-              renderDashboardStats();
-              renderMakeupQueue();
+      saveLessons(lessons);
+      renderCalendar();
+      renderDashboardStats();
+      renderMakeupQueue();
 
-              // 토스트 메시지
-              let statusName = status;
-              if (status === '당일취소') statusName = '당일 취소 (규정 1회 차감)';
-              else if (status === '결석') statusName = '결석 (보강 대기 등록)';
-              else if (status === '순연') statusName = '순연 (사전 연기 / 차감 없음)';
-              else if (status === '보강') statusName = '보강 완료 (1회 차감)';
-              else if (status === '출석') statusName = '출석 완료 (1회 차감)';
+      // 토스트 메시지
+      let statusName = status;
+      if (status === '당일취소') statusName = '당일 취소 (규정 1회 차감)';
+      else if (status === '결석') statusName = '결석 (보강 대기 등록)';
+      else if (status === '순연') statusName = '순연 (사전 연기 / 차감 없음)';
+      else if (status === '보강') statusName = '보강 완료 (1회 차감)';
+      else if (status === '출석') statusName = '출석 완료 (1회 차감)';
 
-              showToast(`출결이 '${statusName}'(으)로 반영되었습니다.`);
+      showToast(`출결이 '${statusName}'(으)로 반영되었습니다.`);
 
-              // 설문 1순위 피드백: 차감 발생 후 잔여 횟수가 0회 또는 1회면 "수강료 골든타임 팝업" 자동 노출!
-              if (student && isDeducted(status)) {
-                const remain = Math.max(0, (student.totalPass || 8) - (student.usedPass || 0));
-                if (remain <= 1) {
-                  setTimeout(() => {
-                    openTuitionGoldModal(student.id, status, remain);
-                  }, 350);
-                }
-              }
-            }
+      // 설문 1순위 피드백: 차감 발생 후 잔여 횟수가 0회 또는 1회면 "수강료 골든타임 팝업" 자동 노출!
+      if (student && isDeducted(status)) {
+        const remain = Math.max(0, (student.totalPass || 8) - (student.usedPass || 0));
+        if (remain <= 1) {
+          setTimeout(() => {
+            openTuitionGoldModal(student.id, status, remain);
+          }, 350);
+        }
+      }
+    }
 
-            // 기타 출결 사유 직접 입력 모달 제어
-            let currentCustomLessonId = null;
-            const adultAttendanceChips = ['회사 야근', '출장 일정', '개인 약속', '컨디션 조절', '회식/모임', '시간 협의 변경'];
-            const childAttendanceChips = ['학교 시험', '콩쿠르/대회', '병원/독감', '가족 행사', '학교 캠프', '시간 협의 변경'];
+    // 기타 출결 사유 직접 입력 모달 제어
+    let currentCustomLessonId = null;
+    const adultAttendanceChips = ['회사 야근', '출장 일정', '개인 약속', '컨디션 조절', '회식/모임', '시간 협의 변경'];
+    const childAttendanceChips = ['학교 시험', '콩쿠르/대회', '병원/독감', '가족 행사', '학교 캠프', '시간 협의 변경'];
 
-            function openCustomAttendanceModal(lessonId) {
-              currentCustomLessonId = lessonId;
-              const lessons = getLessons();
-              const l = lessons.find(x => x.id === lessonId);
-              const students = getStudents();
-              const student = students.find(s => s.id === (l ? l.studentId : ''));
+    function openCustomAttendanceModal(lessonId) {
+      currentCustomLessonId = lessonId;
+      const lessons = getLessons();
+      const l = lessons.find(x => x.id === lessonId);
+      const students = getStudents();
+      const student = students.find(s => s.id === (l ? l.studentId : ''));
 
-              const isAdult = student && student.type === 'adult';
-              const name = student ? student.name : '수강생';
-              const descEl = document.getElementById('custom-att-target-desc');
-              if (descEl) {
-                descEl.innerHTML = isAdult
-                  ? `<span id="custom-att-student-name" class="font-bold text-slate-800">${name}</span> 님의 출결 사유:`
-                  : `<span id="custom-att-student-name" class="font-bold text-slate-800">${name}</span> 학생의 출결 사유:`;
-              }
+      const isAdult = student && student.type === 'adult';
+      const name = student ? student.name : '수강생';
+      const descEl = document.getElementById('custom-att-target-desc');
+      if (descEl) {
+        descEl.innerHTML = isAdult
+          ? `<span id="custom-att-student-name" class="font-bold text-slate-800">${name}</span> 님의 출결 사유:`
+          : `<span id="custom-att-student-name" class="font-bold text-slate-800">${name}</span> 학생의 출결 사유:`;
+      }
 
-              // 빠른 선택 칩 동적 주입
-              const chips = isAdult ? adultAttendanceChips : childAttendanceChips;
-              const container = document.getElementById('custom-att-chips');
-              if (container) {
-                container.innerHTML = chips.map(c => `
+      // 빠른 선택 칩 동적 주입
+      const chips = isAdult ? adultAttendanceChips : childAttendanceChips;
+      const container = document.getElementById('custom-att-chips');
+      if (container) {
+        container.innerHTML = chips.map(c => `
           <button type="button" onclick="setCustomChip('${c}')" class="px-2.5 py-1 bg-slate-100 hover:bg-purple-50 hover:text-purple-700 text-slate-600 text-[11px] font-medium rounded-lg transition cursor-pointer">
             ${c}
           </button>
         `).join('');
-              }
+      }
 
-              let initialVal = '';
-              if (l && l.status && l.status.startsWith('기타')) {
-                initialVal = l.status.replace(/^기타(:|\s)?/, '').trim();
-              }
-              document.getElementById('custom-att-input').value = initialVal;
-              openModal('modal-custom-attendance');
-              setTimeout(() => {
-                document.getElementById('custom-att-input').focus();
-              }, 100);
-            }
+      let initialVal = '';
+      if (l && l.status && l.status.startsWith('기타')) {
+        initialVal = l.status.replace(/^기타(:|\s)?/, '').trim();
+      }
+      document.getElementById('custom-att-input').value = initialVal;
+      openModal('modal-custom-attendance');
+      setTimeout(() => {
+        document.getElementById('custom-att-input').focus();
+      }, 100);
+    }
 
-            function setCustomChip(text) {
-              document.getElementById('custom-att-input').value = text;
-            }
+    function setCustomChip(text) {
+      document.getElementById('custom-att-input').value = text;
+    }
 
-            function saveCustomAttendance() {
-              if (!currentCustomLessonId) return;
-              const val = document.getElementById('custom-att-input').value.trim() || '직접입력';
-              const status = `기타: ${val}`;
-              updateAttendance(currentCustomLessonId, status);
-              closeModal('modal-custom-attendance');
-            }
+    function saveCustomAttendance() {
+      if (!currentCustomLessonId) return;
+      const val = document.getElementById('custom-att-input').value.trim() || '직접입력';
+      const status = `기타: ${val}`;
+      updateAttendance(currentCustomLessonId, status);
+      closeModal('modal-custom-attendance');
+    }
 
-            // 3. 레슨 노트 렌더링 & 학부모 공유
-            function renderNotesList() {
-              const notes = getNotes();
-              const students = getStudents();
-              const grid = document.getElementById('notes-grid');
-              const filterSelect = document.getElementById('note-filter-student');
-              const filterValue = filterSelect.value;
+    // 3. 레슨 노트 렌더링 & 학부모 공유
+    function renderNotesList() {
+      const notes = getNotes();
+      const students = getStudents();
+      const grid = document.getElementById('notes-grid');
+      const filterSelect = document.getElementById('note-filter-student');
+      const filterValue = filterSelect.value;
 
-              // 필터 옵션 채우기
-              filterSelect.innerHTML = '<option value="all">전체 수강생 보기</option>' +
-                students.map(s => `<option value="${s.id}" ${filterValue === s.id ? 'selected' : ''}>${s.name} (${s.subject})</option>`).join('');
+      // 필터 옵션 채우기
+      filterSelect.innerHTML = '<option value="all">전체 수강생 보기</option>' +
+        students.map(s => `<option value="${s.id}" ${filterValue === s.id ? 'selected' : ''}>${s.name} (${s.subject})</option>`).join('');
 
-              let filteredNotes = notes;
-              if (filterValue !== 'all') {
-                filteredNotes = notes.filter(n => n.studentId === filterValue);
-              }
+      let filteredNotes = notes;
+      if (filterValue !== 'all') {
+        filteredNotes = notes.filter(n => n.studentId === filterValue);
+      }
 
-              grid.innerHTML = '';
+      grid.innerHTML = '';
 
-              if (filteredNotes.length === 0) {
-                grid.innerHTML = `
+      if (filteredNotes.length === 0) {
+        grid.innerHTML = `
           <div class="col-span-full py-16 text-center text-slate-400 bg-white rounded-2xl border border-slate-200">
             <svg class="w-12 h-12 mx-auto text-slate-300 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
             <p class="text-sm font-medium">작성된 레슨 노트가 없습니다.</p>
             <button onclick="openNewNoteModal()" class="mt-3 px-4 py-2 text-xs font-semibold bg-brand-500 text-white rounded-lg">지금 첫 노트 작성하기</button>
           </div>
         `;
-                return;
-              }
+        return;
+      }
 
-              filteredNotes.forEach(note => {
-                const student = students.find(s => s.id === note.studentId);
-                const isAdult = student && student.type === 'adult';
-                const card = document.createElement('div');
-                card.className = 'bg-white rounded-2xl border border-slate-200 p-5 shadow-sm hover:shadow-md transition flex flex-col justify-between';
+      filteredNotes.forEach(note => {
+        const student = students.find(s => s.id === note.studentId);
+        const isAdult = student && student.type === 'adult';
+        const card = document.createElement('div');
+        card.className = 'bg-white rounded-2xl border border-slate-200 p-5 shadow-sm hover:shadow-md transition flex flex-col justify-between';
 
-                card.innerHTML = `
+        card.innerHTML = `
           <div>
             <!-- 헤더: 수강생 및 회차 -->
             <div class="flex items-start justify-between">
@@ -3856,86 +3856,86 @@
             </div>` : ''}
           </div>
 
-          <!-- 하단: 1:1 리포트 공유 버튼 -->
-          <div class="mt-5 pt-3.5 border-t border-slate-100 flex items-center justify-between">
-            <button onclick="previewShareReport('${note.id}')" class="text-xs font-semibold text-slate-600 hover:text-slate-900 flex items-center space-x-1">
-              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
-              <span>${isAdult ? '성인 리포트 뷰' : '학부모 뷰 미리보기'}</span>
+          <!-- 하단: 1:1 리포트 공유 버튼 (통합 sendKakaoReportCard 호출) -->
+          <div class="mt-5 pt-3.5 border-t border-slate-100 flex items-center justify-between gap-2">
+            <button type="button" onclick="openShareLinkModal('${note.id}')" class="text-xs font-semibold text-slate-600 hover:text-slate-900 flex items-center space-x-1 cursor-pointer">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/></svg>
+              <span>링크 복사 · 미리보기</span>
             </button>
-            <button onclick="copyParentShareLink('${note.id}')" class="px-3 py-1.5 text-xs font-bold bg-brand-500 hover:bg-brand-600 text-white rounded-lg transition shadow-xs flex items-center space-x-1.5">
-              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/></svg>
-              <span>${isAdult ? '수강생 카톡 복사' : '카톡 공유 링크 복사'}</span>
+            <button type="button" onclick="sendKakaoReportCard('${note.id}')" class="px-3 py-1.5 text-xs font-bold bg-[#FEE500] hover:bg-[#FDD800] text-[#191919] rounded-lg transition shadow-xs flex items-center space-x-1.5 cursor-pointer">
+              <span>💬</span>
+              <span>${isAdult ? '카톡 리포트 공유' : '카톡 카드 공유'}</span>
             </button>
           </div>
         `;
-                grid.appendChild(card);
-              });
-            }
+        grid.appendChild(card);
+      });
+    }
 
-            function filterNotes() {
-              renderNotesList();
-            }
+    function filterNotes() {
+      renderNotesList();
+    }
 
-            // 수강생 필터 상태 변수
-            let studentFilterType = 'all'; // 'all' | 'adult' | 'child'
-            let studentFilterPass = 'all'; // 'all' | 'expiring' | 'normal'
-            let studentSearchQuery = '';
+    // 수강생 필터 상태 변수
+    let studentFilterType = 'all'; // 'all' | 'adult' | 'child'
+    let studentFilterPass = 'all'; // 'all' | 'expiring' | 'normal'
+    let studentSearchQuery = '';
 
-            // 4. 학생 관리 렌더링 & 필터링
-            function renderStudentsList() {
-              const students = getStudents();
-              const grid = document.getElementById('students-grid');
-              if (!grid) return;
+    // 4. 학생 관리 렌더링 & 필터링
+    function renderStudentsList() {
+      const students = getStudents();
+      const grid = document.getElementById('students-grid');
+      if (!grid) return;
 
-              // 1. 카운트 배지 실시간 계산
-              const totalCount = students.length;
-              const expiringCount = students.filter(s => Math.max(0, s.totalPass - s.usedPass) <= 1).length;
-              const normalCount = students.filter(s => Math.max(0, s.totalPass - s.usedPass) > 1).length;
+      // 1. 카운트 배지 실시간 계산
+      const totalCount = students.length;
+      const expiringCount = students.filter(s => Math.max(0, s.totalPass - s.usedPass) <= 1).length;
+      const normalCount = students.filter(s => Math.max(0, s.totalPass - s.usedPass) > 1).length;
 
-              const countAllEl = document.getElementById('sfilter-count-all');
-              const countExpEl = document.getElementById('sfilter-count-expiring');
-              const countNormEl = document.getElementById('sfilter-count-normal');
-              if (countAllEl) countAllEl.innerText = totalCount;
-              if (countExpEl) countExpEl.innerText = expiringCount;
-              if (countNormEl) countNormEl.innerText = `(${normalCount})`;
+      const countAllEl = document.getElementById('sfilter-count-all');
+      const countExpEl = document.getElementById('sfilter-count-expiring');
+      const countNormEl = document.getElementById('sfilter-count-normal');
+      if (countAllEl) countAllEl.innerText = totalCount;
+      if (countExpEl) countExpEl.innerText = expiringCount;
+      if (countNormEl) countNormEl.innerText = `(${normalCount})`;
 
-              // 2. 필터링 수행
-              const filtered = students.filter(s => {
-                const remainPass = Math.max(0, s.totalPass - s.usedPass);
-                const isExpiring = remainPass <= 1;
+      // 2. 필터링 수행
+      const filtered = students.filter(s => {
+        const remainPass = Math.max(0, s.totalPass - s.usedPass);
+        const isExpiring = remainPass <= 1;
 
-                // 수강생 유형 필터 (adult vs child)
-                if (studentFilterType !== 'all' && s.type !== studentFilterType) {
-                  return false;
-                }
+        // 수강생 유형 필터 (adult vs child)
+        if (studentFilterType !== 'all' && s.type !== studentFilterType) {
+          return false;
+        }
 
-                // 수강권 상태 필터 (expiring vs normal)
-                if (studentFilterPass === 'expiring' && !isExpiring) {
-                  return false;
-                }
-                if (studentFilterPass === 'normal' && isExpiring) {
-                  return false;
-                }
+        // 수강권 상태 필터 (expiring vs normal)
+        if (studentFilterPass === 'expiring' && !isExpiring) {
+          return false;
+        }
+        if (studentFilterPass === 'normal' && isExpiring) {
+          return false;
+        }
 
-                // 실시간 검색어 (이름, 악기, 연습곡, 학년/구분)
-                if (studentSearchQuery) {
-                  const q = studentSearchQuery.toLowerCase();
-                  const matchName = (s.name || '').toLowerCase().includes(q);
-                  const matchSubject = (s.subject || '').toLowerCase().includes(q);
-                  const matchPiece = (s.currentPiece || '').toLowerCase().includes(q);
-                  const matchGrade = (s.grade || '').toLowerCase().includes(q);
-                  if (!matchName && !matchSubject && !matchPiece && !matchGrade) {
-                    return false;
-                  }
-                }
+        // 실시간 검색어 (이름, 악기, 연습곡, 학년/구분)
+        if (studentSearchQuery) {
+          const q = studentSearchQuery.toLowerCase();
+          const matchName = (s.name || '').toLowerCase().includes(q);
+          const matchSubject = (s.subject || '').toLowerCase().includes(q);
+          const matchPiece = (s.currentPiece || '').toLowerCase().includes(q);
+          const matchGrade = (s.grade || '').toLowerCase().includes(q);
+          if (!matchName && !matchSubject && !matchPiece && !matchGrade) {
+            return false;
+          }
+        }
 
-                return true;
-              });
+        return true;
+      });
 
-              grid.innerHTML = '';
+      grid.innerHTML = '';
 
-              if (filtered.length === 0) {
-                grid.innerHTML = `
+      if (filtered.length === 0) {
+        grid.innerHTML = `
           <div class="col-span-full py-16 text-center text-slate-400 bg-white rounded-2xl border border-dashed border-slate-200 space-y-2">
             <div class="text-3xl">🔍</div>
             <p class="text-sm font-bold text-slate-700">해당 조건에 맞는 수강생이 없습니다.</p>
@@ -3945,19 +3945,19 @@
             </button>
           </div>
         `;
-                return;
-              }
+        return;
+      }
 
-              filtered.forEach(s => {
-                const remainPass = Math.max(0, s.totalPass - s.usedPass);
-                const isExpiring = remainPass <= 1;
-                const isAdult = s.type === 'adult';
-                const feeFormatted = (s.fee || 350000).toLocaleString();
+      filtered.forEach(s => {
+        const remainPass = Math.max(0, s.totalPass - s.usedPass);
+        const isExpiring = remainPass <= 1;
+        const isAdult = s.type === 'adult';
+        const feeFormatted = (s.fee || 350000).toLocaleString();
 
-                const card = document.createElement('div');
-                card.className = `bg-white rounded-2xl border ${isExpiring ? 'border-amber-300 ring-1 ring-amber-300/50' : 'border-slate-200'} p-5 shadow-sm space-y-4 transition`;
+        const card = document.createElement('div');
+        card.className = `bg-white rounded-2xl border ${isExpiring ? 'border-amber-300 ring-1 ring-amber-300/50' : 'border-slate-200'} p-5 shadow-sm space-y-4 transition`;
 
-                card.innerHTML = `
+        card.innerHTML = `
           <div class="flex items-start justify-between">
             <div class="flex items-center space-x-3">
               <div class="w-11 h-11 rounded-2xl bg-gradient-to-tr from-brand-500 to-rose-400 text-white font-bold flex items-center justify-center text-sm shadow-sm shadow-brand-500/20">
@@ -3968,8 +3968,8 @@
                   <h3 class="font-bold text-slate-900 text-base">${s.name}</h3>
                   <span class="text-xs px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 font-medium">${s.subject}</span>
                   ${isAdult
-                    ? '<span class="text-[10px] px-2 py-0.5 rounded-md bg-purple-100 text-purple-700 font-bold">🧑‍💼 성인반</span>'
-                    : '<span class="text-[10px] px-2 py-0.5 rounded-md bg-sky-100 text-sky-700 font-bold">🧒 학생</span>'}
+            ? '<span class="text-[10px] px-2 py-0.5 rounded-md bg-purple-100 text-purple-700 font-bold">🧑‍💼 성인반</span>'
+            : '<span class="text-[10px] px-2 py-0.5 rounded-md bg-sky-100 text-sky-700 font-bold">🧒 학생</span>'}
                 </div>
                 <p class="text-xs text-slate-500 mt-0.5">${s.grade} • ${s.schedule}</p>
               </div>
@@ -4026,665 +4026,659 @@
             </button>
           </div>
         `;
-                grid.appendChild(card);
-              });
+        grid.appendChild(card);
+      });
+    }
+
+    function setStudentFilterType(type) {
+      studentFilterType = type;
+      ['all', 'adult', 'child'].forEach(t => {
+        const btn = document.getElementById('sfilter-type-' + t);
+        if (!btn) return;
+        if (t === type) {
+          btn.className = 'px-3 py-1.5 rounded-lg font-bold bg-white text-slate-900 shadow-xs transition';
+        } else {
+          btn.className = 'px-3 py-1.5 rounded-lg font-medium text-slate-600 hover:text-slate-900 transition flex items-center space-x-1';
+        }
+      });
+      renderStudentsList();
+    }
+
+    function setStudentFilterPass(pass) {
+      studentFilterPass = pass;
+      ['all', 'expiring', 'normal'].forEach(p => {
+        const btn = document.getElementById('sfilter-pass-' + p);
+        if (!btn) return;
+        if (p === pass) {
+          btn.className = 'px-3 py-1 rounded-full font-bold bg-brand-50 border border-brand-300 text-brand-700 transition flex items-center space-x-1';
+        } else {
+          btn.className = 'px-3 py-1 rounded-full font-medium bg-white border border-slate-200 hover:border-slate-300 text-slate-700 transition flex items-center space-x-1';
+        }
+      });
+      renderStudentsList();
+    }
+
+    function handleStudentSearchInput() {
+      const input = document.getElementById('student-search-input');
+      studentSearchQuery = input ? input.value.trim() : '';
+      renderStudentsList();
+    }
+
+    function resetStudentFilters() {
+      studentFilterType = 'all';
+      studentFilterPass = 'all';
+      studentSearchQuery = '';
+      const input = document.getElementById('student-search-input');
+      if (input) input.value = '';
+      setStudentFilterType('all');
+      setStudentFilterPass('all');
+    }
+
+    // 모달 제어
+    function openModal(id) {
+      document.getElementById(id).classList.remove('hidden');
+    }
+    function closeModal(id) {
+      document.getElementById(id).classList.add('hidden');
+    }
+
+    function openNewNoteModal() {
+      const students = getStudents();
+      const select = document.getElementById('form-note-student');
+      select.innerHTML = students.map(s => `<option value="${s.id}">${s.name} (${s.subject}) - 잔여 ${s.totalPass - s.usedPass}회</option>`).join('');
+      document.getElementById('form-note-date').value = selectedDateStr || todayStr;
+      handleNoteStudentChange();
+      openModal('modal-new-note');
+    }
+
+    function handleNoteStudentChange() {
+      const studentId = document.getElementById('form-note-student').value;
+      const student = getStudents().find(s => s.id === studentId);
+      const isAdult = student && student.type === 'adult';
+
+      const labelMsg = document.getElementById('label-note-parent-msg');
+      const inputMsg = document.getElementById('form-note-parent-msg');
+      const labelHw = document.getElementById('label-note-homework');
+      const inputHw = document.getElementById('form-note-homework');
+
+      if (labelMsg && inputMsg) {
+        if (isAdult) {
+          labelMsg.innerText = '수강생께 드리는 코칭 한마디';
+          inputMsg.placeholder = `예: ${student.name}님, 오늘 오른손 밸런스가 정말 좋았습니다! 이번 주 루틴도 화이팅하세요 :)`;
+        } else {
+          labelMsg.innerText = '학부모님께 드리는 인사말';
+          inputMsg.placeholder = '예: 오늘 지우가 힘든 부분도 끝까지 해냈습니다. 가정에서도 많은 칭찬 부탁드립니다!';
+        }
+      }
+      if (labelHw && inputHw) {
+        if (isAdult) {
+          labelHw.innerText = '개인 연습 가이드 / 위클리 루틴';
+          inputHw.placeholder = '예: 퇴근 후 하루 15분씩 왼손 릴렉스 & 메트로놈 ♩=80 연습';
+        } else {
+          labelHw.innerText = '다음 레슨까지 연습 과제';
+          inputHw.placeholder = '예: 메트로놈 ♩=80으로 16분 음표 구간 하루 15분씩 반복 연습하기';
+        }
+      }
+      checkStudentQuestionsForNote();
+    }
+
+    function checkStudentQuestionsForNote() {
+      const studentId = document.getElementById('form-note-student').value;
+      const questions = getQuestions().filter(q => q.studentId === studentId && !q.answered);
+      const banner = document.getElementById('note-pending-question-banner');
+      const textEl = document.getElementById('note-pending-question-text');
+      if (questions.length > 0) {
+        textEl.innerText = `[${questions[0].category}] "${questions[0].text}"`;
+        banner.classList.remove('hidden');
+      } else {
+        banner.classList.add('hidden');
+      }
+    }
+
+    function openScheduleModal() {
+      const students = getStudents();
+      const select = document.getElementById('form-sched-student');
+      select.innerHTML = students.map(s => `<option value="${s.id}">${s.name} (${s.subject})</option>`).join('');
+      document.getElementById('form-sched-date').value = selectedDateStr;
+      openModal('modal-schedule');
+    }
+
+    function openStudentModal() {
+      const childRadio = document.getElementById('type-child');
+      if (childRadio) childRadio.checked = true;
+      toggleStudentTypeForm();
+      openModal('modal-student');
+    }
+
+    function toggleStudentTypeForm() {
+      const type = document.querySelector('input[name="form_stud_type"]:checked')?.value || 'child';
+      const labelPhone = document.getElementById('label-stud-phone');
+      const labelGrade = document.getElementById('label-stud-grade');
+      const inputGrade = document.getElementById('form-stud-grade');
+
+      if (type === 'adult') {
+        if (labelPhone) labelPhone.innerText = '카톡 연락처 (수강생 본인)';
+        if (labelGrade) labelGrade.innerText = '소속/구분 (성인)';
+        if (inputGrade) inputGrade.placeholder = '예: 직장인 취미반 / 쇼팽 에튀드 목표';
+      } else {
+        if (labelPhone) labelPhone.innerText = '카톡 연락처 (학부모)';
+        if (labelGrade) labelGrade.innerText = '학년/구분';
+        if (inputGrade) inputGrade.placeholder = '예: 초등학교 3학년';
+      }
+    }
+
+    function openNoteForLesson(lessonId, studentId, date) {
+      openNewNoteModal();
+      document.getElementById('form-note-student').value = studentId;
+      document.getElementById('form-note-date').value = date;
+      handleNoteStudentChange();
+    }
+
+    function openNoteForStudent(studentId) {
+      openNewNoteModal();
+      document.getElementById('form-note-student').value = studentId;
+      handleNoteStudentChange();
+      switchTab('notes');
+    }
+
+    function viewExistingNote(studentId, date) {
+      switchTab('notes');
+      document.getElementById('note-filter-student').value = studentId;
+      filterNotes();
+    }
+
+    // 폼 저장 핸들러들
+    function handleSaveNote(e) {
+      e.preventDefault();
+      const students = getStudents();
+      const notes = getNotes();
+
+      const studentId = document.getElementById('form-note-student').value;
+      const student = students.find(s => s.id === studentId);
+      const date = document.getElementById('form-note-date').value;
+      const piece = document.getElementById('form-note-piece').value;
+      const technique = document.getElementById('form-note-technique').value;
+      const feedback = document.getElementById('form-note-feedback').value;
+      const homework = document.getElementById('form-note-homework').value;
+      const parentMsg = document.getElementById('form-note-parent-msg').value;
+      const youtubeUrl = document.getElementById('form-note-youtube').value.trim();
+
+      const badgeInput = document.querySelector('input[name="badge"]:checked');
+      const badge = badgeInput ? badgeInput.value : '🎹 터치감 & 소리 최고';
+
+      // 세션 차감 및 회차 계산
+      const sessionNum = (student.usedPass || 0) + 1;
+      student.usedPass = sessionNum;
+      student.currentPiece = piece;
+      saveStudents(students);
+
+      const newNote = {
+        id: 'n_' + Date.now(),
+        lessonId: 'l_' + Date.now(),
+        studentId,
+        studentName: student.name,
+        subject: student.subject,
+        date,
+        sessionNum,
+        totalPass: student.totalPass,
+        piece,
+        technique,
+        badge,
+        feedback,
+        homework,
+        parentMsg,
+        youtubeUrl,
+        createdAt: new Date().toISOString().replace('T', ' ').substring(0, 16)
+      };
+
+      notes.unshift(newNote);
+      saveNotes(notes);
+
+      // 수업 출결 캘린더에도 동기화
+      const lessons = getLessons();
+      lessons.push({
+        id: newNote.lessonId,
+        studentId,
+        date,
+        time: '15:00',
+        type: '정규',
+        status: '출석',
+        sessionNum
+      });
+      saveLessons(lessons);
+
+      closeModal('modal-new-note');
+      e.target.reset();
+      renderCalendar();
+      renderNotesList();
+      const isAdult = student && student.type === 'adult';
+      showToast(isAdult
+        ? '레슨 리포트가 등록되었습니다. 수강생 1:1 링크가 활성화되었습니다.'
+        : '레슨 노트가 등록되었습니다. 학부모 공유 링크가 활성화되었습니다.');
+    }
+
+    function handleSaveSchedule(e) {
+      e.preventDefault();
+      const studentId = document.getElementById('form-sched-student').value;
+      const date = document.getElementById('form-sched-date').value;
+      const time = document.getElementById('form-sched-time').value;
+      const type = document.getElementById('form-sched-type').value;
+
+      const students = getStudents();
+      const student = students.find(s => s.id === studentId);
+      const lessons = getLessons();
+
+      lessons.push({
+        id: 'l_' + Date.now(),
+        studentId,
+        date,
+        time,
+        type,
+        status: '예정',
+        sessionNum: (student.usedPass || 0) + 1
+      });
+
+      saveLessons(lessons);
+      closeModal('modal-schedule');
+      e.target.reset();
+      renderCalendar();
+      showToast('새 레슨 일정이 추가되었습니다.');
+    }
+
+    function handleSaveStudent(e) {
+      e.preventDefault();
+      const type = document.querySelector('input[name="form_stud_type"]:checked')?.value || 'child';
+      const name = document.getElementById('form-stud-name').value.trim();
+      const subject = document.getElementById('form-stud-subject').value;
+      const grade = document.getElementById('form-stud-grade').value.trim();
+      const totalPass = parseInt(document.getElementById('form-stud-total').value) || 8;
+      const fee = parseInt(document.getElementById('form-stud-fee').value) || 350000;
+      const phone = document.getElementById('form-stud-phone').value.trim();
+      const schedule = document.getElementById('form-stud-schedule').value.trim();
+
+      const students = getStudents();
+      students.push({
+        id: 's_' + Date.now(),
+        type,
+        name,
+        subject,
+        grade: grade || (type === 'adult' ? '직장인 취미반' : '일반 학생'),
+        totalPass,
+        usedPass: 0,
+        fee,
+        phone,
+        schedule,
+        currentPiece: '배정 예정'
+      });
+
+      saveStudents(students);
+      closeModal('modal-student');
+      e.target.reset();
+      renderStudentsList();
+      renderCalendar();
+      showToast(`${name} ${type === 'adult' ? '수강생님이' : '학생이'} 새로 등록되었습니다. (수강권: ${totalPass}회)`);
+    }
+
+    // ================= 학부모 및 수강생 공유 통합 로직 (sendKakaoReportCard 단일화) =================
+    let currentShareModalData = { noteId: '', url: '', title: '', text: '' };
+
+    function buildShareReportUrl(noteId) {
+      const targetId = noteId || currentShareModalData.noteId || '';
+      const note = getNotes().find(n => n.id === targetId) || getNotes()[0];
+      const student = note ? getStudents().find(s => s.id === note.studentId) : null;
+      const teacher = getTeacherProfile();
+
+      const basePath = `https://znno-debug.github.io/practice-fairy/share.html?id=${encodeURIComponent(String(targetId || (note && note.id) || 'n1'))}`;
+      if (!note) return basePath;
+      try {
+        const compactPayload = [
+          note.studentName || (student && student.name) || '수강생',
+          note.subject || (student && student.subject) || '피아노',
+          note.date || todayStr,
+          note.sessionNum || (student && student.usedPass) || 1,
+          (student && student.totalPass) || note.totalPass || 8,
+          (note.piece || '').slice(0, 100),
+          (note.technique || '').slice(0, 100),
+          note.badge || '🎹 터치감 & 소리 최고',
+          (note.feedback || '').slice(0, 220),
+          (note.homework || '').slice(0, 150),
+          (note.parentMsg || '').slice(0, 150),
+          note.youtubeUrl || '',
+          note.attendanceStatus || '출석',
+          (student && student.type) || 'child',
+          (student && student.fee) || 350000,
+          (teacher && teacher.name) || '김민주',
+          (teacher && teacher.bankName) || '카카오뱅크',
+          (teacher && teacher.accountNumber) || '',
+          (teacher && teacher.accountHolder) || (teacher && teacher.name) || '김민주'
+        ];
+        const b64 = btoa(unescape(encodeURIComponent(JSON.stringify(compactPayload))))
+          .replace(/\+/g, '-')
+          .replace(/\//g, '_')
+          .replace(/=+$/, '');
+        return `${basePath}&d=${encodeURIComponent(b64)}`;
+      } catch (e) {
+        return basePath;
+      }
+    }
+
+    function prepareReportCardMeta(noteId) {
+      const targetId = noteId || currentShareModalData.noteId || '';
+      const note = getNotes().find(n => n.id === targetId) || getNotes()[0];
+      const student = note ? getStudents().find(s => s.id === note.studentId) : null;
+      const teacher = getTeacherProfile();
+      const isAdult = student && student.type === 'adult';
+      const shareUrl = buildShareReportUrl(note ? note.id : targetId);
+      const studentName = student ? student.name : (note?.studentName || '수강생');
+      const subject = (note && note.subject) || (student && student.subject) || '음악';
+      const sessionNum = (note && note.sessionNum) || (student && student.usedPass) || 1;
+      const totalPass = (student && student.totalPass) || (note && note.totalPass) || 8;
+      const piece = (note && note.piece) || (student && student.currentPiece) || '오늘의 레슨곡';
+      const badge = (note && note.badge) || '🎹 오늘도 멋진 연주';
+      const homework = (note && note.homework) || '';
+      const feedback = (note && note.feedback) || '';
+      const teacherName = (teacher && teacher.name) ? `${teacher.name} 선생님` : '선생님';
+
+      const title = isAdult
+        ? `🧚‍♀️ ${studentName}님 • ${sessionNum}회차 레슨 리포트`
+        : `🧚‍♀️ ${studentName} 학생 • ${sessionNum}회차 레슨 알림장`;
+
+      const summaryLines = [
+        `[${subject}] ${piece} (${sessionNum}/${totalPass}회)`,
+        `🌟 ${badge}`,
+        homework ? `📝 과제: ${homework}` : (feedback ? `💬 ${feedback}` : '')
+      ].filter(Boolean).join('\n');
+
+      currentShareModalData = {
+        noteId: note ? note.id : targetId,
+        url: shareUrl,
+        title: title,
+        text: summaryLines,
+        studentName,
+        isAdult,
+        subject,
+        sessionNum,
+        totalPass,
+        piece,
+        badge,
+        homework,
+        feedback,
+        teacherName
+      };
+      return currentShareModalData;
+    }
+
+    // 단일 통합 카카오톡 피드 카드 전송 함수
+    function sendKakaoReportCard(noteId) {
+      const meta = prepareReportCardMeta(noteId);
+      const shareUrl = meta.url;
+
+      const payload = {
+        objectType: 'feed',
+        content: {
+          title: meta.title || '🧚‍♀️ 연습요정 레슨 리포트',
+          description: meta.text || '오늘의 레슨 내용과 선생님의 코칭 피드백을 확인해 보세요!',
+          imageUrl: 'https://znno-debug.github.io/practice-fairy/icon-512.png',
+          imageWidth: 800,
+          imageHeight: 400,
+          link: {
+            mobileWebUrl: shareUrl,
+            webUrl: shareUrl
+          }
+        },
+        buttons: [
+          {
+            title: '레슨 리포트 상세보기',
+            link: {
+              mobileWebUrl: shareUrl,
+              webUrl: shareUrl
             }
-
-            function setStudentFilterType(type) {
-              studentFilterType = type;
-              ['all', 'adult', 'child'].forEach(t => {
-                const btn = document.getElementById('sfilter-type-' + t);
-                if (!btn) return;
-                if (t === type) {
-                  btn.className = 'px-3 py-1.5 rounded-lg font-bold bg-white text-slate-900 shadow-xs transition';
-                } else {
-                  btn.className = 'px-3 py-1.5 rounded-lg font-medium text-slate-600 hover:text-slate-900 transition flex items-center space-x-1';
-                }
-              });
-              renderStudentsList();
-            }
-
-            function setStudentFilterPass(pass) {
-              studentFilterPass = pass;
-              ['all', 'expiring', 'normal'].forEach(p => {
-                const btn = document.getElementById('sfilter-pass-' + p);
-                if (!btn) return;
-                if (p === pass) {
-                  btn.className = 'px-3 py-1 rounded-full font-bold bg-brand-50 border border-brand-300 text-brand-700 transition flex items-center space-x-1';
-                } else {
-                  btn.className = 'px-3 py-1 rounded-full font-medium bg-white border border-slate-200 hover:border-slate-300 text-slate-700 transition flex items-center space-x-1';
-                }
-              });
-              renderStudentsList();
-            }
-
-            function handleStudentSearchInput() {
-              const input = document.getElementById('student-search-input');
-              studentSearchQuery = input ? input.value.trim() : '';
-              renderStudentsList();
-            }
-
-            function resetStudentFilters() {
-              studentFilterType = 'all';
-              studentFilterPass = 'all';
-              studentSearchQuery = '';
-              const input = document.getElementById('student-search-input');
-              if (input) input.value = '';
-              setStudentFilterType('all');
-              setStudentFilterPass('all');
-            }
-
-            // 모달 제어
-            function openModal(id) {
-              document.getElementById(id).classList.remove('hidden');
-            }
-            function closeModal(id) {
-              document.getElementById(id).classList.add('hidden');
-            }
-
-            function openNewNoteModal() {
-              const students = getStudents();
-              const select = document.getElementById('form-note-student');
-              select.innerHTML = students.map(s => `<option value="${s.id}">${s.name} (${s.subject}) - 잔여 ${s.totalPass - s.usedPass}회</option>`).join('');
-              document.getElementById('form-note-date').value = selectedDateStr || todayStr;
-              handleNoteStudentChange();
-              openModal('modal-new-note');
-            }
-
-            function handleNoteStudentChange() {
-              const studentId = document.getElementById('form-note-student').value;
-              const student = getStudents().find(s => s.id === studentId);
-              const isAdult = student && student.type === 'adult';
-
-              const labelMsg = document.getElementById('label-note-parent-msg');
-              const inputMsg = document.getElementById('form-note-parent-msg');
-              const labelHw = document.getElementById('label-note-homework');
-              const inputHw = document.getElementById('form-note-homework');
-
-              if (labelMsg && inputMsg) {
-                if (isAdult) {
-                  labelMsg.innerText = '수강생께 드리는 코칭 한마디';
-                  inputMsg.placeholder = `예: ${student.name}님, 오늘 오른손 밸런스가 정말 좋았습니다! 이번 주 루틴도 화이팅하세요 :)`;
-                } else {
-                  labelMsg.innerText = '학부모님께 드리는 인사말';
-                  inputMsg.placeholder = '예: 오늘 지우가 힘든 부분도 끝까지 해냈습니다. 가정에서도 많은 칭찬 부탁드립니다!';
-                }
-              }
-              if (labelHw && inputHw) {
-                if (isAdult) {
-                  labelHw.innerText = '개인 연습 가이드 / 위클리 루틴';
-                  inputHw.placeholder = '예: 퇴근 후 하루 15분씩 왼손 릴렉스 & 메트로놈 ♩=80 연습';
-                } else {
-                  labelHw.innerText = '다음 레슨까지 연습 과제';
-                  inputHw.placeholder = '예: 메트로놈 ♩=80으로 16분 음표 구간 하루 15분씩 반복 연습하기';
-                }
-              }
-              checkStudentQuestionsForNote();
-            }
-
-            function checkStudentQuestionsForNote() {
-              const studentId = document.getElementById('form-note-student').value;
-              const questions = getQuestions().filter(q => q.studentId === studentId && !q.answered);
-              const banner = document.getElementById('note-pending-question-banner');
-              const textEl = document.getElementById('note-pending-question-text');
-              if (questions.length > 0) {
-                textEl.innerText = `[${questions[0].category}] "${questions[0].text}"`;
-                banner.classList.remove('hidden');
-              } else {
-                banner.classList.add('hidden');
-              }
-            }
-
-            function openScheduleModal() {
-              const students = getStudents();
-              const select = document.getElementById('form-sched-student');
-              select.innerHTML = students.map(s => `<option value="${s.id}">${s.name} (${s.subject})</option>`).join('');
-              document.getElementById('form-sched-date').value = selectedDateStr;
-              openModal('modal-schedule');
-            }
-
-            function openStudentModal() {
-              const childRadio = document.getElementById('type-child');
-              if (childRadio) childRadio.checked = true;
-              toggleStudentTypeForm();
-              openModal('modal-student');
-            }
-
-            function toggleStudentTypeForm() {
-              const type = document.querySelector('input[name="form_stud_type"]:checked')?.value || 'child';
-              const labelPhone = document.getElementById('label-stud-phone');
-              const labelGrade = document.getElementById('label-stud-grade');
-              const inputGrade = document.getElementById('form-stud-grade');
-
-              if (type === 'adult') {
-                if (labelPhone) labelPhone.innerText = '카톡 연락처 (수강생 본인)';
-                if (labelGrade) labelGrade.innerText = '소속/구분 (성인)';
-                if (inputGrade) inputGrade.placeholder = '예: 직장인 취미반 / 쇼팽 에튀드 목표';
-              } else {
-                if (labelPhone) labelPhone.innerText = '카톡 연락처 (학부모)';
-                if (labelGrade) labelGrade.innerText = '학년/구분';
-                if (inputGrade) inputGrade.placeholder = '예: 초등학교 3학년';
-              }
-            }
-
-            function openNoteForLesson(lessonId, studentId, date) {
-              openNewNoteModal();
-              document.getElementById('form-note-student').value = studentId;
-              document.getElementById('form-note-date').value = date;
-              handleNoteStudentChange();
-            }
-
-            function openNoteForStudent(studentId) {
-              openNewNoteModal();
-              document.getElementById('form-note-student').value = studentId;
-              handleNoteStudentChange();
-              switchTab('notes');
-            }
-
-            function viewExistingNote(studentId, date) {
-              switchTab('notes');
-              document.getElementById('note-filter-student').value = studentId;
-              filterNotes();
-            }
-
-            // 폼 저장 핸들러들
-            function handleSaveNote(e) {
-              e.preventDefault();
-              const students = getStudents();
-              const notes = getNotes();
-
-              const studentId = document.getElementById('form-note-student').value;
-              const student = students.find(s => s.id === studentId);
-              const date = document.getElementById('form-note-date').value;
-              const piece = document.getElementById('form-note-piece').value;
-              const technique = document.getElementById('form-note-technique').value;
-              const feedback = document.getElementById('form-note-feedback').value;
-              const homework = document.getElementById('form-note-homework').value;
-              const parentMsg = document.getElementById('form-note-parent-msg').value;
-              const youtubeUrl = document.getElementById('form-note-youtube').value.trim();
-
-              const badgeInput = document.querySelector('input[name="badge"]:checked');
-              const badge = badgeInput ? badgeInput.value : '🎹 터치감 & 소리 최고';
-
-              // 세션 차감 및 회차 계산
-              const sessionNum = (student.usedPass || 0) + 1;
-              student.usedPass = sessionNum;
-              student.currentPiece = piece;
-              saveStudents(students);
-
-              const newNote = {
-                id: 'n_' + Date.now(),
-                lessonId: 'l_' + Date.now(),
-                studentId,
-                studentName: student.name,
-                subject: student.subject,
-                date,
-                sessionNum,
-                totalPass: student.totalPass,
-                piece,
-                technique,
-                badge,
-                feedback,
-                homework,
-                parentMsg,
-                youtubeUrl,
-                createdAt: new Date().toISOString().replace('T', ' ').substring(0, 16)
-              };
-
-              notes.unshift(newNote);
-              saveNotes(notes);
-
-              // 수업 출결 캘린더에도 동기화
-              const lessons = getLessons();
-              lessons.push({
-                id: newNote.lessonId,
-                studentId,
-                date,
-                time: '15:00',
-                type: '정규',
-                status: '출석',
-                sessionNum
-              });
-              saveLessons(lessons);
-
-              closeModal('modal-new-note');
-              e.target.reset();
-              renderCalendar();
-              renderNotesList();
-              const isAdult = student && student.type === 'adult';
-              showToast(isAdult
-                ? '레슨 리포트가 등록되었습니다. 수강생 1:1 링크가 활성화되었습니다.'
-                : '레슨 노트가 등록되었습니다. 학부모 공유 링크가 활성화되었습니다.');
-            }
-
-            function handleSaveSchedule(e) {
-              e.preventDefault();
-              const studentId = document.getElementById('form-sched-student').value;
-              const date = document.getElementById('form-sched-date').value;
-              const time = document.getElementById('form-sched-time').value;
-              const type = document.getElementById('form-sched-type').value;
-
-              const students = getStudents();
-              const student = students.find(s => s.id === studentId);
-              const lessons = getLessons();
-
-              lessons.push({
-                id: 'l_' + Date.now(),
-                studentId,
-                date,
-                time,
-                type,
-                status: '예정',
-                sessionNum: (student.usedPass || 0) + 1
-              });
-
-              saveLessons(lessons);
-              closeModal('modal-schedule');
-              e.target.reset();
-              renderCalendar();
-              showToast('새 레슨 일정이 추가되었습니다.');
-            }
-
-            function handleSaveStudent(e) {
-              e.preventDefault();
-              const type = document.querySelector('input[name="form_stud_type"]:checked')?.value || 'child';
-              const name = document.getElementById('form-stud-name').value.trim();
-              const subject = document.getElementById('form-stud-subject').value;
-              const grade = document.getElementById('form-stud-grade').value.trim();
-              const totalPass = parseInt(document.getElementById('form-stud-total').value) || 8;
-              const fee = parseInt(document.getElementById('form-stud-fee').value) || 350000;
-              const phone = document.getElementById('form-stud-phone').value.trim();
-              const schedule = document.getElementById('form-stud-schedule').value.trim();
-
-              const students = getStudents();
-              students.push({
-                id: 's_' + Date.now(),
-                type,
-                name,
-                subject,
-                grade: grade || (type === 'adult' ? '직장인 취미반' : '일반 학생'),
-                totalPass,
-                usedPass: 0,
-                fee,
-                phone,
-                schedule,
-                currentPiece: '배정 예정'
-              });
-
-              saveStudents(students);
-              closeModal('modal-student');
-              e.target.reset();
-              renderStudentsList();
-              renderCalendar();
-              showToast(`${name} ${type === 'adult' ? '수강생님이' : '학생이'} 새로 등록되었습니다. (수강권: ${totalPass}회)`);
-            }
-
-            // ================= 학부모 및 수강생 공유 링크 복사 & 모바일 카카오톡 바로 공유 =================
-            let currentShareModalData = { url: '', title: '', text: '' };
-
-            function buildShareReportUrl(noteId) {
-              const note = getNotes().find(n => n.id === noteId);
-              const student = note ? getStudents().find(s => s.id === note.studentId) : null;
-              const teacher = getTeacherProfile();
-
-              const basePath = `https://znno-debug.github.io/practice-fairy/share.html?id=${encodeURIComponent(String(noteId || ''))}`;
-              if (!note) return basePath;
-              try {
-                const compactPayload = [
-                  note.studentName || (student && student.name) || '수강생',
-                  note.subject || (student && student.subject) || '피아노',
-                  note.date || todayStr,
-                  note.sessionNum || (student && student.usedPass) || 1,
-                  (student && student.totalPass) || note.totalPass || 8,
-                  (note.piece || '').slice(0, 100),
-                  (note.technique || '').slice(0, 100),
-                  note.badge || '🎹 터치감 & 소리 최고',
-                  (note.feedback || '').slice(0, 220),
-                  (note.homework || '').slice(0, 150),
-                  (note.parentMsg || '').slice(0, 150),
-                  note.youtubeUrl || '',
-                  note.attendanceStatus || '출석',
-                  (student && student.type) || 'child',
-                  (student && student.fee) || 350000,
-                  (teacher && teacher.name) || '김민주',
-                  (teacher && teacher.bankName) || '카카오뱅크',
-                  (teacher && teacher.accountNumber) || '',
-                  (teacher && teacher.accountHolder) || (teacher && teacher.name) || '김민주'
-                ];
-                const b64 = btoa(unescape(encodeURIComponent(JSON.stringify(compactPayload))))
-                  .replace(/\+/g, '-')
-                  .replace(/\//g, '_')
-                  .replace(/=+$/, '');
-                return `${basePath}&d=${encodeURIComponent(b64)}`;
-              } catch (e) {
-                return basePath;
-              }
-            }
-
-            function copyTextWithFallback(text) {
-              let copied = false;
-              try {
-                const ta = document.createElement('textarea');
-                ta.value = text;
-                ta.setAttribute('readonly', '');
-                ta.style.position = 'fixed';
-                ta.style.top = '0';
-                ta.style.left = '0';
-                ta.style.width = '1px';
-                ta.style.height = '1px';
-                ta.style.padding = '0';
-                ta.style.border = 'none';
-                ta.style.outline = 'none';
-                ta.style.boxShadow = 'none';
-                ta.style.background = 'transparent';
-                ta.style.opacity = '0';
-                document.body.appendChild(ta);
-                ta.focus();
-                ta.select();
-                ta.setSelectionRange(0, text.length);
-                copied = document.execCommand('copy');
-                document.body.removeChild(ta);
-              } catch (e) {
-                copied = false;
-              }
-
-              if (navigator.clipboard && window.isSecureContext) {
-                navigator.clipboard.writeText(text).catch(() => { });
-                copied = true;
-              }
-              return copied;
-            }
-
-            function copyParentShareLink(noteId) {
-              const note = getNotes().find(n => n.id === noteId);
-              const student = note ? getStudents().find(s => s.id === note.studentId) : null;
-              const teacher = getTeacherProfile();
-              const isAdult = student && student.type === 'adult';
-              const shareUrl = buildShareReportUrl(noteId);
-              const studentName = student ? student.name : (note?.studentName || '수강생');
-              const subject = (note && note.subject) || (student && student.subject) || '음악';
-              const sessionNum = (note && note.sessionNum) || (student && student.usedPass) || 1;
-              const totalPass = (student && student.totalPass) || (note && note.totalPass) || 8;
-              const piece = (note && note.piece) || (student && student.currentPiece) || '오늘의 레슨곡';
-              const badge = (note && note.badge) || '🎹 오늘도 멋진 연주';
-              const homework = (note && note.homework) || '';
-              const feedback = (note && note.feedback) || '';
-              const teacherName = (teacher && teacher.name) ? `${teacher.name} 선생님` : '선생님';
-
-              const title = isAdult
-                ? `🧚‍♀️ ${studentName}님 • ${sessionNum}회차 레슨 리포트`
-                : `🧚‍♀️ ${studentName} 학생 • ${sessionNum}회차 레슨 알림장`;
-
-              const summaryLines = [
-                `[${subject}] ${piece} (${sessionNum}/${totalPass}회)`,
-                `🌟 ${badge}`,
-                homework ? `📝 과제: ${homework}` : (feedback ? `💬 ${feedback}` : '')
-              ].filter(Boolean).join('\n');
-
-              currentShareModalData = {
-                url: shareUrl,
-                title: title,
-                text: summaryLines,
-                studentName,
-                isAdult,
-                subject,
-                sessionNum,
-                totalPass,
-                piece,
-                badge,
-                homework,
-                feedback,
-                teacherName
-              };
-
-              const copied = copyTextWithFallback(shareUrl);
-
-              const modalTitle = document.getElementById('share-modal-title');
-              const modalStatus = document.getElementById('share-modal-status');
-              const modalDesc = document.getElementById('share-modal-target-desc');
-              const linkInput = document.getElementById('share-link-input');
-              const recopyText = document.getElementById('btn-share-modal-recopy-text');
-
-              if (modalTitle) {
-                modalTitle.innerText = isAdult ? '수강생 1:1 레슨 리포트 링크' : '학부모 레슨 리포트 공유 링크';
-              }
-              if (modalDesc) {
-                modalDesc.innerText = `${studentName} ${isAdult ? '님' : '학생'} • ${note ? note.sessionNum + '회차' : ''} 레슨 리포트`;
-              }
-              if (linkInput) {
-                linkInput.value = shareUrl;
-              }
-              if (recopyText) {
-                recopyText.innerText = '다시 복사하기';
-              }
-              if (modalStatus) {
-                if (copied) {
-                  modalStatus.className = 'text-[11px] font-semibold text-emerald-600';
-                  modalStatus.innerText = '✓ 클립보드에 링크가 자동 복사되었습니다!';
-                } else {
-                  modalStatus.className = 'text-[11px] font-semibold text-amber-600';
-                  modalStatus.innerText = '아래 [다시 복사하기]를 누르거나 링크를 직접 복사하세요';
-                }
-              }
-
-              openModal('modal-share-link');
-              if (copied) {
-                showToast(isAdult ? '🔗 수강생 리포트 링크가 복사되었습니다!' : '🔗 학부모 공유 링크가 복사되었습니다!');
-              }
-            }
-
-            function copyShareModalLink() {
-              const linkInput = document.getElementById('share-link-input');
-              const url = (linkInput && linkInput.value) || currentShareModalData.url;
-              if (!url) return;
-
-              const copied = copyTextWithFallback(url);
-              if (linkInput) {
-                linkInput.focus();
-                linkInput.select();
-                linkInput.setSelectionRange(0, url.length);
-              }
-
-              const modalStatus = document.getElementById('share-modal-status');
-              const recopyText = document.getElementById('btn-share-modal-recopy-text');
-              if (modalStatus) {
-                modalStatus.className = 'text-[11px] font-semibold text-emerald-600';
-                modalStatus.innerText = '✓ 링크가 다시 복사되었습니다! 카톡 대화방에 붙여넣기 하세요.';
-              }
-              if (recopyText) {
-                recopyText.innerText = '복사 완료 ✓';
-                setTimeout(() => {
-                  recopyText.innerText = '다시 복사하기';
-                }, 1800);
-              }
-              showToast(copied ? '📋 링크가 클립보드에 복사되었습니다!' : '입력창의 링크가 선택되었습니다. 복사하여 전달하세요.');
-            }
-
-            async function triggerNativeWebShareFromModal() {
-              const shareUrl = currentShareModalData.url || document.getElementById('share-link-input')?.value;
-              if (!shareUrl) return;
-
-              // 1. Kakao JavaScript SDK 피드형 카드 메시지 전송 (objectType: 'feed')
-              if (ensureKakaoInitialized() && window.Kakao && window.Kakao.Share) {
-                try {
-                  const d = currentShareModalData;
-                  window.Kakao.Share.sendDefault({
-                    objectType: 'feed',
-                    content: {
-                      title: d.title || '🧚‍♀️ 연습요정 레슨 리포트',
-                      description: d.text || '오늘의 레슨 내용과 선생님의 코칭 피드백을 확인해 보세요!',
-                      imageUrl: 'https://znno-debug.github.io/practice-fairy/icon-512.png',
-                      imageWidth: 800,
-                      imageHeight: 400,
-                      link: {
-                        mobileWebUrl: shareUrl,
-                        webUrl: shareUrl
-                      }
-                    },
-                    buttons: [
-                      {
-                        title: '레슨 리포트 상세보기',
-                        link: {
-                          mobileWebUrl: shareUrl,
-                          webUrl: shareUrl
-                        }
-                      }
-                    ]
-                  });
-                  showToast('카카오톡 카드 메시지 공유 창을 열었습니다! 💬');
-                  return;
-                } catch (kakaoErr) {
-                  console.error('Kakao.Share.sendDefault error:', kakaoErr);
-                }
-              }
-
-              // 2. Fallback: 모바일 Web Share API 또는 클립보드 복사
-              if (navigator.share) {
-                try {
-                  await navigator.share({
-                    title: currentShareModalData.title,
-                    text: currentShareModalData.text,
-                    url: shareUrl
-                  });
-                  showToast('카카오톡/공유 창을 통해 리포트를 전송했습니다! 💬');
-                  return;
-                } catch (err) {
-                  if (err.name === 'AbortError') return;
-                  copyShareModalLink();
-                }
-              }
-              copyShareModalLink();
-            }
-
-            function openShareUrlFromModal() {
-              const url = currentShareModalData.url || document.getElementById('share-link-input')?.value;
-              if (url) window.open(url, '_blank');
-            }
-
-            function previewShareReport(noteId) {
-              window.open(buildShareReportUrl(noteId), '_blank');
-            }
-
-            function showToast(msg) {
-              const toast = document.getElementById('toast');
-              const text = document.getElementById('toast-msg');
-              text.innerText = msg;
-              toast.classList.remove('opacity-0', 'pointer-events-none');
-              toast.classList.add('opacity-100');
-              setTimeout(() => {
-                toast.classList.remove('opacity-100');
-                toast.classList.add('opacity-0', 'pointer-events-none');
-              }, 2500);
-            }
-
-            // =======================================================
-            // 🧚‍♀️ 학생 연습실 (Student Practice Portal) JS 로직
-            // =======================================================
-            let currentPracticeStudentId = 's1';
-            let selectedQuestionCat = '운지번호';
-
-            function getPracticeChecklists() {
-              const data = JSON.parse(localStorage.getItem(STORAGE_KEY_PRACTICE) || JSON.stringify(defaultChecklists));
-              if (!data['s4'] && defaultChecklists['s4']) {
-                data['s4'] = defaultChecklists['s4'];
-                savePracticeChecklists(data);
-              }
-              return data;
-            }
-            function savePracticeChecklists(data) {
-              localStorage.setItem(STORAGE_KEY_PRACTICE, JSON.stringify(data));
-              syncTableToSupabase(STORAGE_KEY_PRACTICE, data);
-            }
-
-            function getQuestions() {
-              const data = JSON.parse(localStorage.getItem(STORAGE_KEY_QUESTIONS) || JSON.stringify(defaultQuestions));
-              if (!data.some(q => q.studentId === 's4')) {
-                const s4q = defaultQuestions.find(q => q.studentId === 's4');
-                if (s4q) {
-                  data.push(s4q);
-                  saveQuestions(data);
-                }
-              }
-              return data;
-            }
-            function saveQuestions(data) {
-              localStorage.setItem(STORAGE_KEY_QUESTIONS, JSON.stringify(data));
-              syncTableToSupabase(STORAGE_KEY_QUESTIONS, data);
-            }
-
-            function switchPracticeStudent() {
-              const select = document.getElementById('practice-student-select');
-              currentPracticeStudentId = select.value;
-              renderPracticePortal();
-            }
-
-            function renderPracticePortal() {
-              const students = getStudents();
-              const student = students.find(s => s.id === currentPracticeStudentId) || students[0];
-              if (!student) return;
-
-              currentPracticeStudentId = student.id;
-
-              // 1. 수강생 선택 셀렉트박스 채우기
-              const select = document.getElementById('practice-student-select');
-              select.innerHTML = students.map(s =>
-                `<option value="${s.id}" ${s.id === currentPracticeStudentId ? 'selected' : ''}>${s.name} (${s.subject})</option>`
-              ).join('');
-
-              // 2. 환영 문구 & 상단 정보 (성인/학생 맞춤 호칭)
-              const isAdult = student.type === 'adult';
-              document.getElementById('practice-greeting-name').innerText = student.name;
-              const titleEl = document.getElementById('practice-greeting-title');
-              if (titleEl) {
-                titleEl.innerText = isAdult ? '님!' : ' 학생!';
-              }
-              const subEl = document.getElementById('practice-greeting-sub');
-              if (subEl) {
-                subEl.innerText = isAdult
-                  ? '오늘 하루의 피로를 음악과 함께 편안하게 리프레시해 보세요.'
-                  : '오늘도 건반 위에서 나만의 소리를 멋지게 만들어볼까요?';
-              }
-
-              // 3. 연습 체크리스트 렌더링
-              const allChecklists = getPracticeChecklists();
-              let list = allChecklists[currentPracticeStudentId] || [];
-
-              // 만약 최신 레슨 노트에 homework가 있는데 체크리스트에 없으면 자동 주입
-              const notes = getNotes().filter(n => n.studentId === currentPracticeStudentId);
-              if (notes.length > 0 && notes[0].homework) {
-                const latestHw = notes[0].homework;
-                if (!list.some(item => item.meta === latestHw)) {
-                  list.unshift({
-                    id: 'c_hw_' + Date.now(),
-                    title: notes[0].piece || '선생님 레슨 과제',
-                    meta: latestHw,
-                    isTeacherHw: true,
-                    done: false
-                  });
-                  allChecklists[currentPracticeStudentId] = list;
-                  savePracticeChecklists(allChecklists);
-                }
-              }
-
-              const listContainer = document.getElementById('practice-checklist-items');
-              listContainer.innerHTML = '';
-
-              if (list.length === 0) {
-                listContainer.innerHTML = `
+          }
+        ]
+      };
+
+      console.log('[KAKAO PAYLOAD]', JSON.stringify(payload));
+
+      if (!ensureKakaoInitialized() || !window.Kakao || !window.Kakao.Share) {
+        alert('Kakao SDK가 아직 로드되지 않았습니다. 페이지를 새로고침한 뒤 다시 시도해 주세요.');
+        return;
+      }
+
+      try {
+        window.Kakao.Share.sendDefault(payload);
+        showToast('카카오톡 카드 메시지 공유 창을 열었습니다! 💬');
+      } catch (kakaoErr) {
+        console.error('[Kakao.Share.sendDefault Error]', kakaoErr);
+        alert('카카오톡 카드 공유 오류: ' + (kakaoErr?.message || String(kakaoErr)));
+      }
+    }
+
+    function copyTextWithFallback(text) {
+      let copied = false;
+      try {
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        ta.setAttribute('readonly', '');
+        ta.style.position = 'fixed';
+        ta.style.top = '0';
+        ta.style.left = '0';
+        ta.style.width = '1px';
+        ta.style.height = '1px';
+        ta.style.padding = '0';
+        ta.style.border = 'none';
+        ta.style.outline = 'none';
+        ta.style.boxShadow = 'none';
+        ta.style.background = 'transparent';
+        ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.focus();
+        ta.select();
+        ta.setSelectionRange(0, text.length);
+        copied = document.execCommand('copy');
+        document.body.removeChild(ta);
+      } catch (e) {
+        copied = false;
+      }
+
+      if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(text).catch(() => {});
+        copied = true;
+      }
+      return copied;
+    }
+
+    function openShareLinkModal(noteId) {
+      const meta = prepareReportCardMeta(noteId);
+      const shareUrl = meta.url;
+      const copied = copyTextWithFallback(shareUrl);
+
+      const modalTitle = document.getElementById('share-modal-title');
+      const modalStatus = document.getElementById('share-modal-status');
+      const modalDesc = document.getElementById('share-modal-target-desc');
+      const linkInput = document.getElementById('share-link-input');
+      const recopyText = document.getElementById('btn-share-modal-recopy-text');
+
+      if (modalTitle) {
+        modalTitle.innerText = meta.isAdult ? '수강생 1:1 레슨 리포트 링크' : '학부모 레슨 리포트 공유 링크';
+      }
+      if (modalDesc) {
+        modalDesc.innerText = `${meta.studentName} ${meta.isAdult ? '님' : '학생'} • ${meta.sessionNum}회차 레슨 리포트`;
+      }
+      if (linkInput) {
+        linkInput.value = shareUrl;
+      }
+      if (recopyText) {
+        recopyText.innerText = '다시 복사하기';
+      }
+      if (modalStatus) {
+        if (copied) {
+          modalStatus.className = 'text-[11px] font-semibold text-emerald-600';
+          modalStatus.innerText = '✓ 클립보드에 링크가 자동 복사되었습니다!';
+        } else {
+          modalStatus.className = 'text-[11px] font-semibold text-amber-600';
+          modalStatus.innerText = '아래 [다시 복사하기]를 누르거나 [카카오톡 공유]를 눌러주세요';
+        }
+      }
+
+      openModal('modal-share-link');
+    }
+
+    function copyShareModalLink() {
+      const linkInput = document.getElementById('share-link-input');
+      const url = (linkInput && linkInput.value) || currentShareModalData.url;
+      if (!url) return;
+
+      const copied = copyTextWithFallback(url);
+      if (linkInput) {
+        linkInput.focus();
+        linkInput.select();
+        linkInput.setSelectionRange(0, url.length);
+      }
+
+      const modalStatus = document.getElementById('share-modal-status');
+      const recopyText = document.getElementById('btn-share-modal-recopy-text');
+      if (modalStatus) {
+        modalStatus.className = 'text-[11px] font-semibold text-emerald-600';
+        modalStatus.innerText = '✓ 링크가 복사되었습니다! 카드형 메시지는 [카카오톡 공유] 버튼을 눌러주세요.';
+      }
+      if (recopyText) {
+        recopyText.innerText = '복사 완료 ✓';
+        setTimeout(() => {
+          recopyText.innerText = '다시 복사하기';
+        }, 1800);
+      }
+      showToast(copied ? '📋 링크가 클립보드에 복사되었습니다!' : '입력창의 링크가 선택되었습니다.');
+    }
+
+    function openShareUrlFromModal() {
+      const url = currentShareModalData.url || document.getElementById('share-link-input')?.value;
+      if (url) window.open(url, '_blank');
+    }
+
+    function previewShareReport(noteId) {
+      window.open(buildShareReportUrl(noteId), '_blank');
+    }
+
+    function showToast(msg) {
+      const toast = document.getElementById('toast');
+      const text = document.getElementById('toast-msg');
+      text.innerText = msg;
+      toast.classList.remove('opacity-0', 'pointer-events-none');
+      toast.classList.add('opacity-100');
+      setTimeout(() => {
+        toast.classList.remove('opacity-100');
+        toast.classList.add('opacity-0', 'pointer-events-none');
+      }, 2500);
+    }
+
+    // =======================================================
+    // 🧚‍♀️ 학생 연습실 (Student Practice Portal) JS 로직
+    // =======================================================
+    let currentPracticeStudentId = 's1';
+    let selectedQuestionCat = '운지번호';
+
+    function getPracticeChecklists() {
+      const data = JSON.parse(localStorage.getItem(STORAGE_KEY_PRACTICE) || JSON.stringify(defaultChecklists));
+      if (!data['s4'] && defaultChecklists['s4']) {
+        data['s4'] = defaultChecklists['s4'];
+        savePracticeChecklists(data);
+      }
+      return data;
+    }
+    function savePracticeChecklists(data) {
+      localStorage.setItem(STORAGE_KEY_PRACTICE, JSON.stringify(data));
+      syncTableToSupabase(STORAGE_KEY_PRACTICE, data);
+    }
+
+    function getQuestions() {
+      const data = JSON.parse(localStorage.getItem(STORAGE_KEY_QUESTIONS) || JSON.stringify(defaultQuestions));
+      if (!data.some(q => q.studentId === 's4')) {
+        const s4q = defaultQuestions.find(q => q.studentId === 's4');
+        if (s4q) {
+          data.push(s4q);
+          saveQuestions(data);
+        }
+      }
+      return data;
+    }
+    function saveQuestions(data) {
+      localStorage.setItem(STORAGE_KEY_QUESTIONS, JSON.stringify(data));
+      syncTableToSupabase(STORAGE_KEY_QUESTIONS, data);
+    }
+
+    function switchPracticeStudent() {
+      const select = document.getElementById('practice-student-select');
+      currentPracticeStudentId = select.value;
+      renderPracticePortal();
+    }
+
+    function renderPracticePortal() {
+      const students = getStudents();
+      const student = students.find(s => s.id === currentPracticeStudentId) || students[0];
+      if (!student) return;
+
+      currentPracticeStudentId = student.id;
+
+      // 1. 수강생 선택 셀렉트박스 채우기
+      const select = document.getElementById('practice-student-select');
+      select.innerHTML = students.map(s =>
+        `<option value="${s.id}" ${s.id === currentPracticeStudentId ? 'selected' : ''}>${s.name} (${s.subject})</option>`
+      ).join('');
+
+      // 2. 환영 문구 & 상단 정보 (성인/학생 맞춤 호칭)
+      const isAdult = student.type === 'adult';
+      document.getElementById('practice-greeting-name').innerText = student.name;
+      const titleEl = document.getElementById('practice-greeting-title');
+      if (titleEl) {
+        titleEl.innerText = isAdult ? '님!' : ' 학생!';
+      }
+      const subEl = document.getElementById('practice-greeting-sub');
+      if (subEl) {
+        subEl.innerText = isAdult
+          ? '오늘 하루의 피로를 음악과 함께 편안하게 리프레시해 보세요.'
+          : '오늘도 건반 위에서 나만의 소리를 멋지게 만들어볼까요?';
+      }
+
+      // 3. 연습 체크리스트 렌더링
+      const allChecklists = getPracticeChecklists();
+      let list = allChecklists[currentPracticeStudentId] || [];
+
+      // 만약 최신 레슨 노트에 homework가 있는데 체크리스트에 없으면 자동 주입
+      const notes = getNotes().filter(n => n.studentId === currentPracticeStudentId);
+      if (notes.length > 0 && notes[0].homework) {
+        const latestHw = notes[0].homework;
+        if (!list.some(item => item.meta === latestHw)) {
+          list.unshift({
+            id: 'c_hw_' + Date.now(),
+            title: notes[0].piece || '선생님 레슨 과제',
+            meta: latestHw,
+            isTeacherHw: true,
+            done: false
+          });
+          allChecklists[currentPracticeStudentId] = list;
+          savePracticeChecklists(allChecklists);
+        }
+      }
+
+      const listContainer = document.getElementById('practice-checklist-items');
+      listContainer.innerHTML = '';
+
+      if (list.length === 0) {
+        listContainer.innerHTML = `
           <div class="py-8 text-center text-slate-400 bg-slate-50 rounded-xl border border-dashed border-slate-200">
             <p class="text-xs">등록된 오늘의 연습 목표가 없습니다.</p>
             <button onclick="openAddPracticeModal()" class="mt-2 text-xs font-bold text-purple-600 hover:underline">+ 첫 연습 목표 추가하기</button>
           </div>
         `;
-              } else {
-                list.forEach(item => {
-                  const itemEl = document.createElement('div');
-                  itemEl.className = `p-3 rounded-xl border transition flex items-start justify-between ${item.done
-                    ? 'bg-slate-50 border-slate-200 opacity-75'
-                    : 'bg-white border-slate-200 hover:border-purple-300 shadow-xs'
-                    }`;
+      } else {
+        list.forEach(item => {
+          const itemEl = document.createElement('div');
+          itemEl.className = `p-3 rounded-xl border transition flex items-start justify-between ${item.done
+            ? 'bg-slate-50 border-slate-200 opacity-75'
+            : 'bg-white border-slate-200 hover:border-purple-300 shadow-xs'
+            }`;
 
-                  itemEl.innerHTML = `
+          itemEl.innerHTML = `
             <div class="flex items-start space-x-3">
               <input type="checkbox" onchange="toggleChecklistItem('${item.id}')" ${item.done ? 'checked' : ''} class="mt-1 w-4 h-4 rounded text-purple-600 focus:ring-purple-500 cursor-pointer">
               <div>
@@ -4697,38 +4691,38 @@
             </div>
             <button onclick="deleteChecklistItem('${item.id}')" class="text-slate-400 hover:text-slate-600 p-1 text-xs" title="삭제">✕</button>
           `;
-                  listContainer.appendChild(itemEl);
-                });
-              }
+          listContainer.appendChild(itemEl);
+        });
+      }
 
-              // 진행률 계산
-              const totalCount = list.length;
-              const doneCount = list.filter(i => i.done).length;
-              const pct = totalCount === 0 ? 0 : Math.round((doneCount / totalCount) * 100);
-              document.getElementById('checklist-progress-text').innerText = `${doneCount} / ${totalCount} 완료 (${pct}%)`;
-              document.getElementById('checklist-progress-bar').style.width = `${pct}%`;
+      // 진행률 계산
+      const totalCount = list.length;
+      const doneCount = list.filter(i => i.done).length;
+      const pct = totalCount === 0 ? 0 : Math.round((doneCount / totalCount) * 100);
+      document.getElementById('checklist-progress-text').innerText = `${doneCount} / ${totalCount} 완료 (${pct}%)`;
+      document.getElementById('checklist-progress-bar').style.width = `${pct}%`;
 
-              // 4. 질문 보관함 렌더링
-              const allQuestions = getQuestions();
-              const studentQuestions = allQuestions.filter(q => q.studentId === currentPracticeStudentId);
-              const pendingCount = studentQuestions.filter(q => !q.answered).length;
-              document.getElementById('question-pending-count').innerText = `${pendingCount}건 질문 대기`;
+      // 4. 질문 보관함 렌더링
+      const allQuestions = getQuestions();
+      const studentQuestions = allQuestions.filter(q => q.studentId === currentPracticeStudentId);
+      const pendingCount = studentQuestions.filter(q => !q.answered).length;
+      document.getElementById('question-pending-count').innerText = `${pendingCount}건 질문 대기`;
 
-              const qContainer = document.getElementById('practice-questions-list');
-              qContainer.innerHTML = '';
+      const qContainer = document.getElementById('practice-questions-list');
+      qContainer.innerHTML = '';
 
-              if (studentQuestions.length === 0) {
-                qContainer.innerHTML = `
+      if (studentQuestions.length === 0) {
+        qContainer.innerHTML = `
           <div class="py-6 text-center text-slate-400 bg-slate-50 rounded-xl border border-dashed border-slate-200">
             <p class="text-xs">아직 기록된 질문이 없습니다.</p>
             <p class="text-[11px] text-slate-400 mt-0.5">연습 중 헷갈리는 박자나 운지번호를 자유롭게 물어보세요!</p>
           </div>
         `;
-              } else {
-                studentQuestions.forEach(q => {
-                  const qEl = document.createElement('div');
-                  qEl.className = 'p-3 bg-white rounded-xl border border-slate-200 hover:border-slate-300 transition space-y-1.5';
-                  qEl.innerHTML = `
+      } else {
+        studentQuestions.forEach(q => {
+          const qEl = document.createElement('div');
+          qEl.className = 'p-3 bg-white rounded-xl border border-slate-200 hover:border-slate-300 transition space-y-1.5';
+          qEl.innerHTML = `
             <div class="flex items-center justify-between">
               <div class="flex items-center space-x-1.5">
                 <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-purple-50 text-purple-700 border border-purple-200">${q.category}</span>
@@ -4740,23 +4734,23 @@
             </div>
             <p class="text-xs text-slate-800 font-medium leading-relaxed">${q.text}</p>
           `;
-                  qContainer.appendChild(qEl);
-                });
-              }
+          qContainer.appendChild(qEl);
+        });
+      }
 
-              // 5. 칭찬 뱃지 보관함 렌더링
-              const trophiesContainer = document.getElementById('badge-trophies-list');
-              const studentNotes = getNotes().filter(n => n.studentId === currentPracticeStudentId);
-              trophiesContainer.innerHTML = '';
-              document.getElementById('badge-trophy-count').innerText = `${studentNotes.length}개 획득`;
+      // 5. 칭찬 뱃지 보관함 렌더링
+      const trophiesContainer = document.getElementById('badge-trophies-list');
+      const studentNotes = getNotes().filter(n => n.studentId === currentPracticeStudentId);
+      trophiesContainer.innerHTML = '';
+      document.getElementById('badge-trophy-count').innerText = `${studentNotes.length}개 획득`;
 
-              if (studentNotes.length === 0) {
-                trophiesContainer.innerHTML = '<div class="py-4 text-center text-xs text-slate-400">레슨을 받으면 칭찬 뱃지가 모입니다!</div>';
-              } else {
-                studentNotes.forEach(sn => {
-                  const badgeEl = document.createElement('div');
-                  badgeEl.className = 'p-2.5 bg-amber-50/70 border border-amber-200/80 rounded-xl flex items-center justify-between text-xs';
-                  badgeEl.innerHTML = `
+      if (studentNotes.length === 0) {
+        trophiesContainer.innerHTML = '<div class="py-4 text-center text-xs text-slate-400">레슨을 받으면 칭찬 뱃지가 모입니다!</div>';
+      } else {
+        studentNotes.forEach(sn => {
+          const badgeEl = document.createElement('div');
+          badgeEl.className = 'p-2.5 bg-amber-50/70 border border-amber-200/80 rounded-xl flex items-center justify-between text-xs';
+          badgeEl.innerHTML = `
             <div class="flex items-center space-x-2">
               <span class="text-base">🌟</span>
               <div>
@@ -4766,71 +4760,71 @@
             </div>
             <span class="text-[10px] font-bold text-amber-800 bg-amber-200/60 px-2 py-0.5 rounded-full">${sn.sessionNum}회차</span>
           `;
-                  trophiesContainer.appendChild(badgeEl);
-                });
-              }
+          trophiesContainer.appendChild(badgeEl);
+        });
+      }
 
-              // 6. 오늘 누적 연습 세션 타임라인 렌더링
-              renderPracticeSessionsTimeline();
+      // 6. 오늘 누적 연습 세션 타임라인 렌더링
+      renderPracticeSessionsTimeline();
 
-              // 7. 메트로놈 비트 라이트 초기화
-              renderMetroBeatLights();
-            }
+      // 7. 메트로놈 비트 라이트 초기화
+      renderMetroBeatLights();
+    }
 
-            // =======================================================
-            // ⏱️ 오늘 누적 연습 세션 타임라인 관리
-            // =======================================================
-            function getPracticeSessions() {
-              const data = JSON.parse(localStorage.getItem(STORAGE_KEY_SESSIONS) || JSON.stringify(defaultSessions));
-              if (!data['s4'] && defaultSessions['s4']) {
-                data['s4'] = defaultSessions['s4'];
-                savePracticeSessions(data);
-              }
-              return data;
-            }
-            function savePracticeSessions(data) {
-              localStorage.setItem(STORAGE_KEY_SESSIONS, JSON.stringify(data));
-              syncTableToSupabase(STORAGE_KEY_SESSIONS, data);
-            }
+    // =======================================================
+    // ⏱️ 오늘 누적 연습 세션 타임라인 관리
+    // =======================================================
+    function getPracticeSessions() {
+      const data = JSON.parse(localStorage.getItem(STORAGE_KEY_SESSIONS) || JSON.stringify(defaultSessions));
+      if (!data['s4'] && defaultSessions['s4']) {
+        data['s4'] = defaultSessions['s4'];
+        savePracticeSessions(data);
+      }
+      return data;
+    }
+    function savePracticeSessions(data) {
+      localStorage.setItem(STORAGE_KEY_SESSIONS, JSON.stringify(data));
+      syncTableToSupabase(STORAGE_KEY_SESSIONS, data);
+    }
 
-            function renderPracticeSessionsTimeline() {
-              const allSessions = getPracticeSessions();
-              const studentSessions = allSessions[currentPracticeStudentId] || [];
-              const timelineContainer = document.getElementById('practice-sessions-timeline');
-              if (!timelineContainer) return;
+    function renderPracticeSessionsTimeline() {
+      const allSessions = getPracticeSessions();
+      const studentSessions = allSessions[currentPracticeStudentId] || [];
+      const timelineContainer = document.getElementById('practice-sessions-timeline');
+      if (!timelineContainer) return;
 
-              timelineContainer.innerHTML = '';
+      timelineContainer.innerHTML = '';
 
-              // 총 누적 연습 시간 계산
-              const totalMinutes = studentSessions.reduce((acc, cur) => acc + (cur.durationMinutes || 0), 0);
-              document.getElementById('timeline-total-minutes').innerText = totalMinutes;
-              document.getElementById('timeline-session-count').innerText = `(총 ${studentSessions.length}개 세션)`;
+      // 총 누적 연습 시간 계산
+      const totalMinutes = studentSessions.reduce((acc, cur) => acc + (cur.durationMinutes || 0), 0);
+      document.getElementById('timeline-total-minutes').innerText = totalMinutes;
+      document.getElementById('timeline-session-count').innerText = `(총 ${studentSessions.length}개 세션)`;
 
-              // 목표 60분 달성 여부 뱃지
-              const goalBadge = document.getElementById('timeline-goal-badge');
-              if (totalMinutes >= 60) {
-                goalBadge.innerText = '목표 60분 달성! 🎉';
-                goalBadge.className = 'text-[10px] font-bold px-2 py-0.5 rounded-full bg-purple-200 text-purple-900';
-              } else {
-                goalBadge.innerText = `목표까지 ${60 - totalMinutes}분 남음 💪`;
-                goalBadge.className = 'text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-900';
-              }
+      // 목표 60분 달성 여부 뱃지
+      const goalBadge = document.getElementById('timeline-goal-badge');
+      if (totalMinutes >= 60) {
+        goalBadge.innerText = '목표 60분 달성! 🎉';
+        goalBadge.className = 'text-[10px] font-bold px-2 py-0.5 rounded-full bg-purple-200 text-purple-900';
+      } else {
+        goalBadge.innerText = `목표까지 ${60 - totalMinutes}분 남음 💪`;
+        goalBadge.className = 'text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-900';
+      }
 
-              if (studentSessions.length === 0) {
-                timelineContainer.innerHTML = `
+      if (studentSessions.length === 0) {
+        timelineContainer.innerHTML = `
           <div class="py-6 text-center text-slate-400 bg-slate-50 rounded-xl border border-dashed border-slate-200 ml-7">
             <p class="text-xs">오늘 아직 기록된 연습 세션이 없습니다.</p>
             <p class="text-[11px] text-slate-400 mt-0.5">상단의 '타이머 시작' 또는 '수동 기록'을 눌러보세요!</p>
           </div>
         `;
-                return;
-              }
+        return;
+      }
 
-              studentSessions.forEach((sess, idx) => {
-                const itemEl = document.createElement('div');
-                itemEl.className = 'relative flex items-start space-x-3 group';
+      studentSessions.forEach((sess, idx) => {
+        const itemEl = document.createElement('div');
+        itemEl.className = 'relative flex items-start space-x-3 group';
 
-                itemEl.innerHTML = `
+        itemEl.innerHTML = `
           <!-- 타임라인 불릿 점 -->
           <div class="w-7 h-7 rounded-full bg-purple-100 border-2 border-purple-500 text-purple-700 flex items-center justify-center font-bold text-xs shrink-0 z-10 mt-1 shadow-2xs">
             ${idx + 1}
@@ -4851,568 +4845,568 @@
             ${sess.notes ? `<p class="text-[11px] text-slate-600 leading-relaxed break-keep bg-white/70 p-2 rounded-lg border border-slate-100">${sess.notes}</p>` : ''}
           </div>
         `;
-                timelineContainer.appendChild(itemEl);
-              });
-            }
-
-            // 수동 세션 기록
-            function openManualSessionModal() {
-              const student = getStudents().find(s => s.id === currentPracticeStudentId);
-              document.getElementById('manual-sess-piece').value = student ? (student.currentPiece || '') : '';
-
-              const now = new Date();
-              const hh = String(now.getHours()).padStart(2, '0');
-              const mm = String(now.getMinutes()).padStart(2, '0');
-              document.getElementById('manual-sess-start').value = `${hh}:${mm}`;
-              document.getElementById('manual-sess-duration').value = 20;
-              document.getElementById('manual-sess-notes').value = '';
-
-              openModal('modal-session-manual');
-            }
-
-            function handleSaveManualSession(e) {
-              e.preventDefault();
-              const piece = document.getElementById('manual-sess-piece').value.trim();
-              const startTime = document.getElementById('manual-sess-start').value;
-              const duration = parseInt(document.getElementById('manual-sess-duration').value) || 20;
-              const notes = document.getElementById('manual-sess-notes').value.trim();
-
-              // 시작 시간과 지속 시간으로 종료 시간 계산
-              const [h, m] = startTime.split(':').map(Number);
-              const endTotalM = h * 60 + m + duration;
-              const endH = String(Math.floor(endTotalM / 60) % 24).padStart(2, '0');
-              const endM = String(endTotalM % 60).padStart(2, '0');
-              const endTime = `${endH}:${endM}`;
-
-              const allSessions = getPracticeSessions();
-              let list = allSessions[currentPracticeStudentId] || [];
-
-              list.push({
-                id: 'sess_' + Date.now(),
-                date: todayStr,
-                startTime,
-                endTime,
-                durationMinutes: duration,
-                piece,
-                notes: notes || '집중 연습 완료'
-              });
-
-              allSessions[currentPracticeStudentId] = list;
-              savePracticeSessions(allSessions);
-              closeModal('modal-session-manual');
-              renderPracticeSessionsTimeline();
-              showToast(`연습 세션이 타임라인에 기록되었습니다! (+${duration}분) 👏`);
-            }
-
-            function deletePracticeSession(sessId) {
-              const allSessions = getPracticeSessions();
-              let list = allSessions[currentPracticeStudentId] || [];
-              allSessions[currentPracticeStudentId] = list.filter(s => s.id !== sessId);
-              savePracticeSessions(allSessions);
-              renderPracticeSessionsTimeline();
-              showToast('연습 세션이 삭제되었습니다.');
-            }
-
-            // 실시간 세션 타이머 제어
-            let liveTimerInterval = null;
-            let liveTimerSeconds = 0;
-            let liveTimerPieceName = '';
-            let liveTimerStartStr = '';
-
-            function toggleSessionTimerModal() {
-              // 연습할 곡 목록 채우기
-              const select = document.getElementById('timer-piece-select');
-              const student = getStudents().find(s => s.id === currentPracticeStudentId);
-              const checklists = (getPracticeChecklists()[currentPracticeStudentId] || []);
-
-              let optionsHtml = '';
-              if (student && student.currentPiece) {
-                optionsHtml += `<option value="${student.currentPiece}">${student.currentPiece} (현재 메인곡)</option>`;
-              }
-              checklists.forEach(item => {
-                optionsHtml += `<option value="${item.title}">${item.title}</option>`;
-              });
-              optionsHtml += `<option value="하농 및 기본 테크닉">하농 및 기본 테크닉 연습</option>`;
-              optionsHtml += `<option value="자유곡 연습">자유곡 / 취미곡 연습</option>`;
-
-              select.innerHTML = optionsHtml;
-              document.getElementById('timer-piece-custom').value = '';
-              openModal('modal-session-timer');
-            }
-
-            function handleStartLiveSession(e) {
-              e.preventDefault();
-              const customPiece = document.getElementById('timer-piece-custom').value.trim();
-              const selectPiece = document.getElementById('timer-piece-select').value;
-              liveTimerPieceName = customPiece || selectPiece || '피아노 연습';
-
-              const now = new Date();
-              liveTimerStartStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
-
-              closeModal('modal-session-timer');
-
-              // 배너 띄우기
-              document.getElementById('live-timer-piece').innerText = `🎵 [${liveTimerPieceName}] 연습 진행 중...`;
-              document.getElementById('live-timer-banner').classList.remove('hidden');
-
-              liveTimerSeconds = 0;
-              clearInterval(liveTimerInterval);
-              liveTimerInterval = setInterval(() => {
-                liveTimerSeconds++;
-                const m = String(Math.floor(liveTimerSeconds / 60)).padStart(2, '0');
-                const s = String(liveTimerSeconds % 60).padStart(2, '0');
-                document.getElementById('live-timer-clock').innerText = `${m}:${s}`;
-              }, 1000);
-
-              showToast(`'${liveTimerPieceName}' 연습 타이머가 시작되었습니다! 화이팅 🎵`);
-            }
-
-            function stopAndSaveLiveTimer() {
-              clearInterval(liveTimerInterval);
-              document.getElementById('live-timer-banner').classList.add('hidden');
-
-              const durationMinutes = Math.max(1, Math.round(liveTimerSeconds / 60));
-              const now = new Date();
-              const endStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
-
-              const noteMsg = prompt('오늘 연습은 어땠나요? 세션 메모를 간단히 남겨보세요:', '손가락 힘 빼고 템포 집중 연습함');
-
-              const allSessions = getPracticeSessions();
-              let list = allSessions[currentPracticeStudentId] || [];
-
-              list.push({
-                id: 'sess_' + Date.now(),
-                date: todayStr,
-                startTime: liveTimerStartStr,
-                endTime: endStr,
-                durationMinutes,
-                piece: liveTimerPieceName,
-                notes: noteMsg || '집중 연습 완료'
-              });
-
-              allSessions[currentPracticeStudentId] = list;
-              savePracticeSessions(allSessions);
-              renderPracticeSessionsTimeline();
-              showToast(`세션이 타임라인에 등록되었습니다! (+${durationMinutes}분 연습 완료 🎉)`);
-            }
-
-            function cancelLiveTimer() {
-              if (confirm('진행 중인 연습 세션 타이머를 취소하시겠습니까?')) {
-                clearInterval(liveTimerInterval);
-                document.getElementById('live-timer-banner').classList.add('hidden');
-                showToast('연습 타이머가 취소되었습니다.');
-              }
-            }
-
-            // =======================================================
-            // 🎵 정밀 멀티박자 메트로놈 (2/4, 3/4, 4/4, 6/8 박자)
-            // =======================================================
-            let currentTsBeats = 4;
-            let currentTsUnit = 4;
-            let currentBeatIndex = 0;
-            let isMetroCollapsed = false;
-
-            function toggleMetronomeCollapse() {
-              isMetroCollapsed = !isMetroCollapsed;
-              const content = document.getElementById('metro-body-content');
-              const text = document.getElementById('metro-collapse-text');
-              const icon = document.getElementById('metro-collapse-icon');
-
-              if (isMetroCollapsed) {
-                content.classList.add('hidden');
-                text.innerText = '펼치기';
-                icon.innerText = '▼';
-              } else {
-                content.classList.remove('hidden');
-                text.innerText = '접기';
-                icon.innerText = '▲';
-              }
-            }
-
-            function setTimeSignature(beats, unit) {
-              currentTsBeats = beats;
-              currentTsUnit = unit;
-              currentBeatIndex = 0;
-
-              // 버튼 하이라이트 갱신
-              const presets = [
-                { b: 2, u: 4, id: 'ts-btn-2-4' },
-                { b: 3, u: 4, id: 'ts-btn-3-4' },
-                { b: 4, u: 4, id: 'ts-btn-4-4' },
-                { b: 6, u: 8, id: 'ts-btn-6-8' }
-              ];
-
-              presets.forEach(p => {
-                const btn = document.getElementById(p.id);
-                if (p.b === beats && p.u === unit) {
-                  btn.className = 'ts-btn flex-1 py-1 rounded-lg bg-white text-purple-700 shadow-xs transition';
-                } else {
-                  btn.className = 'ts-btn flex-1 py-1 rounded-lg text-slate-600 hover:text-slate-900 transition';
-                }
-              });
-
-              renderMetroBeatLights();
-
-              if (isMetroRunning) {
-                clearInterval(metroInterval);
-                const ms = (60 / currentBpm) * 1000;
-                metroInterval = setInterval(() => triggerMetroBeat(), ms);
-              }
-            }
-
-            function renderMetroBeatLights() {
-              const container = document.getElementById('metro-beat-lights');
-              if (!container) return;
-              container.innerHTML = '';
-
-              for (let i = 0; i < currentTsBeats; i++) {
-                const isAccent = (i === 0) || (currentTsBeats === 6 && i === 3);
-                const dot = document.createElement('span');
-                dot.id = `beat-light-${i}`;
-                dot.className = `w-3 h-3 rounded-full transition-all duration-75 ${isAccent ? 'border-2 border-purple-500 bg-white ring-1 ring-purple-200' : 'border border-slate-300 bg-white'
-                  }`;
-                container.appendChild(dot);
-              }
-            }
-
-            function triggerMetroBeat() {
-              // 1. 비트 램프 하이라이트
-              for (let i = 0; i < currentTsBeats; i++) {
-                const dot = document.getElementById(`beat-light-${i}`);
-                if (!dot) continue;
-                const isAccent = (i === 0) || (currentTsBeats === 6 && i === 3);
-
-                if (i === currentBeatIndex) {
-                  if (i === 0) {
-                    dot.className = 'w-3.5 h-3.5 rounded-full bg-purple-600 ring-4 ring-purple-300 transition-all duration-75';
-                  } else if (currentTsBeats === 6 && i === 3) {
-                    dot.className = 'w-3 h-3 rounded-full bg-indigo-500 ring-2 ring-indigo-300 transition-all duration-75';
-                  } else {
-                    dot.className = 'w-3 h-3 rounded-full bg-purple-400 ring-2 ring-purple-200 transition-all duration-75';
-                  }
-                } else {
-                  dot.className = `w-3 h-3 rounded-full transition-all duration-75 ${isAccent ? 'border-2 border-purple-400 bg-white' : 'border border-slate-300 bg-white'
-                    }`;
-                }
-              }
-
-              // 2. 오디오 틱 사운드 주파수 분기 (강세 적용)
-              let freq = 750;
-              if (currentBeatIndex === 0) {
-                freq = 1200; // 제1박 고음 강세 (Ding!)
-              } else if (currentTsBeats === 6 && currentBeatIndex === 3) {
-                freq = 960;  // 6/8박자의 제4박 중간 강세 (Dong!)
-              } else {
-                freq = 750;  // 일반 박자 (Tok)
-              }
-
-              playMetroClick(freq);
-
-              // 다음 박자로 인덱스 이동
-              currentBeatIndex = (currentBeatIndex + 1) % currentTsBeats;
-            }
-
-            // 체크리스트 토글 & 추가
-            function toggleChecklistItem(itemId) {
-              const allChecklists = getPracticeChecklists();
-              let list = allChecklists[currentPracticeStudentId] || [];
-              const item = list.find(i => i.id === itemId);
-              if (item) {
-                item.done = !item.done;
-                savePracticeChecklists(allChecklists);
-                renderPracticePortal();
-
-                // 메트로놈 틱 소리로 가벼운 체크 피드백
-                playMetroClick(1200);
-
-                if (list.every(i => i.done)) {
-                  showToast('🎉 대단해요! 오늘의 연습 목표를 모두 완수했습니다! 요정 레벨 UP! 🧚‍♀️');
-                } else if (item.done) {
-                  showToast('연습 목표 하나를 멋지게 달성했습니다! ✨');
-                }
-              }
-            }
-
-            function openAddPracticeModal() {
-              document.getElementById('custom-practice-title').value = '';
-              document.getElementById('custom-practice-meta').value = '';
-              openModal('modal-add-practice');
-            }
-
-            function handleSaveCustomPracticeGoal(e) {
-              e.preventDefault();
-              const title = document.getElementById('custom-practice-title').value.trim();
-              const meta = document.getElementById('custom-practice-meta').value.trim();
-
-              const allChecklists = getPracticeChecklists();
-              let list = allChecklists[currentPracticeStudentId] || [];
-
-              list.push({
-                id: 'c_' + Date.now(),
-                title,
-                meta,
-                isTeacherHw: false,
-                done: false
-              });
-
-              allChecklists[currentPracticeStudentId] = list;
-              savePracticeChecklists(allChecklists);
-              closeModal('modal-add-practice');
-              renderPracticePortal();
-              showToast('새 연습 목표가 추가되었습니다! 화이팅 🎵');
-            }
-
-            function deleteChecklistItem(itemId) {
-              const allChecklists = getPracticeChecklists();
-              let list = allChecklists[currentPracticeStudentId] || [];
-              allChecklists[currentPracticeStudentId] = list.filter(i => i.id !== itemId);
-              savePracticeChecklists(allChecklists);
-              renderPracticePortal();
-            }
-
-            // 질문 카테고리 & 질문 추가
-            function selectQuestionCategory(cat) {
-              selectedQuestionCat = cat;
-              const btns = document.querySelectorAll('.q-cat-btn');
-              btns.forEach(b => {
-                if (b.innerText === cat) {
-                  b.className = 'q-cat-btn px-2 py-0.5 rounded text-[11px] font-semibold bg-purple-600 text-white';
-                } else {
-                  b.className = 'q-cat-btn px-2 py-0.5 rounded text-[11px] font-semibold bg-white text-slate-600 border border-slate-200';
-                }
-              });
-            }
-
-            function handleAddQuestion(e) {
-              e.preventDefault();
-              const text = document.getElementById('question-input-text').value.trim();
-              if (!text) return;
-
-              const questions = getQuestions();
-              questions.unshift({
-                id: 'q_' + Date.now(),
-                studentId: currentPracticeStudentId,
-                text,
-                category: selectedQuestionCat,
-                date: new Date().toISOString().replace('T', ' ').substring(0, 16),
-                answered: false
-              });
-
-              saveQuestions(questions);
-              document.getElementById('question-input-text').value = '';
-              renderPracticePortal();
-              showToast('선생님께 드릴 질문이 저장되었습니다! 다음 레슨 때 확인해 드릴게요 📝');
-            }
-
-            function toggleQuestionResolved(qId) {
-              const questions = getQuestions();
-              const q = questions.find(item => item.id === qId);
-              if (q) {
-                q.answered = !q.answered;
-                saveQuestions(questions);
-                renderPracticePortal();
-                showToast(q.answered ? '질문이 해결 완료로 표시되었습니다 ✅' : '질문이 답변 대기 상태로 변경되었습니다 ⏳');
-              }
-            }
-
-            // =======================================================
-            // ⏱️ Web Audio API 스마트 메트로놈 & 타이머 로직
-            // =======================================================
-            let audioCtx = null;
-            let metroInterval = null;
-            let isMetroRunning = false;
-            let currentBpm = 84;
-
-            function playMetroClick(freq = 880) {
-              try {
-                if (!audioCtx) {
-                  audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                }
-                if (audioCtx.state === 'suspended') {
-                  audioCtx.resume();
-                }
-                const osc = audioCtx.createOscillator();
-                const gain = audioCtx.createGain();
-                osc.type = 'triangle';
-                osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
-                gain.gain.setValueAtTime(0.25, audioCtx.currentTime);
-                gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.04);
-                osc.connect(gain);
-                gain.connect(audioCtx.destination);
-                osc.start();
-                osc.stop(audioCtx.currentTime + 0.04);
-              } catch (err) {
-                console.error(err);
-              }
-            }
-
-            function getTempoTerm(bpm) {
-              if (bpm < 60) return 'Largo';
-              if (bpm < 76) return 'Adagio';
-              if (bpm < 108) return 'Andante';
-              if (bpm < 120) return 'Moderato';
-              if (bpm < 168) return 'Allegro';
-              return 'Presto';
-            }
-
-            function changeBpm(val) {
-              currentBpm = parseInt(val);
-              document.getElementById('metro-bpm-val').innerText = currentBpm;
-              document.getElementById('metro-slider').value = currentBpm;
-              document.getElementById('metro-tempo-term').innerText = getTempoTerm(currentBpm);
-
-              if (isMetroRunning) {
-                clearInterval(metroInterval);
-                const ms = (60 / currentBpm) * 1000;
-                metroInterval = setInterval(() => triggerMetroBeat(), ms);
-              }
-            }
-
-            function changeBpmBy(delta) {
-              let next = Math.max(40, Math.min(208, currentBpm + delta));
-              changeBpm(next);
-            }
-
-            function toggleMetronome() {
-              if (isMetroRunning) {
-                clearInterval(metroInterval);
-                isMetroRunning = false;
-                currentBeatIndex = 0;
-                document.getElementById('metro-btn-icon').innerText = '▶';
-                document.getElementById('metro-btn-text').innerText = '메트로놈 시작';
-                document.getElementById('metro-play-btn').className = 'w-full py-2.5 rounded-xl font-bold text-xs bg-purple-600 hover:bg-purple-700 text-white shadow-md shadow-purple-600/20 transition flex items-center justify-center space-x-2';
-                renderMetroBeatLights();
-              } else {
-                isMetroRunning = true;
-                currentBeatIndex = 0;
-                triggerMetroBeat();
-                const ms = (60 / currentBpm) * 1000;
-                metroInterval = setInterval(() => triggerMetroBeat(), ms);
-                document.getElementById('metro-btn-icon').innerText = '⏸';
-                document.getElementById('metro-btn-text').innerText = '메트로놈 정지';
-                document.getElementById('metro-play-btn').className = 'w-full py-2.5 rounded-xl font-bold text-xs bg-rose-600 hover:bg-rose-700 text-white shadow-md shadow-rose-600/20 transition flex items-center justify-center space-x-2 animate-pulse';
-              }
-            }
-
-            // ================= PWA 설치 및 Service Worker 로직 =================
-            let deferredPrompt = null;
-
-            window.addEventListener('beforeinstallprompt', (e) => {
-              e.preventDefault();
-              deferredPrompt = e;
-
-              const headerBtn = document.getElementById('header-install-btn');
-              if (headerBtn) headerBtn.classList.remove('hidden');
-
-              if (!isAppStandalone() && !localStorage.getItem('fairy_pwa_banner_dismissed')) {
-                const banner = document.getElementById('pwa-floating-banner');
-                if (banner) banner.classList.remove('hidden');
-              }
-            });
-
-            window.addEventListener('appinstalled', () => {
-              deferredPrompt = null;
-              dismissInstallBanner();
-              showToast('연습요정이 홈 화면에 설치되었습니다! 🎉');
-            });
-
-            function isAppStandalone() {
-              return (window.matchMedia('(display-mode: standalone)').matches) || (window.navigator.standalone === true);
-            }
-
-            function triggerPwaInstall() {
-              if (deferredPrompt) {
-                triggerNativeInstall();
-              } else {
-                openInstallModal();
-              }
-            }
-
-            function triggerNativeInstall() {
-              if (deferredPrompt) {
-                deferredPrompt.prompt();
-                deferredPrompt.userChoice.then((choiceResult) => {
-                  if (choiceResult.outcome === 'accepted') {
-                    showToast('연습요정이 홈 화면에 설치되었습니다! 🎉');
-                    dismissInstallBanner();
-                  }
-                  deferredPrompt = null;
-                });
-              } else {
-                openInstallModal();
-              }
-            }
-
-            function dismissInstallBanner() {
-              const banner = document.getElementById('pwa-floating-banner');
-              if (banner) banner.classList.add('hidden');
-              localStorage.setItem('fairy_pwa_banner_dismissed', 'true');
-            }
-
-            function openInstallModal() {
-              const modal = document.getElementById('modal-pwa-install');
-              if (modal) {
-                modal.classList.remove('hidden');
-                autoDetectPwaPlatform();
-              }
-            }
-
-            function autoDetectPwaPlatform() {
-              const ua = navigator.userAgent || '';
-              if (/iPad|iPhone|iPod/.test(ua) && !window.MSStream) {
-                selectPwaTab('ios');
-              } else if (/Android/.test(ua)) {
-                selectPwaTab('android');
-              } else {
-                selectPwaTab('desktop');
-              }
-            }
-
-            function selectPwaTab(tab) {
-              ['ios', 'android', 'desktop'].forEach(t => {
-                const btn = document.getElementById(`pwa-tab-btn-${t}`);
-                const content = document.getElementById(`pwa-tab-content-${t}`);
-                if (btn && content) {
-                  if (t === tab) {
-                    btn.className = 'flex-1 py-2 text-xs font-bold text-indigo-600 border-b-2 border-indigo-600 bg-indigo-50/50 transition';
-                    content.classList.remove('hidden');
-                  } else {
-                    btn.className = 'flex-1 py-2 text-xs font-semibold text-slate-500 hover:text-slate-800 border-b-2 border-transparent transition';
-                    content.classList.add('hidden');
-                  }
-                }
-              });
-            }
-
-            // 서비스 워커 등록
-            if ('serviceWorker' in navigator) {
-              window.addEventListener('load', () => {
-                navigator.serviceWorker.register('./sw.js').then((reg) => {
-                  console.log('연습요정 Service Worker 등록 성공:', reg.scope);
-                }).catch((err) => {
-                  console.log('Service Worker 등록 실패:', err);
-                });
-              });
-            }
-
-            // 초기화 실행
-            window.addEventListener('DOMContentLoaded', () => {
-              initData();
-              renderCalendar();
-              renderDashboardStats();
-              renderMakeupQueue();
-              renderNotesList();
-              renderStudentsList();
-              initSupabaseClient();
-
-              // 모바일 첫 방문 시 홈화면 설치 플로팅 배너 노출
-              if (!isAppStandalone() && !localStorage.getItem('fairy_pwa_banner_dismissed')) {
-                setTimeout(() => {
-                  const banner = document.getElementById('pwa-floating-banner');
-                  if (banner) banner.classList.remove('hidden');
-                }, 1200);
-              }
-            });
+        timelineContainer.appendChild(itemEl);
+      });
+    }
+
+    // 수동 세션 기록
+    function openManualSessionModal() {
+      const student = getStudents().find(s => s.id === currentPracticeStudentId);
+      document.getElementById('manual-sess-piece').value = student ? (student.currentPiece || '') : '';
+
+      const now = new Date();
+      const hh = String(now.getHours()).padStart(2, '0');
+      const mm = String(now.getMinutes()).padStart(2, '0');
+      document.getElementById('manual-sess-start').value = `${hh}:${mm}`;
+      document.getElementById('manual-sess-duration').value = 20;
+      document.getElementById('manual-sess-notes').value = '';
+
+      openModal('modal-session-manual');
+    }
+
+    function handleSaveManualSession(e) {
+      e.preventDefault();
+      const piece = document.getElementById('manual-sess-piece').value.trim();
+      const startTime = document.getElementById('manual-sess-start').value;
+      const duration = parseInt(document.getElementById('manual-sess-duration').value) || 20;
+      const notes = document.getElementById('manual-sess-notes').value.trim();
+
+      // 시작 시간과 지속 시간으로 종료 시간 계산
+      const [h, m] = startTime.split(':').map(Number);
+      const endTotalM = h * 60 + m + duration;
+      const endH = String(Math.floor(endTotalM / 60) % 24).padStart(2, '0');
+      const endM = String(endTotalM % 60).padStart(2, '0');
+      const endTime = `${endH}:${endM}`;
+
+      const allSessions = getPracticeSessions();
+      let list = allSessions[currentPracticeStudentId] || [];
+
+      list.push({
+        id: 'sess_' + Date.now(),
+        date: todayStr,
+        startTime,
+        endTime,
+        durationMinutes: duration,
+        piece,
+        notes: notes || '집중 연습 완료'
+      });
+
+      allSessions[currentPracticeStudentId] = list;
+      savePracticeSessions(allSessions);
+      closeModal('modal-session-manual');
+      renderPracticeSessionsTimeline();
+      showToast(`연습 세션이 타임라인에 기록되었습니다! (+${duration}분) 👏`);
+    }
+
+    function deletePracticeSession(sessId) {
+      const allSessions = getPracticeSessions();
+      let list = allSessions[currentPracticeStudentId] || [];
+      allSessions[currentPracticeStudentId] = list.filter(s => s.id !== sessId);
+      savePracticeSessions(allSessions);
+      renderPracticeSessionsTimeline();
+      showToast('연습 세션이 삭제되었습니다.');
+    }
+
+    // 실시간 세션 타이머 제어
+    let liveTimerInterval = null;
+    let liveTimerSeconds = 0;
+    let liveTimerPieceName = '';
+    let liveTimerStartStr = '';
+
+    function toggleSessionTimerModal() {
+      // 연습할 곡 목록 채우기
+      const select = document.getElementById('timer-piece-select');
+      const student = getStudents().find(s => s.id === currentPracticeStudentId);
+      const checklists = (getPracticeChecklists()[currentPracticeStudentId] || []);
+
+      let optionsHtml = '';
+      if (student && student.currentPiece) {
+        optionsHtml += `<option value="${student.currentPiece}">${student.currentPiece} (현재 메인곡)</option>`;
+      }
+      checklists.forEach(item => {
+        optionsHtml += `<option value="${item.title}">${item.title}</option>`;
+      });
+      optionsHtml += `<option value="하농 및 기본 테크닉">하농 및 기본 테크닉 연습</option>`;
+      optionsHtml += `<option value="자유곡 연습">자유곡 / 취미곡 연습</option>`;
+
+      select.innerHTML = optionsHtml;
+      document.getElementById('timer-piece-custom').value = '';
+      openModal('modal-session-timer');
+    }
+
+    function handleStartLiveSession(e) {
+      e.preventDefault();
+      const customPiece = document.getElementById('timer-piece-custom').value.trim();
+      const selectPiece = document.getElementById('timer-piece-select').value;
+      liveTimerPieceName = customPiece || selectPiece || '피아노 연습';
+
+      const now = new Date();
+      liveTimerStartStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+
+      closeModal('modal-session-timer');
+
+      // 배너 띄우기
+      document.getElementById('live-timer-piece').innerText = `🎵 [${liveTimerPieceName}] 연습 진행 중...`;
+      document.getElementById('live-timer-banner').classList.remove('hidden');
+
+      liveTimerSeconds = 0;
+      clearInterval(liveTimerInterval);
+      liveTimerInterval = setInterval(() => {
+        liveTimerSeconds++;
+        const m = String(Math.floor(liveTimerSeconds / 60)).padStart(2, '0');
+        const s = String(liveTimerSeconds % 60).padStart(2, '0');
+        document.getElementById('live-timer-clock').innerText = `${m}:${s}`;
+      }, 1000);
+
+      showToast(`'${liveTimerPieceName}' 연습 타이머가 시작되었습니다! 화이팅 🎵`);
+    }
+
+    function stopAndSaveLiveTimer() {
+      clearInterval(liveTimerInterval);
+      document.getElementById('live-timer-banner').classList.add('hidden');
+
+      const durationMinutes = Math.max(1, Math.round(liveTimerSeconds / 60));
+      const now = new Date();
+      const endStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+
+      const noteMsg = prompt('오늘 연습은 어땠나요? 세션 메모를 간단히 남겨보세요:', '손가락 힘 빼고 템포 집중 연습함');
+
+      const allSessions = getPracticeSessions();
+      let list = allSessions[currentPracticeStudentId] || [];
+
+      list.push({
+        id: 'sess_' + Date.now(),
+        date: todayStr,
+        startTime: liveTimerStartStr,
+        endTime: endStr,
+        durationMinutes,
+        piece: liveTimerPieceName,
+        notes: noteMsg || '집중 연습 완료'
+      });
+
+      allSessions[currentPracticeStudentId] = list;
+      savePracticeSessions(allSessions);
+      renderPracticeSessionsTimeline();
+      showToast(`세션이 타임라인에 등록되었습니다! (+${durationMinutes}분 연습 완료 🎉)`);
+    }
+
+    function cancelLiveTimer() {
+      if (confirm('진행 중인 연습 세션 타이머를 취소하시겠습니까?')) {
+        clearInterval(liveTimerInterval);
+        document.getElementById('live-timer-banner').classList.add('hidden');
+        showToast('연습 타이머가 취소되었습니다.');
+      }
+    }
+
+    // =======================================================
+    // 🎵 정밀 멀티박자 메트로놈 (2/4, 3/4, 4/4, 6/8 박자)
+    // =======================================================
+    let currentTsBeats = 4;
+    let currentTsUnit = 4;
+    let currentBeatIndex = 0;
+    let isMetroCollapsed = false;
+
+    function toggleMetronomeCollapse() {
+      isMetroCollapsed = !isMetroCollapsed;
+      const content = document.getElementById('metro-body-content');
+      const text = document.getElementById('metro-collapse-text');
+      const icon = document.getElementById('metro-collapse-icon');
+
+      if (isMetroCollapsed) {
+        content.classList.add('hidden');
+        text.innerText = '펼치기';
+        icon.innerText = '▼';
+      } else {
+        content.classList.remove('hidden');
+        text.innerText = '접기';
+        icon.innerText = '▲';
+      }
+    }
+
+    function setTimeSignature(beats, unit) {
+      currentTsBeats = beats;
+      currentTsUnit = unit;
+      currentBeatIndex = 0;
+
+      // 버튼 하이라이트 갱신
+      const presets = [
+        { b: 2, u: 4, id: 'ts-btn-2-4' },
+        { b: 3, u: 4, id: 'ts-btn-3-4' },
+        { b: 4, u: 4, id: 'ts-btn-4-4' },
+        { b: 6, u: 8, id: 'ts-btn-6-8' }
+      ];
+
+      presets.forEach(p => {
+        const btn = document.getElementById(p.id);
+        if (p.b === beats && p.u === unit) {
+          btn.className = 'ts-btn flex-1 py-1 rounded-lg bg-white text-purple-700 shadow-xs transition';
+        } else {
+          btn.className = 'ts-btn flex-1 py-1 rounded-lg text-slate-600 hover:text-slate-900 transition';
+        }
+      });
+
+      renderMetroBeatLights();
+
+      if (isMetroRunning) {
+        clearInterval(metroInterval);
+        const ms = (60 / currentBpm) * 1000;
+        metroInterval = setInterval(() => triggerMetroBeat(), ms);
+      }
+    }
+
+    function renderMetroBeatLights() {
+      const container = document.getElementById('metro-beat-lights');
+      if (!container) return;
+      container.innerHTML = '';
+
+      for (let i = 0; i < currentTsBeats; i++) {
+        const isAccent = (i === 0) || (currentTsBeats === 6 && i === 3);
+        const dot = document.createElement('span');
+        dot.id = `beat-light-${i}`;
+        dot.className = `w-3 h-3 rounded-full transition-all duration-75 ${isAccent ? 'border-2 border-purple-500 bg-white ring-1 ring-purple-200' : 'border border-slate-300 bg-white'
+          }`;
+        container.appendChild(dot);
+      }
+    }
+
+    function triggerMetroBeat() {
+      // 1. 비트 램프 하이라이트
+      for (let i = 0; i < currentTsBeats; i++) {
+        const dot = document.getElementById(`beat-light-${i}`);
+        if (!dot) continue;
+        const isAccent = (i === 0) || (currentTsBeats === 6 && i === 3);
+
+        if (i === currentBeatIndex) {
+          if (i === 0) {
+            dot.className = 'w-3.5 h-3.5 rounded-full bg-purple-600 ring-4 ring-purple-300 transition-all duration-75';
+          } else if (currentTsBeats === 6 && i === 3) {
+            dot.className = 'w-3 h-3 rounded-full bg-indigo-500 ring-2 ring-indigo-300 transition-all duration-75';
+          } else {
+            dot.className = 'w-3 h-3 rounded-full bg-purple-400 ring-2 ring-purple-200 transition-all duration-75';
+          }
+        } else {
+          dot.className = `w-3 h-3 rounded-full transition-all duration-75 ${isAccent ? 'border-2 border-purple-400 bg-white' : 'border border-slate-300 bg-white'
+            }`;
+        }
+      }
+
+      // 2. 오디오 틱 사운드 주파수 분기 (강세 적용)
+      let freq = 750;
+      if (currentBeatIndex === 0) {
+        freq = 1200; // 제1박 고음 강세 (Ding!)
+      } else if (currentTsBeats === 6 && currentBeatIndex === 3) {
+        freq = 960;  // 6/8박자의 제4박 중간 강세 (Dong!)
+      } else {
+        freq = 750;  // 일반 박자 (Tok)
+      }
+
+      playMetroClick(freq);
+
+      // 다음 박자로 인덱스 이동
+      currentBeatIndex = (currentBeatIndex + 1) % currentTsBeats;
+    }
+
+    // 체크리스트 토글 & 추가
+    function toggleChecklistItem(itemId) {
+      const allChecklists = getPracticeChecklists();
+      let list = allChecklists[currentPracticeStudentId] || [];
+      const item = list.find(i => i.id === itemId);
+      if (item) {
+        item.done = !item.done;
+        savePracticeChecklists(allChecklists);
+        renderPracticePortal();
+
+        // 메트로놈 틱 소리로 가벼운 체크 피드백
+        playMetroClick(1200);
+
+        if (list.every(i => i.done)) {
+          showToast('🎉 대단해요! 오늘의 연습 목표를 모두 완수했습니다! 요정 레벨 UP! 🧚‍♀️');
+        } else if (item.done) {
+          showToast('연습 목표 하나를 멋지게 달성했습니다! ✨');
+        }
+      }
+    }
+
+    function openAddPracticeModal() {
+      document.getElementById('custom-practice-title').value = '';
+      document.getElementById('custom-practice-meta').value = '';
+      openModal('modal-add-practice');
+    }
+
+    function handleSaveCustomPracticeGoal(e) {
+      e.preventDefault();
+      const title = document.getElementById('custom-practice-title').value.trim();
+      const meta = document.getElementById('custom-practice-meta').value.trim();
+
+      const allChecklists = getPracticeChecklists();
+      let list = allChecklists[currentPracticeStudentId] || [];
+
+      list.push({
+        id: 'c_' + Date.now(),
+        title,
+        meta,
+        isTeacherHw: false,
+        done: false
+      });
+
+      allChecklists[currentPracticeStudentId] = list;
+      savePracticeChecklists(allChecklists);
+      closeModal('modal-add-practice');
+      renderPracticePortal();
+      showToast('새 연습 목표가 추가되었습니다! 화이팅 🎵');
+    }
+
+    function deleteChecklistItem(itemId) {
+      const allChecklists = getPracticeChecklists();
+      let list = allChecklists[currentPracticeStudentId] || [];
+      allChecklists[currentPracticeStudentId] = list.filter(i => i.id !== itemId);
+      savePracticeChecklists(allChecklists);
+      renderPracticePortal();
+    }
+
+    // 질문 카테고리 & 질문 추가
+    function selectQuestionCategory(cat) {
+      selectedQuestionCat = cat;
+      const btns = document.querySelectorAll('.q-cat-btn');
+      btns.forEach(b => {
+        if (b.innerText === cat) {
+          b.className = 'q-cat-btn px-2 py-0.5 rounded text-[11px] font-semibold bg-purple-600 text-white';
+        } else {
+          b.className = 'q-cat-btn px-2 py-0.5 rounded text-[11px] font-semibold bg-white text-slate-600 border border-slate-200';
+        }
+      });
+    }
+
+    function handleAddQuestion(e) {
+      e.preventDefault();
+      const text = document.getElementById('question-input-text').value.trim();
+      if (!text) return;
+
+      const questions = getQuestions();
+      questions.unshift({
+        id: 'q_' + Date.now(),
+        studentId: currentPracticeStudentId,
+        text,
+        category: selectedQuestionCat,
+        date: new Date().toISOString().replace('T', ' ').substring(0, 16),
+        answered: false
+      });
+
+      saveQuestions(questions);
+      document.getElementById('question-input-text').value = '';
+      renderPracticePortal();
+      showToast('선생님께 드릴 질문이 저장되었습니다! 다음 레슨 때 확인해 드릴게요 📝');
+    }
+
+    function toggleQuestionResolved(qId) {
+      const questions = getQuestions();
+      const q = questions.find(item => item.id === qId);
+      if (q) {
+        q.answered = !q.answered;
+        saveQuestions(questions);
+        renderPracticePortal();
+        showToast(q.answered ? '질문이 해결 완료로 표시되었습니다 ✅' : '질문이 답변 대기 상태로 변경되었습니다 ⏳');
+      }
+    }
+
+    // =======================================================
+    // ⏱️ Web Audio API 스마트 메트로놈 & 타이머 로직
+    // =======================================================
+    let audioCtx = null;
+    let metroInterval = null;
+    let isMetroRunning = false;
+    let currentBpm = 84;
+
+    function playMetroClick(freq = 880) {
+      try {
+        if (!audioCtx) {
+          audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        }
+        if (audioCtx.state === 'suspended') {
+          audioCtx.resume();
+        }
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+        gain.gain.setValueAtTime(0.25, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.04);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.04);
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    function getTempoTerm(bpm) {
+      if (bpm < 60) return 'Largo';
+      if (bpm < 76) return 'Adagio';
+      if (bpm < 108) return 'Andante';
+      if (bpm < 120) return 'Moderato';
+      if (bpm < 168) return 'Allegro';
+      return 'Presto';
+    }
+
+    function changeBpm(val) {
+      currentBpm = parseInt(val);
+      document.getElementById('metro-bpm-val').innerText = currentBpm;
+      document.getElementById('metro-slider').value = currentBpm;
+      document.getElementById('metro-tempo-term').innerText = getTempoTerm(currentBpm);
+
+      if (isMetroRunning) {
+        clearInterval(metroInterval);
+        const ms = (60 / currentBpm) * 1000;
+        metroInterval = setInterval(() => triggerMetroBeat(), ms);
+      }
+    }
+
+    function changeBpmBy(delta) {
+      let next = Math.max(40, Math.min(208, currentBpm + delta));
+      changeBpm(next);
+    }
+
+    function toggleMetronome() {
+      if (isMetroRunning) {
+        clearInterval(metroInterval);
+        isMetroRunning = false;
+        currentBeatIndex = 0;
+        document.getElementById('metro-btn-icon').innerText = '▶';
+        document.getElementById('metro-btn-text').innerText = '메트로놈 시작';
+        document.getElementById('metro-play-btn').className = 'w-full py-2.5 rounded-xl font-bold text-xs bg-purple-600 hover:bg-purple-700 text-white shadow-md shadow-purple-600/20 transition flex items-center justify-center space-x-2';
+        renderMetroBeatLights();
+      } else {
+        isMetroRunning = true;
+        currentBeatIndex = 0;
+        triggerMetroBeat();
+        const ms = (60 / currentBpm) * 1000;
+        metroInterval = setInterval(() => triggerMetroBeat(), ms);
+        document.getElementById('metro-btn-icon').innerText = '⏸';
+        document.getElementById('metro-btn-text').innerText = '메트로놈 정지';
+        document.getElementById('metro-play-btn').className = 'w-full py-2.5 rounded-xl font-bold text-xs bg-rose-600 hover:bg-rose-700 text-white shadow-md shadow-rose-600/20 transition flex items-center justify-center space-x-2 animate-pulse';
+      }
+    }
+
+    // ================= PWA 설치 및 Service Worker 로직 =================
+    let deferredPrompt = null;
+
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+
+      const headerBtn = document.getElementById('header-install-btn');
+      if (headerBtn) headerBtn.classList.remove('hidden');
+
+      if (!isAppStandalone() && !localStorage.getItem('fairy_pwa_banner_dismissed')) {
+        const banner = document.getElementById('pwa-floating-banner');
+        if (banner) banner.classList.remove('hidden');
+      }
+    });
+
+    window.addEventListener('appinstalled', () => {
+      deferredPrompt = null;
+      dismissInstallBanner();
+      showToast('연습요정이 홈 화면에 설치되었습니다! 🎉');
+    });
+
+    function isAppStandalone() {
+      return (window.matchMedia('(display-mode: standalone)').matches) || (window.navigator.standalone === true);
+    }
+
+    function triggerPwaInstall() {
+      if (deferredPrompt) {
+        triggerNativeInstall();
+      } else {
+        openInstallModal();
+      }
+    }
+
+    function triggerNativeInstall() {
+      if (deferredPrompt) {
+        deferredPrompt.prompt();
+        deferredPrompt.userChoice.then((choiceResult) => {
+          if (choiceResult.outcome === 'accepted') {
+            showToast('연습요정이 홈 화면에 설치되었습니다! 🎉');
+            dismissInstallBanner();
+          }
+          deferredPrompt = null;
+        });
+      } else {
+        openInstallModal();
+      }
+    }
+
+    function dismissInstallBanner() {
+      const banner = document.getElementById('pwa-floating-banner');
+      if (banner) banner.classList.add('hidden');
+      localStorage.setItem('fairy_pwa_banner_dismissed', 'true');
+    }
+
+    function openInstallModal() {
+      const modal = document.getElementById('modal-pwa-install');
+      if (modal) {
+        modal.classList.remove('hidden');
+        autoDetectPwaPlatform();
+      }
+    }
+
+    function autoDetectPwaPlatform() {
+      const ua = navigator.userAgent || '';
+      if (/iPad|iPhone|iPod/.test(ua) && !window.MSStream) {
+        selectPwaTab('ios');
+      } else if (/Android/.test(ua)) {
+        selectPwaTab('android');
+      } else {
+        selectPwaTab('desktop');
+      }
+    }
+
+    function selectPwaTab(tab) {
+      ['ios', 'android', 'desktop'].forEach(t => {
+        const btn = document.getElementById(`pwa-tab-btn-${t}`);
+        const content = document.getElementById(`pwa-tab-content-${t}`);
+        if (btn && content) {
+          if (t === tab) {
+            btn.className = 'flex-1 py-2 text-xs font-bold text-indigo-600 border-b-2 border-indigo-600 bg-indigo-50/50 transition';
+            content.classList.remove('hidden');
+          } else {
+            btn.className = 'flex-1 py-2 text-xs font-semibold text-slate-500 hover:text-slate-800 border-b-2 border-transparent transition';
+            content.classList.add('hidden');
+          }
+        }
+      });
+    }
+
+    // 서비스 워커 등록
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js').then((reg) => {
+          console.log('연습요정 Service Worker 등록 성공:', reg.scope);
+        }).catch((err) => {
+          console.log('Service Worker 등록 실패:', err);
+        });
+      });
+    }
+
+    // 초기화 실행
+    window.addEventListener('DOMContentLoaded', () => {
+      initData();
+      renderCalendar();
+      renderDashboardStats();
+      renderMakeupQueue();
+      renderNotesList();
+      renderStudentsList();
+      initSupabaseClient();
+
+      // 모바일 첫 방문 시 홈화면 설치 플로팅 배너 노출
+      if (!isAppStandalone() && !localStorage.getItem('fairy_pwa_banner_dismissed')) {
+        setTimeout(() => {
+          const banner = document.getElementById('pwa-floating-banner');
+          if (banner) banner.classList.remove('hidden');
+        }, 1200);
+      }
+    });
   </script>
 </body>
 
