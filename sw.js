@@ -1,10 +1,11 @@
-// 연습요정 (Practice Fairy) Service Worker - v13.0.0 (Supabase Auth 로그인 스크립트 복구 및 에러 출력 강화)
-const CACHE_NAME = 'fairy-cache-v13';
+// 연습요정 (Practice Fairy) Service Worker - v14.0.0 (카카오톡 공유 카드 절대경로 URL & 상세보기 버튼 구조 확정)
+const CACHE_NAME = 'fairy-cache-v14';
 const STATIC_ASSETS = [
   './',
   './index.html',
   './share.html',
   './manifest.json',
+  './icon-512.png',
   './icons/icon-192.png',
   './icons/icon-512.png',
   './icons/icon-maskable-192.png',
@@ -63,9 +64,9 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // HTML / App navigation: Network-first, fallback to cache
+  // HTML / App navigation: Network-first (bypassing 10-min HTTP disk cache), fallback to cache
   event.respondWith(
-    fetch(req)
+    fetch(req, { cache: 'no-cache' })
       .then((networkRes) => {
         if (networkRes && networkRes.status === 200) {
           const resClone = networkRes.clone();
