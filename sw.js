@@ -1,5 +1,5 @@
-// 연습요정 (Practice Fairy) Service Worker - v9.0.0 (Supabase Auth 이메일/비밀번호 로그인 & user_id 멀티유저 격리 반영)
-const CACHE_NAME = 'fairy-cache-v9';
+// 연습요정 (Practice Fairy) Service Worker - v10.0.0 (모바일 공유 링크 복사 execCommand 폴백 & 안내 모달 추가)
+const CACHE_NAME = 'fairy-cache-v10';
 const STATIC_ASSETS = [
   './',
   './index.html',

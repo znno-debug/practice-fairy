@@ -468,15 +468,35 @@
       }
     }
 
-    // 계좌번호 복사하기
+    // 계좌번호 복사하기 (모바일 Safari/Chrome execCommand 폴백 지원)
     function copyBillAccount() {
       const textToCopy = `${globalTeacher.bankName} ${globalTeacher.accountNumber} ${globalTeacher.accountHolder}`;
+      let copied = false;
+      try {
+        const ta = document.createElement('textarea');
+        ta.value = textToCopy;
+        ta.setAttribute('readonly', '');
+        ta.style.position = 'fixed';
+        ta.style.top = '0';
+        ta.style.left = '0';
+        ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.focus();
+        ta.select();
+        ta.setSelectionRange(0, textToCopy.length);
+        copied = document.execCommand('copy');
+        document.body.removeChild(ta);
+      } catch (e) {
+        copied = false;
+      }
+
       if (navigator.clipboard && window.isSecureContext) {
-        navigator.clipboard.writeText(textToCopy).then(() => {
-          alert(`📋 계좌 정보가 복사되었습니다!\n\n${textToCopy}\n\n은행/토스 앱에서 붙여넣기 하세요.`);
-        }).catch(() => {
-          prompt('계좌번호를 복사하세요:', textToCopy);
-        });
+        navigator.clipboard.writeText(textToCopy).catch(() => {});
+        copied = true;
+      }
+
+      if (copied) {
+        alert(`📋 계좌 정보가 복사되었습니다!\n\n${textToCopy}\n\n은행/토스 앱에서 붙여넣기 하세요.`);
       } else {
         prompt('계좌번호를 복사하세요:', textToCopy);
       }
