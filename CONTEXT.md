@@ -1,6 +1,6 @@
 # CONTEXT — 연습요정 (Practice Fairy)
 
-> **최종 갱신**: 2026-11-20 · 기준 커밋 `172b641` · `sw.js` 캐시 `fairy-cache-v15`
+> **최종 갱신**: 2026-11-21 · 기준 커밋 `342d9bd` · `sw.js` 캐시 `fairy-cache-v16`
 > **한 줄 요약**: 음악 1:1 레슨 선생님용 출결·수강료·레슨노트 관리 + 수강생 연습일지 PWA. 학부모에게는 카카오톡 카드로 1:1 리포트(`share.html`)를 보냄.
 > **현재 단계**: 기능 시제품 완성, Supabase Auth 연동, GitHub Pages 배포 완료. 지금은 **카카오 공유 마무리와 모바일 다듬기** 단계.
 > 이 문서는 작업 시작 전에 가장 먼저 읽고, 작업이 끝나면 곧바로 갱신한다(→ `CLAUDE.md` / `GEMINI.md`).
@@ -15,7 +15,7 @@
 | Supabase 프로젝트 | `https://zpfcocrqvmrotuiwpkru.supabase.co` (Auth + PostgreSQL + JS SDK v2) | `index.html:1926` (`SUPABASE_URL`, `SUPABASE_ANON_KEY`) |
 | Supabase 테이블 (7개) | `fairy_teacher_profile_v1`, `fairy_students_v1`, `fairy_lessons_v1`, `fairy_notes_v1`, `fairy_practice_v1`, `fairy_questions_v1`, `fairy_sessions_v1` | `supabase_schema.sql`, `index.html:1950~` (LocalStorage 키와 같은 이름) |
 | 카카오 개발자센터 | 앱 ID `1659300`, JS SDK `2.7.2`, `KAKAO_JS_KEY`는 `index.html:1933` | `index.html:25`, `:1933` |
-| PWA | `sw.js` (현재 `fairy-cache-v15`), `manifest.json`, `icons/`, 루트 `icon-512.png` | |
+| PWA | `sw.js` (현재 `fairy-cache-v16`), `manifest.json`, `icons/`, 루트 `icon-512.png` | |
 | 로컬 테스트 서버 | `python3 server.py` → `http://localhost:8080` (같은 Wi-Fi 기기용 IP 자동 표시) | `server.py` |
 | 기술 스택 | HTML5 + Vanilla JS + Tailwind CSS(CDN) + Supabase + Web Audio API + Service Worker + LocalStorage | |
 
@@ -55,9 +55,9 @@
 
 ## 5. 남은 마무리 작업
 
-- [ ] **① 카카오 공유 최종 검증**: `sendKakaoReportCard` 통합은 코드 반영 완료(`172b641`). 실기기 카톡에서 두 진입점(공유 모달, 노트 카드 하단)으로 카드가 정상 발송되는지, 카드 하단 **`[레슨 리포트 상세보기]` 버튼**이 `share.html?id=...&d=...`로 열리고 내용이 제대로 그려지는지 확인. 콘솔의 `[KAKAO PAYLOAD]` 로그로 페이로드 점검.
+- [ ] **① 카카오 공유 최종 검증**: `sendKakaoReportCard` 단일 함수 통합 및 `[레슨 리포트 상세보기]` 버튼 링크(`mobileWebUrl`, `webUrl`) 보강 완료(캐시 `v16`). 실기기 카톡에서 두 진입점(공유 모달, 노트 카드 하단)으로 카드가 정상 발송되는지, 카드 하단 **`[레슨 리포트 상세보기]` 버튼**이 `share.html?id=...&d=...`로 열리고 내용이 제대로 그려지는지 확인. 콘솔의 `[KAKAO PAYLOAD]` 로그로 페이로드 점검.
 - [ ] **② 카카오 개발자센터 앱(ID `1659300`) 기본 정보에 `icon-512.png` 앱 아이콘 등록** (사용자가 웹 콘솔에서 직접 진행. 플랫폼 > Web 사이트 도메인에 `https://znno-debug.github.io`가 등록되어 있는지도 함께 확인).
-- [ ] **③ 모바일(폭 ≤ 430px) 상단 헤더 반응형 다듬기**: `index.html:143` `<header>`의 타이틀과 버튼(백업/복원, 로그인 이메일, 로그아웃 등)이 겹치는 문제 수정. 그 뒤 `sw.js` 캐시를 `v16`으로 올리고 커밋·푸시.
+- [ ] **③ 모바일(폭 ≤ 430px) 상단 헤더 반응형 다듬기**: `index.html:143` `<header>`의 타이틀과 버튼(백업/복원, 로그인 이메일, 로그아웃 등)이 겹치는 문제 수정. 그 뒤 `sw.js` 캐시를 한 단계 올리고 커밋·푸시.
 - [ ] (추가) `supabase_schema.sql`을 실제 운영 스키마(`user_id` + RLS)에 맞게 갱신 (4장 1번).
 - [ ] (추가) `README.md` 최신화 (Supabase Auth, 카카오 카드 공유, 배포 URL).
 
@@ -65,6 +65,7 @@
 
 | 날짜 | 내용 |
 | :--- | :--- |
+| 2026-11-21 | 공유 코드 병합 사고 복구(HEAD로 되돌린 뒤 unifiedLink·resolvedId만 다시 적용), ExecutionParams 제외, 캐시 v16 |
 | 2026-11-20 | `CONTEXT.md` 신설(이 문서), `CLAUDE.md`/`GEMINI.md` 에이전트 공통 지침 추가, `handover_notes.md` → `docs/`로 이동(보관용) |
 | 2026-11-20 | 카카오 공유를 `sendKakaoReportCard` 하나로 통일, 캐시 v15 (`172b641`) |
 | 2026-11-20 | 카카오 SDK 피드 카드 공유 + `share.html` 모바일 인앱 리포트 UI, GitHub Pages 절대 `shareUrl` (`4f1d1f6`~`41a9659`) |

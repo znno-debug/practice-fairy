@@ -4327,8 +4327,9 @@
       const note = getNotes().find(n => n.id === targetId) || getNotes()[0];
       const student = note ? getStudents().find(s => s.id === note.studentId) : null;
       const teacher = getTeacherProfile();
+      const resolvedId = String((note && note.id) || targetId || 'n1');
 
-      const basePath = `https://znno-debug.github.io/practice-fairy/share.html?id=${encodeURIComponent(String(targetId || (note && note.id) || 'n1'))}`;
+      const basePath = `https://znno-debug.github.io/practice-fairy/share.html?id=${encodeURIComponent(resolvedId)}`;
       if (!note) return basePath;
       try {
         const compactPayload = [
@@ -4412,6 +4413,7 @@
     function sendKakaoReportCard(noteId) {
       const meta = prepareReportCardMeta(noteId);
       const shareUrl = meta.url;
+      const unifiedLink = { mobileWebUrl: shareUrl, webUrl: shareUrl };
 
       const payload = {
         objectType: 'feed',
@@ -4421,18 +4423,12 @@
           imageUrl: 'https://znno-debug.github.io/practice-fairy/icon-512.png',
           imageWidth: 800,
           imageHeight: 400,
-          link: {
-            mobileWebUrl: shareUrl,
-            webUrl: shareUrl
-          }
+          link: unifiedLink
         },
         buttons: [
           {
             title: '레슨 리포트 상세보기',
-            link: {
-              mobileWebUrl: shareUrl,
-              webUrl: shareUrl
-            }
+            link: unifiedLink
           }
         ]
       };
