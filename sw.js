@@ -1,5 +1,5 @@
-// 연습요정 (Practice Fairy) Service Worker - v12.0.0 (카카오톡 공유 카드 상세보기 버튼 & 가로형 썸네일 & 리포트 직행 연결)
-const CACHE_NAME = 'fairy-cache-v12';
+// 연습요정 (Practice Fairy) Service Worker - v13.0.0 (Supabase Auth 로그인 스크립트 복구 및 에러 출력 강화)
+const CACHE_NAME = 'fairy-cache-v13';
 const STATIC_ASSETS = [
   './',
   './index.html',

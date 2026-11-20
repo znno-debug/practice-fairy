@@ -2215,13 +2215,14 @@
     }
 
     function translateAuthError(err) {
-      const msg = (err?.message || String(err)).toLowerCase();
-      if (msg.includes('invalid login credentials')) return '이메일 또는 비밀번호가 일치하지 않습니다.';
-      if (msg.includes('user already registered')) return '이미 가입된 이메일입니다. 로그인 탭에서 로그인해 주세요.';
-      if (msg.includes('password should be at least 6 characters')) return '비밀번호는 최소 6자 이상 입력해 주세요.';
-      if (msg.includes('email not confirmed')) return '이메일 인증이 완료되지 않았습니다. 받은편지함을 확인해 주세요.';
-      if (msg.includes('rate limit')) return '요청이 너무 많습니다. 잠시 후 다시 시도해 주세요.';
-      return err?.message || '인증 처리 중 오류가 발생했습니다.';
+      const rawMsg = err?.message || String(err);
+      const msg = rawMsg.toLowerCase();
+      if (msg.includes('invalid login credentials')) return `이메일 또는 비밀번호가 일치하지 않습니다. (${rawMsg})`;
+      if (msg.includes('user already registered')) return `이미 가입된 이메일입니다. 로그인 탭에서 로그인해 주세요. (${rawMsg})`;
+      if (msg.includes('password should be at least 6 characters')) return `비밀번호는 최소 6자 이상 입력해 주세요. (${rawMsg})`;
+      if (msg.includes('email not confirmed')) return `이메일 인증이 완료되지 않았습니다. 받은편지함을 확인해 주세요. (${rawMsg})`;
+      if (msg.includes('rate limit')) return `요청이 너무 많습니다. 잠시 후 다시 시도해 주세요. (${rawMsg})`;
+      return `로그인/인증 오류: ${rawMsg}`;
     }
 
     function updateAuthHeaderUI(user) {
@@ -2240,19 +2241,35 @@
     }
 
     async function handleAuthSubmit(e) {
-      e.preventDefault();
+      if (e) e.preventDefault();
+      const alertBox = document.getElementById('auth-alert-box');
+      if (alertBox) alertBox.classList.add('hidden');
+
+      if (!window.supabase) {
+        const sdkErr = 'Supabase 인증 라이브러리를 불러오지 못했습니다. 인터넷 연결을 확인하고 페이지를 새로고침해 주세요.';
+        console.error('[Auth Error]', sdkErr);
+        showAuthAlert(sdkErr, 'error');
+        showToast(sdkErr);
+        return;
+      }
+
       if (!supabaseClient) {
         supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
       }
-      const email = document.getElementById('auth-email').value.trim();
-      const password = document.getElementById('auth-password').value;
+
+      const email = (document.getElementById('auth-email')?.value || '').trim();
+      const password = document.getElementById('auth-password')?.value || '';
       const teacherName = (document.getElementById('auth-teacher-name')?.value || '').trim();
       const submitBtn = document.getElementById('auth-submit-btn');
 
-      if (!email || !password) return;
-      submitBtn.disabled = true;
-      const prevBtnText = submitBtn.innerText;
-      submitBtn.innerText = '처리 중...';
+      if (!email || !password) {
+        showAuthAlert('이메일과 비밀번호를 모두 입력해 주세요.', 'error');
+        return;
+      }
+
+      if (submitBtn) submitBtn.disabled = true;
+      const prevBtnText = submitBtn ? submitBtn.innerText : '이메일로 로그인하기';
+      if (submitBtn) submitBtn.innerText = '인증 처리 중...';
 
       try {
         if (currentAuthMode === 'signup') {
@@ -2269,7 +2286,6 @@
             await onAuthSessionEstablished(data.session, teacherName);
             showToast('회원가입 및 로그인이 완료되었습니다! 환영합니다 🎉');
           } else {
-            // 이메일 인증이 꺼져있지 않은 경우 바로 로그인 시도해보고 안 되면 안내
             const loginTry = await supabaseClient.auth.signInWithPassword({ email, password });
             if (!loginTry.error && loginTry.data?.session) {
               await onAuthSessionEstablished(loginTry.data.session, teacherName);
@@ -2288,14 +2304,20 @@
           if (data?.session) {
             await onAuthSessionEstablished(data.session);
             showToast(`${data.session.user.email} 계정으로 로그인되었습니다! 🧚‍♀️`);
+          } else {
+            throw new Error('로그인 세션을 생성하지 못했습니다.');
           }
         }
       } catch (err) {
-        console.error('Auth error:', err);
-        showAuthAlert(translateAuthError(err), 'error');
+        const errText = translateAuthError(err);
+        console.error('[Supabase Auth 실패 상세]:', err);
+        showAuthAlert(errText, 'error');
+        showToast(errText);
       } finally {
-        submitBtn.disabled = false;
-        submitBtn.innerText = prevBtnText;
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.innerText = currentAuthMode === 'signup' ? '새 선생님 계정으로 가입하기' : '이메일로 로그인하기';
+        }
       }
     }
 
@@ -3022,61 +3044,40 @@
       }
 
       // 2. 데스크톱 또는 Fallback: 클립보드 복사 후 토스트
-      if (navigator.clipboard && window.isSecureContext) {
-        try {
-          await navigator.clipboard.writeText(msg);
-          showToast('카톡 안내 문구가 복사되었습니다! 카카오톡 대화방에 붙여넣기 하세요.');
-        } catch (e) {
-          prompt('아래 문구를 복사하여 카카오톡에 전송하세요:', msg);
-          if (copyTextWithFallback(msg)) {
-            showToast('카톡 안내 문구가 복사되었습니다! 카카오톡 대화방에 붙여넣기 하세요.');
-          } else {
-            const msgArea = document.getElementById('gold-msg-preview');
-            if (msgArea) {
-              msgArea.focus();
-              msgArea.select();
-            }
-          } else {
-            prompt('아래 문구를 복사하여 카카오톡에 전송하세요:', msg);
-            showToast('안내 문구가 선택되었습니다. 복사하여 카카오톡에 전송하세요.');
-          }
+      if (copyTextWithFallback(msg)) {
+        showToast('카톡 안내 문구가 복사되었습니다! 카카오톡 대화방에 붙여넣기 하세요.');
+      } else {
+        const msgArea = document.getElementById('gold-msg-preview');
+        if (msgArea) {
+          msgArea.focus();
+          msgArea.select();
         }
+        showToast('안내 문구가 선택되었습니다. 복사하여 카카오톡에 전송하세요.');
+      }
+    }
 
-        function copyGoldTuitionText() {
-          const msg = document.getElementById('gold-msg-preview').value;
-          const msgArea = document.getElementById('gold-msg-preview');
-          const msg = msgArea ? msgArea.value : '';
-          if (!msg) return;
-          if (navigator.clipboard && window.isSecureContext) {
-            navigator.clipboard.writeText(msg).then(() => {
-              showToast('📋 안내 문구가 클립보드에 복사되었습니다.');
-            }).catch(() => {
-              prompt('안내 문구를 복사하세요:', msg);
-            });
-          } else {
-            prompt('안내 문구를 복사하세요:', msg);
-            if (copyTextWithFallback(msg)) {
-              showToast('📋 안내 문구가 클립보드에 복사되었습니다.');
-            } else if (msgArea) {
-              msgArea.focus();
-              msgArea.select();
-              showToast('안내 문구가 선택되었습니다. 복사해 주세요.');
-            }
-          }
+    function copyGoldTuitionText() {
+      const msgArea = document.getElementById('gold-msg-preview');
+      const msg = msgArea ? msgArea.value : '';
+      if (!msg) return;
+      if (copyTextWithFallback(msg)) {
+        showToast('📋 안내 문구가 클립보드에 복사되었습니다.');
+      } else if (msgArea) {
+        msgArea.focus();
+        msgArea.select();
+        showToast('안내 문구가 선택되었습니다. 복사해 주세요.');
+      }
+    }
 
-          function copyGoldAccountOnly() {
-            const teacher = getTeacherProfile();
-            const text = `${teacher.bankName} ${teacher.accountNumber} ${teacher.accountHolder}`;
-            if (navigator.clipboard && window.isSecureContext) {
-              navigator.clipboard.writeText(text).then(() => {
-                showToast(`📋 계좌번호(${text})가 복사되었습니다!`);
-              });
-              if (copyTextWithFallback(text)) {
-                showToast(`📋 계좌번호(${text})가 복사되었습니다!`);
-              } else {
-                prompt('계좌번호 복사:', text);
-              }
-            }
+    function copyGoldAccountOnly() {
+      const teacher = getTeacherProfile();
+      const text = `${teacher.bankName} ${teacher.accountNumber} ${teacher.accountHolder}`;
+      if (copyTextWithFallback(text)) {
+        showToast(`📋 계좌번호(${text})가 복사되었습니다!`);
+      } else {
+        prompt('계좌번호 복사:', text);
+      }
+    }
 
             // 기존 수강생 목록에서 '수강료 안내' 버튼 누를 때도 골든타임 모달 연결
             function copyTuitionRequestText(studentId) {
@@ -4566,6 +4567,7 @@
                   return;
                 } catch (err) {
                   if (err.name === 'AbortError') return;
+                  copyShareModalLink();
                 }
               }
               copyShareModalLink();
@@ -4580,126 +4582,126 @@
               window.open(buildShareReportUrl(noteId), '_blank');
             }
 
-              function showToast(msg) {
-                const toast = document.getElementById('toast');
-                const text = document.getElementById('toast-msg');
-                text.innerText = msg;
-                toast.classList.remove('opacity-0', 'pointer-events-none');
-                toast.classList.add('opacity-100');
-                setTimeout(() => {
-                  toast.classList.remove('opacity-100');
-                  toast.classList.add('opacity-0', 'pointer-events-none');
-                }, 2500);
-              }
-
-              // =======================================================
-              // 🧚‍♀️ 학생 연습실 (Student Practice Portal) JS 로직
-              // =======================================================
-              let currentPracticeStudentId = 's1';
-              let selectedQuestionCat = '운지번호';
-
-              function getPracticeChecklists() {
-                const data = JSON.parse(localStorage.getItem(STORAGE_KEY_PRACTICE) || JSON.stringify(defaultChecklists));
-                if (!data['s4'] && defaultChecklists['s4']) {
-                  data['s4'] = defaultChecklists['s4'];
-                  savePracticeChecklists(data);
+                function showToast(msg) {
+                  const toast = document.getElementById('toast');
+                  const text = document.getElementById('toast-msg');
+                  text.innerText = msg;
+                  toast.classList.remove('opacity-0', 'pointer-events-none');
+                  toast.classList.add('opacity-100');
+                  setTimeout(() => {
+                    toast.classList.remove('opacity-100');
+                    toast.classList.add('opacity-0', 'pointer-events-none');
+                  }, 2500);
                 }
-                return data;
-              }
-              function savePracticeChecklists(data) {
-                localStorage.setItem(STORAGE_KEY_PRACTICE, JSON.stringify(data));
-                syncTableToSupabase(STORAGE_KEY_PRACTICE, data);
-              }
 
-              function getQuestions() {
-                const data = JSON.parse(localStorage.getItem(STORAGE_KEY_QUESTIONS) || JSON.stringify(defaultQuestions));
-                if (!data.some(q => q.studentId === 's4')) {
-                  const s4q = defaultQuestions.find(q => q.studentId === 's4');
-                  if (s4q) {
-                    data.push(s4q);
-                    saveQuestions(data);
+                // =======================================================
+                // 🧚‍♀️ 학생 연습실 (Student Practice Portal) JS 로직
+                // =======================================================
+                let currentPracticeStudentId = 's1';
+                let selectedQuestionCat = '운지번호';
+
+                function getPracticeChecklists() {
+                  const data = JSON.parse(localStorage.getItem(STORAGE_KEY_PRACTICE) || JSON.stringify(defaultChecklists));
+                  if (!data['s4'] && defaultChecklists['s4']) {
+                    data['s4'] = defaultChecklists['s4'];
+                    savePracticeChecklists(data);
                   }
+                  return data;
                 }
-                return data;
-              }
-              function saveQuestions(data) {
-                localStorage.setItem(STORAGE_KEY_QUESTIONS, JSON.stringify(data));
-                syncTableToSupabase(STORAGE_KEY_QUESTIONS, data);
-              }
-
-              function switchPracticeStudent() {
-                const select = document.getElementById('practice-student-select');
-                currentPracticeStudentId = select.value;
-                renderPracticePortal();
-              }
-
-              function renderPracticePortal() {
-                const students = getStudents();
-                const student = students.find(s => s.id === currentPracticeStudentId) || students[0];
-                if (!student) return;
-
-                currentPracticeStudentId = student.id;
-
-                // 1. 수강생 선택 셀렉트박스 채우기
-                const select = document.getElementById('practice-student-select');
-                select.innerHTML = students.map(s =>
-                  `<option value="${s.id}" ${s.id === currentPracticeStudentId ? 'selected' : ''}>${s.name} (${s.subject})</option>`
-                ).join('');
-
-                // 2. 환영 문구 & 상단 정보 (성인/학생 맞춤 호칭)
-                const isAdult = student.type === 'adult';
-                document.getElementById('practice-greeting-name').innerText = student.name;
-                const titleEl = document.getElementById('practice-greeting-title');
-                if (titleEl) {
-                  titleEl.innerText = isAdult ? '님!' : ' 학생!';
-                }
-                const subEl = document.getElementById('practice-greeting-sub');
-                if (subEl) {
-                  subEl.innerText = isAdult
-                    ? '오늘 하루의 피로를 음악과 함께 편안하게 리프레시해 보세요.'
-                    : '오늘도 건반 위에서 나만의 소리를 멋지게 만들어볼까요?';
+                function savePracticeChecklists(data) {
+                  localStorage.setItem(STORAGE_KEY_PRACTICE, JSON.stringify(data));
+                  syncTableToSupabase(STORAGE_KEY_PRACTICE, data);
                 }
 
-                // 3. 연습 체크리스트 렌더링
-                const allChecklists = getPracticeChecklists();
-                let list = allChecklists[currentPracticeStudentId] || [];
-
-                // 만약 최신 레슨 노트에 homework가 있는데 체크리스트에 없으면 자동 주입
-                const notes = getNotes().filter(n => n.studentId === currentPracticeStudentId);
-                if (notes.length > 0 && notes[0].homework) {
-                  const latestHw = notes[0].homework;
-                  if (!list.some(item => item.meta === latestHw)) {
-                    list.unshift({
-                      id: 'c_hw_' + Date.now(),
-                      title: notes[0].piece || '선생님 레슨 과제',
-                      meta: latestHw,
-                      isTeacherHw: true,
-                      done: false
-                    });
-                    allChecklists[currentPracticeStudentId] = list;
-                    savePracticeChecklists(allChecklists);
+                function getQuestions() {
+                  const data = JSON.parse(localStorage.getItem(STORAGE_KEY_QUESTIONS) || JSON.stringify(defaultQuestions));
+                  if (!data.some(q => q.studentId === 's4')) {
+                    const s4q = defaultQuestions.find(q => q.studentId === 's4');
+                    if (s4q) {
+                      data.push(s4q);
+                      saveQuestions(data);
+                    }
                   }
+                  return data;
+                }
+                function saveQuestions(data) {
+                  localStorage.setItem(STORAGE_KEY_QUESTIONS, JSON.stringify(data));
+                  syncTableToSupabase(STORAGE_KEY_QUESTIONS, data);
                 }
 
-                const listContainer = document.getElementById('practice-checklist-items');
-                listContainer.innerHTML = '';
+                function switchPracticeStudent() {
+                  const select = document.getElementById('practice-student-select');
+                  currentPracticeStudentId = select.value;
+                  renderPracticePortal();
+                }
 
-                if (list.length === 0) {
-                  listContainer.innerHTML = `
+                function renderPracticePortal() {
+                  const students = getStudents();
+                  const student = students.find(s => s.id === currentPracticeStudentId) || students[0];
+                  if (!student) return;
+
+                  currentPracticeStudentId = student.id;
+
+                  // 1. 수강생 선택 셀렉트박스 채우기
+                  const select = document.getElementById('practice-student-select');
+                  select.innerHTML = students.map(s =>
+                    `<option value="${s.id}" ${s.id === currentPracticeStudentId ? 'selected' : ''}>${s.name} (${s.subject})</option>`
+                  ).join('');
+
+                  // 2. 환영 문구 & 상단 정보 (성인/학생 맞춤 호칭)
+                  const isAdult = student.type === 'adult';
+                  document.getElementById('practice-greeting-name').innerText = student.name;
+                  const titleEl = document.getElementById('practice-greeting-title');
+                  if (titleEl) {
+                    titleEl.innerText = isAdult ? '님!' : ' 학생!';
+                  }
+                  const subEl = document.getElementById('practice-greeting-sub');
+                  if (subEl) {
+                    subEl.innerText = isAdult
+                      ? '오늘 하루의 피로를 음악과 함께 편안하게 리프레시해 보세요.'
+                      : '오늘도 건반 위에서 나만의 소리를 멋지게 만들어볼까요?';
+                  }
+
+                  // 3. 연습 체크리스트 렌더링
+                  const allChecklists = getPracticeChecklists();
+                  let list = allChecklists[currentPracticeStudentId] || [];
+
+                  // 만약 최신 레슨 노트에 homework가 있는데 체크리스트에 없으면 자동 주입
+                  const notes = getNotes().filter(n => n.studentId === currentPracticeStudentId);
+                  if (notes.length > 0 && notes[0].homework) {
+                    const latestHw = notes[0].homework;
+                    if (!list.some(item => item.meta === latestHw)) {
+                      list.unshift({
+                        id: 'c_hw_' + Date.now(),
+                        title: notes[0].piece || '선생님 레슨 과제',
+                        meta: latestHw,
+                        isTeacherHw: true,
+                        done: false
+                      });
+                      allChecklists[currentPracticeStudentId] = list;
+                      savePracticeChecklists(allChecklists);
+                    }
+                  }
+
+                  const listContainer = document.getElementById('practice-checklist-items');
+                  listContainer.innerHTML = '';
+
+                  if (list.length === 0) {
+                    listContainer.innerHTML = `
           <div class="py-8 text-center text-slate-400 bg-slate-50 rounded-xl border border-dashed border-slate-200">
             <p class="text-xs">등록된 오늘의 연습 목표가 없습니다.</p>
             <button onclick="openAddPracticeModal()" class="mt-2 text-xs font-bold text-purple-600 hover:underline">+ 첫 연습 목표 추가하기</button>
           </div>
         `;
-                } else {
-                  list.forEach(item => {
-                    const itemEl = document.createElement('div');
-                    itemEl.className = `p-3 rounded-xl border transition flex items-start justify-between ${item.done
-                      ? 'bg-slate-50 border-slate-200 opacity-75'
-                      : 'bg-white border-slate-200 hover:border-purple-300 shadow-xs'
-                      }`;
+                  } else {
+                    list.forEach(item => {
+                      const itemEl = document.createElement('div');
+                      itemEl.className = `p-3 rounded-xl border transition flex items-start justify-between ${item.done
+                        ? 'bg-slate-50 border-slate-200 opacity-75'
+                        : 'bg-white border-slate-200 hover:border-purple-300 shadow-xs'
+                        }`;
 
-                    itemEl.innerHTML = `
+                      itemEl.innerHTML = `
             <div class="flex items-start space-x-3">
               <input type="checkbox" onchange="toggleChecklistItem('${item.id}')" ${item.done ? 'checked' : ''} class="mt-1 w-4 h-4 rounded text-purple-600 focus:ring-purple-500 cursor-pointer">
               <div>
@@ -4712,38 +4714,38 @@
             </div>
             <button onclick="deleteChecklistItem('${item.id}')" class="text-slate-400 hover:text-slate-600 p-1 text-xs" title="삭제">✕</button>
           `;
-                    listContainer.appendChild(itemEl);
-                  });
-                }
+                      listContainer.appendChild(itemEl);
+                    });
+                  }
 
-                // 진행률 계산
-                const totalCount = list.length;
-                const doneCount = list.filter(i => i.done).length;
-                const pct = totalCount === 0 ? 0 : Math.round((doneCount / totalCount) * 100);
-                document.getElementById('checklist-progress-text').innerText = `${doneCount} / ${totalCount} 완료 (${pct}%)`;
-                document.getElementById('checklist-progress-bar').style.width = `${pct}%`;
+                  // 진행률 계산
+                  const totalCount = list.length;
+                  const doneCount = list.filter(i => i.done).length;
+                  const pct = totalCount === 0 ? 0 : Math.round((doneCount / totalCount) * 100);
+                  document.getElementById('checklist-progress-text').innerText = `${doneCount} / ${totalCount} 완료 (${pct}%)`;
+                  document.getElementById('checklist-progress-bar').style.width = `${pct}%`;
 
-                // 4. 질문 보관함 렌더링
-                const allQuestions = getQuestions();
-                const studentQuestions = allQuestions.filter(q => q.studentId === currentPracticeStudentId);
-                const pendingCount = studentQuestions.filter(q => !q.answered).length;
-                document.getElementById('question-pending-count').innerText = `${pendingCount}건 질문 대기`;
+                  // 4. 질문 보관함 렌더링
+                  const allQuestions = getQuestions();
+                  const studentQuestions = allQuestions.filter(q => q.studentId === currentPracticeStudentId);
+                  const pendingCount = studentQuestions.filter(q => !q.answered).length;
+                  document.getElementById('question-pending-count').innerText = `${pendingCount}건 질문 대기`;
 
-                const qContainer = document.getElementById('practice-questions-list');
-                qContainer.innerHTML = '';
+                  const qContainer = document.getElementById('practice-questions-list');
+                  qContainer.innerHTML = '';
 
-                if (studentQuestions.length === 0) {
-                  qContainer.innerHTML = `
+                  if (studentQuestions.length === 0) {
+                    qContainer.innerHTML = `
           <div class="py-6 text-center text-slate-400 bg-slate-50 rounded-xl border border-dashed border-slate-200">
             <p class="text-xs">아직 기록된 질문이 없습니다.</p>
             <p class="text-[11px] text-slate-400 mt-0.5">연습 중 헷갈리는 박자나 운지번호를 자유롭게 물어보세요!</p>
           </div>
         `;
-                } else {
-                  studentQuestions.forEach(q => {
-                    const qEl = document.createElement('div');
-                    qEl.className = 'p-3 bg-white rounded-xl border border-slate-200 hover:border-slate-300 transition space-y-1.5';
-                    qEl.innerHTML = `
+                  } else {
+                    studentQuestions.forEach(q => {
+                      const qEl = document.createElement('div');
+                      qEl.className = 'p-3 bg-white rounded-xl border border-slate-200 hover:border-slate-300 transition space-y-1.5';
+                      qEl.innerHTML = `
             <div class="flex items-center justify-between">
               <div class="flex items-center space-x-1.5">
                 <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-purple-50 text-purple-700 border border-purple-200">${q.category}</span>
@@ -4755,23 +4757,23 @@
             </div>
             <p class="text-xs text-slate-800 font-medium leading-relaxed">${q.text}</p>
           `;
-                    qContainer.appendChild(qEl);
-                  });
-                }
+                      qContainer.appendChild(qEl);
+                    });
+                  }
 
-                // 5. 칭찬 뱃지 보관함 렌더링
-                const trophiesContainer = document.getElementById('badge-trophies-list');
-                const studentNotes = getNotes().filter(n => n.studentId === currentPracticeStudentId);
-                trophiesContainer.innerHTML = '';
-                document.getElementById('badge-trophy-count').innerText = `${studentNotes.length}개 획득`;
+                  // 5. 칭찬 뱃지 보관함 렌더링
+                  const trophiesContainer = document.getElementById('badge-trophies-list');
+                  const studentNotes = getNotes().filter(n => n.studentId === currentPracticeStudentId);
+                  trophiesContainer.innerHTML = '';
+                  document.getElementById('badge-trophy-count').innerText = `${studentNotes.length}개 획득`;
 
-                if (studentNotes.length === 0) {
-                  trophiesContainer.innerHTML = '<div class="py-4 text-center text-xs text-slate-400">레슨을 받으면 칭찬 뱃지가 모입니다!</div>';
-                } else {
-                  studentNotes.forEach(sn => {
-                    const badgeEl = document.createElement('div');
-                    badgeEl.className = 'p-2.5 bg-amber-50/70 border border-amber-200/80 rounded-xl flex items-center justify-between text-xs';
-                    badgeEl.innerHTML = `
+                  if (studentNotes.length === 0) {
+                    trophiesContainer.innerHTML = '<div class="py-4 text-center text-xs text-slate-400">레슨을 받으면 칭찬 뱃지가 모입니다!</div>';
+                  } else {
+                    studentNotes.forEach(sn => {
+                      const badgeEl = document.createElement('div');
+                      badgeEl.className = 'p-2.5 bg-amber-50/70 border border-amber-200/80 rounded-xl flex items-center justify-between text-xs';
+                      badgeEl.innerHTML = `
             <div class="flex items-center space-x-2">
               <span class="text-base">🌟</span>
               <div>
@@ -4781,71 +4783,71 @@
             </div>
             <span class="text-[10px] font-bold text-amber-800 bg-amber-200/60 px-2 py-0.5 rounded-full">${sn.sessionNum}회차</span>
           `;
-                    trophiesContainer.appendChild(badgeEl);
-                  });
+                      trophiesContainer.appendChild(badgeEl);
+                    });
+                  }
+
+                  // 6. 오늘 누적 연습 세션 타임라인 렌더링
+                  renderPracticeSessionsTimeline();
+
+                  // 7. 메트로놈 비트 라이트 초기화
+                  renderMetroBeatLights();
                 }
 
-                // 6. 오늘 누적 연습 세션 타임라인 렌더링
-                renderPracticeSessionsTimeline();
-
-                // 7. 메트로놈 비트 라이트 초기화
-                renderMetroBeatLights();
-              }
-
-              // =======================================================
-              // ⏱️ 오늘 누적 연습 세션 타임라인 관리
-              // =======================================================
-              function getPracticeSessions() {
-                const data = JSON.parse(localStorage.getItem(STORAGE_KEY_SESSIONS) || JSON.stringify(defaultSessions));
-                if (!data['s4'] && defaultSessions['s4']) {
-                  data['s4'] = defaultSessions['s4'];
-                  savePracticeSessions(data);
+                // =======================================================
+                // ⏱️ 오늘 누적 연습 세션 타임라인 관리
+                // =======================================================
+                function getPracticeSessions() {
+                  const data = JSON.parse(localStorage.getItem(STORAGE_KEY_SESSIONS) || JSON.stringify(defaultSessions));
+                  if (!data['s4'] && defaultSessions['s4']) {
+                    data['s4'] = defaultSessions['s4'];
+                    savePracticeSessions(data);
+                  }
+                  return data;
                 }
-                return data;
-              }
-              function savePracticeSessions(data) {
-                localStorage.setItem(STORAGE_KEY_SESSIONS, JSON.stringify(data));
-                syncTableToSupabase(STORAGE_KEY_SESSIONS, data);
-              }
-
-              function renderPracticeSessionsTimeline() {
-                const allSessions = getPracticeSessions();
-                const studentSessions = allSessions[currentPracticeStudentId] || [];
-                const timelineContainer = document.getElementById('practice-sessions-timeline');
-                if (!timelineContainer) return;
-
-                timelineContainer.innerHTML = '';
-
-                // 총 누적 연습 시간 계산
-                const totalMinutes = studentSessions.reduce((acc, cur) => acc + (cur.durationMinutes || 0), 0);
-                document.getElementById('timeline-total-minutes').innerText = totalMinutes;
-                document.getElementById('timeline-session-count').innerText = `(총 ${studentSessions.length}개 세션)`;
-
-                // 목표 60분 달성 여부 뱃지
-                const goalBadge = document.getElementById('timeline-goal-badge');
-                if (totalMinutes >= 60) {
-                  goalBadge.innerText = '목표 60분 달성! 🎉';
-                  goalBadge.className = 'text-[10px] font-bold px-2 py-0.5 rounded-full bg-purple-200 text-purple-900';
-                } else {
-                  goalBadge.innerText = `목표까지 ${60 - totalMinutes}분 남음 💪`;
-                  goalBadge.className = 'text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-900';
+                function savePracticeSessions(data) {
+                  localStorage.setItem(STORAGE_KEY_SESSIONS, JSON.stringify(data));
+                  syncTableToSupabase(STORAGE_KEY_SESSIONS, data);
                 }
 
-                if (studentSessions.length === 0) {
-                  timelineContainer.innerHTML = `
+                function renderPracticeSessionsTimeline() {
+                  const allSessions = getPracticeSessions();
+                  const studentSessions = allSessions[currentPracticeStudentId] || [];
+                  const timelineContainer = document.getElementById('practice-sessions-timeline');
+                  if (!timelineContainer) return;
+
+                  timelineContainer.innerHTML = '';
+
+                  // 총 누적 연습 시간 계산
+                  const totalMinutes = studentSessions.reduce((acc, cur) => acc + (cur.durationMinutes || 0), 0);
+                  document.getElementById('timeline-total-minutes').innerText = totalMinutes;
+                  document.getElementById('timeline-session-count').innerText = `(총 ${studentSessions.length}개 세션)`;
+
+                  // 목표 60분 달성 여부 뱃지
+                  const goalBadge = document.getElementById('timeline-goal-badge');
+                  if (totalMinutes >= 60) {
+                    goalBadge.innerText = '목표 60분 달성! 🎉';
+                    goalBadge.className = 'text-[10px] font-bold px-2 py-0.5 rounded-full bg-purple-200 text-purple-900';
+                  } else {
+                    goalBadge.innerText = `목표까지 ${60 - totalMinutes}분 남음 💪`;
+                    goalBadge.className = 'text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-900';
+                  }
+
+                  if (studentSessions.length === 0) {
+                    timelineContainer.innerHTML = `
           <div class="py-6 text-center text-slate-400 bg-slate-50 rounded-xl border border-dashed border-slate-200 ml-7">
             <p class="text-xs">오늘 아직 기록된 연습 세션이 없습니다.</p>
             <p class="text-[11px] text-slate-400 mt-0.5">상단의 '타이머 시작' 또는 '수동 기록'을 눌러보세요!</p>
           </div>
         `;
-                  return;
-                }
+                    return;
+                  }
 
-                studentSessions.forEach((sess, idx) => {
-                  const itemEl = document.createElement('div');
-                  itemEl.className = 'relative flex items-start space-x-3 group';
+                  studentSessions.forEach((sess, idx) => {
+                    const itemEl = document.createElement('div');
+                    itemEl.className = 'relative flex items-start space-x-3 group';
 
-                  itemEl.innerHTML = `
+                    itemEl.innerHTML = `
           <!-- 타임라인 불릿 점 -->
           <div class="w-7 h-7 rounded-full bg-purple-100 border-2 border-purple-500 text-purple-700 flex items-center justify-center font-bold text-xs shrink-0 z-10 mt-1 shadow-2xs">
             ${idx + 1}
@@ -4866,568 +4868,568 @@
             ${sess.notes ? `<p class="text-[11px] text-slate-600 leading-relaxed break-keep bg-white/70 p-2 rounded-lg border border-slate-100">${sess.notes}</p>` : ''}
           </div>
         `;
-                  timelineContainer.appendChild(itemEl);
-                });
-              }
-
-              // 수동 세션 기록
-              function openManualSessionModal() {
-                const student = getStudents().find(s => s.id === currentPracticeStudentId);
-                document.getElementById('manual-sess-piece').value = student ? (student.currentPiece || '') : '';
-
-                const now = new Date();
-                const hh = String(now.getHours()).padStart(2, '0');
-                const mm = String(now.getMinutes()).padStart(2, '0');
-                document.getElementById('manual-sess-start').value = `${hh}:${mm}`;
-                document.getElementById('manual-sess-duration').value = 20;
-                document.getElementById('manual-sess-notes').value = '';
-
-                openModal('modal-session-manual');
-              }
-
-              function handleSaveManualSession(e) {
-                e.preventDefault();
-                const piece = document.getElementById('manual-sess-piece').value.trim();
-                const startTime = document.getElementById('manual-sess-start').value;
-                const duration = parseInt(document.getElementById('manual-sess-duration').value) || 20;
-                const notes = document.getElementById('manual-sess-notes').value.trim();
-
-                // 시작 시간과 지속 시간으로 종료 시간 계산
-                const [h, m] = startTime.split(':').map(Number);
-                const endTotalM = h * 60 + m + duration;
-                const endH = String(Math.floor(endTotalM / 60) % 24).padStart(2, '0');
-                const endM = String(endTotalM % 60).padStart(2, '0');
-                const endTime = `${endH}:${endM}`;
-
-                const allSessions = getPracticeSessions();
-                let list = allSessions[currentPracticeStudentId] || [];
-
-                list.push({
-                  id: 'sess_' + Date.now(),
-                  date: todayStr,
-                  startTime,
-                  endTime,
-                  durationMinutes: duration,
-                  piece,
-                  notes: notes || '집중 연습 완료'
-                });
-
-                allSessions[currentPracticeStudentId] = list;
-                savePracticeSessions(allSessions);
-                closeModal('modal-session-manual');
-                renderPracticeSessionsTimeline();
-                showToast(`연습 세션이 타임라인에 기록되었습니다! (+${duration}분) 👏`);
-              }
-
-              function deletePracticeSession(sessId) {
-                const allSessions = getPracticeSessions();
-                let list = allSessions[currentPracticeStudentId] || [];
-                allSessions[currentPracticeStudentId] = list.filter(s => s.id !== sessId);
-                savePracticeSessions(allSessions);
-                renderPracticeSessionsTimeline();
-                showToast('연습 세션이 삭제되었습니다.');
-              }
-
-              // 실시간 세션 타이머 제어
-              let liveTimerInterval = null;
-              let liveTimerSeconds = 0;
-              let liveTimerPieceName = '';
-              let liveTimerStartStr = '';
-
-              function toggleSessionTimerModal() {
-                // 연습할 곡 목록 채우기
-                const select = document.getElementById('timer-piece-select');
-                const student = getStudents().find(s => s.id === currentPracticeStudentId);
-                const checklists = (getPracticeChecklists()[currentPracticeStudentId] || []);
-
-                let optionsHtml = '';
-                if (student && student.currentPiece) {
-                  optionsHtml += `<option value="${student.currentPiece}">${student.currentPiece} (현재 메인곡)</option>`;
+                    timelineContainer.appendChild(itemEl);
+                  });
                 }
-                checklists.forEach(item => {
-                  optionsHtml += `<option value="${item.title}">${item.title}</option>`;
-                });
-                optionsHtml += `<option value="하농 및 기본 테크닉">하농 및 기본 테크닉 연습</option>`;
-                optionsHtml += `<option value="자유곡 연습">자유곡 / 취미곡 연습</option>`;
 
-                select.innerHTML = optionsHtml;
-                document.getElementById('timer-piece-custom').value = '';
-                openModal('modal-session-timer');
-              }
+                // 수동 세션 기록
+                function openManualSessionModal() {
+                  const student = getStudents().find(s => s.id === currentPracticeStudentId);
+                  document.getElementById('manual-sess-piece').value = student ? (student.currentPiece || '') : '';
 
-              function handleStartLiveSession(e) {
-                e.preventDefault();
-                const customPiece = document.getElementById('timer-piece-custom').value.trim();
-                const selectPiece = document.getElementById('timer-piece-select').value;
-                liveTimerPieceName = customPiece || selectPiece || '피아노 연습';
+                  const now = new Date();
+                  const hh = String(now.getHours()).padStart(2, '0');
+                  const mm = String(now.getMinutes()).padStart(2, '0');
+                  document.getElementById('manual-sess-start').value = `${hh}:${mm}`;
+                  document.getElementById('manual-sess-duration').value = 20;
+                  document.getElementById('manual-sess-notes').value = '';
 
-                const now = new Date();
-                liveTimerStartStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+                  openModal('modal-session-manual');
+                }
 
-                closeModal('modal-session-timer');
+                function handleSaveManualSession(e) {
+                  e.preventDefault();
+                  const piece = document.getElementById('manual-sess-piece').value.trim();
+                  const startTime = document.getElementById('manual-sess-start').value;
+                  const duration = parseInt(document.getElementById('manual-sess-duration').value) || 20;
+                  const notes = document.getElementById('manual-sess-notes').value.trim();
 
-                // 배너 띄우기
-                document.getElementById('live-timer-piece').innerText = `🎵 [${liveTimerPieceName}] 연습 진행 중...`;
-                document.getElementById('live-timer-banner').classList.remove('hidden');
+                  // 시작 시간과 지속 시간으로 종료 시간 계산
+                  const [h, m] = startTime.split(':').map(Number);
+                  const endTotalM = h * 60 + m + duration;
+                  const endH = String(Math.floor(endTotalM / 60) % 24).padStart(2, '0');
+                  const endM = String(endTotalM % 60).padStart(2, '0');
+                  const endTime = `${endH}:${endM}`;
 
-                liveTimerSeconds = 0;
-                clearInterval(liveTimerInterval);
-                liveTimerInterval = setInterval(() => {
-                  liveTimerSeconds++;
-                  const m = String(Math.floor(liveTimerSeconds / 60)).padStart(2, '0');
-                  const s = String(liveTimerSeconds % 60).padStart(2, '0');
-                  document.getElementById('live-timer-clock').innerText = `${m}:${s}`;
-                }, 1000);
+                  const allSessions = getPracticeSessions();
+                  let list = allSessions[currentPracticeStudentId] || [];
 
-                showToast(`'${liveTimerPieceName}' 연습 타이머가 시작되었습니다! 화이팅 🎵`);
-              }
+                  list.push({
+                    id: 'sess_' + Date.now(),
+                    date: todayStr,
+                    startTime,
+                    endTime,
+                    durationMinutes: duration,
+                    piece,
+                    notes: notes || '집중 연습 완료'
+                  });
 
-              function stopAndSaveLiveTimer() {
-                clearInterval(liveTimerInterval);
-                document.getElementById('live-timer-banner').classList.add('hidden');
+                  allSessions[currentPracticeStudentId] = list;
+                  savePracticeSessions(allSessions);
+                  closeModal('modal-session-manual');
+                  renderPracticeSessionsTimeline();
+                  showToast(`연습 세션이 타임라인에 기록되었습니다! (+${duration}분) 👏`);
+                }
 
-                const durationMinutes = Math.max(1, Math.round(liveTimerSeconds / 60));
-                const now = new Date();
-                const endStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+                function deletePracticeSession(sessId) {
+                  const allSessions = getPracticeSessions();
+                  let list = allSessions[currentPracticeStudentId] || [];
+                  allSessions[currentPracticeStudentId] = list.filter(s => s.id !== sessId);
+                  savePracticeSessions(allSessions);
+                  renderPracticeSessionsTimeline();
+                  showToast('연습 세션이 삭제되었습니다.');
+                }
 
-                const noteMsg = prompt('오늘 연습은 어땠나요? 세션 메모를 간단히 남겨보세요:', '손가락 힘 빼고 템포 집중 연습함');
+                // 실시간 세션 타이머 제어
+                let liveTimerInterval = null;
+                let liveTimerSeconds = 0;
+                let liveTimerPieceName = '';
+                let liveTimerStartStr = '';
 
-                const allSessions = getPracticeSessions();
-                let list = allSessions[currentPracticeStudentId] || [];
+                function toggleSessionTimerModal() {
+                  // 연습할 곡 목록 채우기
+                  const select = document.getElementById('timer-piece-select');
+                  const student = getStudents().find(s => s.id === currentPracticeStudentId);
+                  const checklists = (getPracticeChecklists()[currentPracticeStudentId] || []);
 
-                list.push({
-                  id: 'sess_' + Date.now(),
-                  date: todayStr,
-                  startTime: liveTimerStartStr,
-                  endTime: endStr,
-                  durationMinutes,
-                  piece: liveTimerPieceName,
-                  notes: noteMsg || '집중 연습 완료'
-                });
+                  let optionsHtml = '';
+                  if (student && student.currentPiece) {
+                    optionsHtml += `<option value="${student.currentPiece}">${student.currentPiece} (현재 메인곡)</option>`;
+                  }
+                  checklists.forEach(item => {
+                    optionsHtml += `<option value="${item.title}">${item.title}</option>`;
+                  });
+                  optionsHtml += `<option value="하농 및 기본 테크닉">하농 및 기본 테크닉 연습</option>`;
+                  optionsHtml += `<option value="자유곡 연습">자유곡 / 취미곡 연습</option>`;
 
-                allSessions[currentPracticeStudentId] = list;
-                savePracticeSessions(allSessions);
-                renderPracticeSessionsTimeline();
-                showToast(`세션이 타임라인에 등록되었습니다! (+${durationMinutes}분 연습 완료 🎉)`);
-              }
+                  select.innerHTML = optionsHtml;
+                  document.getElementById('timer-piece-custom').value = '';
+                  openModal('modal-session-timer');
+                }
 
-              function cancelLiveTimer() {
-                if (confirm('진행 중인 연습 세션 타이머를 취소하시겠습니까?')) {
+                function handleStartLiveSession(e) {
+                  e.preventDefault();
+                  const customPiece = document.getElementById('timer-piece-custom').value.trim();
+                  const selectPiece = document.getElementById('timer-piece-select').value;
+                  liveTimerPieceName = customPiece || selectPiece || '피아노 연습';
+
+                  const now = new Date();
+                  liveTimerStartStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+
+                  closeModal('modal-session-timer');
+
+                  // 배너 띄우기
+                  document.getElementById('live-timer-piece').innerText = `🎵 [${liveTimerPieceName}] 연습 진행 중...`;
+                  document.getElementById('live-timer-banner').classList.remove('hidden');
+
+                  liveTimerSeconds = 0;
+                  clearInterval(liveTimerInterval);
+                  liveTimerInterval = setInterval(() => {
+                    liveTimerSeconds++;
+                    const m = String(Math.floor(liveTimerSeconds / 60)).padStart(2, '0');
+                    const s = String(liveTimerSeconds % 60).padStart(2, '0');
+                    document.getElementById('live-timer-clock').innerText = `${m}:${s}`;
+                  }, 1000);
+
+                  showToast(`'${liveTimerPieceName}' 연습 타이머가 시작되었습니다! 화이팅 🎵`);
+                }
+
+                function stopAndSaveLiveTimer() {
                   clearInterval(liveTimerInterval);
                   document.getElementById('live-timer-banner').classList.add('hidden');
-                  showToast('연습 타이머가 취소되었습니다.');
+
+                  const durationMinutes = Math.max(1, Math.round(liveTimerSeconds / 60));
+                  const now = new Date();
+                  const endStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+
+                  const noteMsg = prompt('오늘 연습은 어땠나요? 세션 메모를 간단히 남겨보세요:', '손가락 힘 빼고 템포 집중 연습함');
+
+                  const allSessions = getPracticeSessions();
+                  let list = allSessions[currentPracticeStudentId] || [];
+
+                  list.push({
+                    id: 'sess_' + Date.now(),
+                    date: todayStr,
+                    startTime: liveTimerStartStr,
+                    endTime: endStr,
+                    durationMinutes,
+                    piece: liveTimerPieceName,
+                    notes: noteMsg || '집중 연습 완료'
+                  });
+
+                  allSessions[currentPracticeStudentId] = list;
+                  savePracticeSessions(allSessions);
+                  renderPracticeSessionsTimeline();
+                  showToast(`세션이 타임라인에 등록되었습니다! (+${durationMinutes}분 연습 완료 🎉)`);
                 }
-              }
 
-              // =======================================================
-              // 🎵 정밀 멀티박자 메트로놈 (2/4, 3/4, 4/4, 6/8 박자)
-              // =======================================================
-              let currentTsBeats = 4;
-              let currentTsUnit = 4;
-              let currentBeatIndex = 0;
-              let isMetroCollapsed = false;
-
-              function toggleMetronomeCollapse() {
-                isMetroCollapsed = !isMetroCollapsed;
-                const content = document.getElementById('metro-body-content');
-                const text = document.getElementById('metro-collapse-text');
-                const icon = document.getElementById('metro-collapse-icon');
-
-                if (isMetroCollapsed) {
-                  content.classList.add('hidden');
-                  text.innerText = '펼치기';
-                  icon.innerText = '▼';
-                } else {
-                  content.classList.remove('hidden');
-                  text.innerText = '접기';
-                  icon.innerText = '▲';
-                }
-              }
-
-              function setTimeSignature(beats, unit) {
-                currentTsBeats = beats;
-                currentTsUnit = unit;
-                currentBeatIndex = 0;
-
-                // 버튼 하이라이트 갱신
-                const presets = [
-                  { b: 2, u: 4, id: 'ts-btn-2-4' },
-                  { b: 3, u: 4, id: 'ts-btn-3-4' },
-                  { b: 4, u: 4, id: 'ts-btn-4-4' },
-                  { b: 6, u: 8, id: 'ts-btn-6-8' }
-                ];
-
-                presets.forEach(p => {
-                  const btn = document.getElementById(p.id);
-                  if (p.b === beats && p.u === unit) {
-                    btn.className = 'ts-btn flex-1 py-1 rounded-lg bg-white text-purple-700 shadow-xs transition';
-                  } else {
-                    btn.className = 'ts-btn flex-1 py-1 rounded-lg text-slate-600 hover:text-slate-900 transition';
+                function cancelLiveTimer() {
+                  if (confirm('진행 중인 연습 세션 타이머를 취소하시겠습니까?')) {
+                    clearInterval(liveTimerInterval);
+                    document.getElementById('live-timer-banner').classList.add('hidden');
+                    showToast('연습 타이머가 취소되었습니다.');
                   }
-                });
-
-                renderMetroBeatLights();
-
-                if (isMetroRunning) {
-                  clearInterval(metroInterval);
-                  const ms = (60 / currentBpm) * 1000;
-                  metroInterval = setInterval(() => triggerMetroBeat(), ms);
                 }
-              }
 
-              function renderMetroBeatLights() {
-                const container = document.getElementById('metro-beat-lights');
-                if (!container) return;
-                container.innerHTML = '';
+                // =======================================================
+                // 🎵 정밀 멀티박자 메트로놈 (2/4, 3/4, 4/4, 6/8 박자)
+                // =======================================================
+                let currentTsBeats = 4;
+                let currentTsUnit = 4;
+                let currentBeatIndex = 0;
+                let isMetroCollapsed = false;
 
-                for (let i = 0; i < currentTsBeats; i++) {
-                  const isAccent = (i === 0) || (currentTsBeats === 6 && i === 3);
-                  const dot = document.createElement('span');
-                  dot.id = `beat-light-${i}`;
-                  dot.className = `w-3 h-3 rounded-full transition-all duration-75 ${isAccent ? 'border-2 border-purple-500 bg-white ring-1 ring-purple-200' : 'border border-slate-300 bg-white'
-                    }`;
-                  container.appendChild(dot);
+                function toggleMetronomeCollapse() {
+                  isMetroCollapsed = !isMetroCollapsed;
+                  const content = document.getElementById('metro-body-content');
+                  const text = document.getElementById('metro-collapse-text');
+                  const icon = document.getElementById('metro-collapse-icon');
+
+                  if (isMetroCollapsed) {
+                    content.classList.add('hidden');
+                    text.innerText = '펼치기';
+                    icon.innerText = '▼';
+                  } else {
+                    content.classList.remove('hidden');
+                    text.innerText = '접기';
+                    icon.innerText = '▲';
+                  }
                 }
-              }
 
-              function triggerMetroBeat() {
-                // 1. 비트 램프 하이라이트
-                for (let i = 0; i < currentTsBeats; i++) {
-                  const dot = document.getElementById(`beat-light-${i}`);
-                  if (!dot) continue;
-                  const isAccent = (i === 0) || (currentTsBeats === 6 && i === 3);
+                function setTimeSignature(beats, unit) {
+                  currentTsBeats = beats;
+                  currentTsUnit = unit;
+                  currentBeatIndex = 0;
 
-                  if (i === currentBeatIndex) {
-                    if (i === 0) {
-                      dot.className = 'w-3.5 h-3.5 rounded-full bg-purple-600 ring-4 ring-purple-300 transition-all duration-75';
-                    } else if (currentTsBeats === 6 && i === 3) {
-                      dot.className = 'w-3 h-3 rounded-full bg-indigo-500 ring-2 ring-indigo-300 transition-all duration-75';
+                  // 버튼 하이라이트 갱신
+                  const presets = [
+                    { b: 2, u: 4, id: 'ts-btn-2-4' },
+                    { b: 3, u: 4, id: 'ts-btn-3-4' },
+                    { b: 4, u: 4, id: 'ts-btn-4-4' },
+                    { b: 6, u: 8, id: 'ts-btn-6-8' }
+                  ];
+
+                  presets.forEach(p => {
+                    const btn = document.getElementById(p.id);
+                    if (p.b === beats && p.u === unit) {
+                      btn.className = 'ts-btn flex-1 py-1 rounded-lg bg-white text-purple-700 shadow-xs transition';
                     } else {
-                      dot.className = 'w-3 h-3 rounded-full bg-purple-400 ring-2 ring-purple-200 transition-all duration-75';
+                      btn.className = 'ts-btn flex-1 py-1 rounded-lg text-slate-600 hover:text-slate-900 transition';
                     }
-                  } else {
-                    dot.className = `w-3 h-3 rounded-full transition-all duration-75 ${isAccent ? 'border-2 border-purple-400 bg-white' : 'border border-slate-300 bg-white'
-                      }`;
+                  });
+
+                  renderMetroBeatLights();
+
+                  if (isMetroRunning) {
+                    clearInterval(metroInterval);
+                    const ms = (60 / currentBpm) * 1000;
+                    metroInterval = setInterval(() => triggerMetroBeat(), ms);
                   }
                 }
 
-                // 2. 오디오 틱 사운드 주파수 분기 (강세 적용)
-                let freq = 750;
-                if (currentBeatIndex === 0) {
-                  freq = 1200; // 제1박 고음 강세 (Ding!)
-                } else if (currentTsBeats === 6 && currentBeatIndex === 3) {
-                  freq = 960;  // 6/8박자의 제4박 중간 강세 (Dong!)
-                } else {
-                  freq = 750;  // 일반 박자 (Tok)
+                function renderMetroBeatLights() {
+                  const container = document.getElementById('metro-beat-lights');
+                  if (!container) return;
+                  container.innerHTML = '';
+
+                  for (let i = 0; i < currentTsBeats; i++) {
+                    const isAccent = (i === 0) || (currentTsBeats === 6 && i === 3);
+                    const dot = document.createElement('span');
+                    dot.id = `beat-light-${i}`;
+                    dot.className = `w-3 h-3 rounded-full transition-all duration-75 ${isAccent ? 'border-2 border-purple-500 bg-white ring-1 ring-purple-200' : 'border border-slate-300 bg-white'
+                      }`;
+                    container.appendChild(dot);
+                  }
                 }
 
-                playMetroClick(freq);
+                function triggerMetroBeat() {
+                  // 1. 비트 램프 하이라이트
+                  for (let i = 0; i < currentTsBeats; i++) {
+                    const dot = document.getElementById(`beat-light-${i}`);
+                    if (!dot) continue;
+                    const isAccent = (i === 0) || (currentTsBeats === 6 && i === 3);
 
-                // 다음 박자로 인덱스 이동
-                currentBeatIndex = (currentBeatIndex + 1) % currentTsBeats;
-              }
+                    if (i === currentBeatIndex) {
+                      if (i === 0) {
+                        dot.className = 'w-3.5 h-3.5 rounded-full bg-purple-600 ring-4 ring-purple-300 transition-all duration-75';
+                      } else if (currentTsBeats === 6 && i === 3) {
+                        dot.className = 'w-3 h-3 rounded-full bg-indigo-500 ring-2 ring-indigo-300 transition-all duration-75';
+                      } else {
+                        dot.className = 'w-3 h-3 rounded-full bg-purple-400 ring-2 ring-purple-200 transition-all duration-75';
+                      }
+                    } else {
+                      dot.className = `w-3 h-3 rounded-full transition-all duration-75 ${isAccent ? 'border-2 border-purple-400 bg-white' : 'border border-slate-300 bg-white'
+                        }`;
+                    }
+                  }
 
-              // 체크리스트 토글 & 추가
-              function toggleChecklistItem(itemId) {
-                const allChecklists = getPracticeChecklists();
-                let list = allChecklists[currentPracticeStudentId] || [];
-                const item = list.find(i => i.id === itemId);
-                if (item) {
-                  item.done = !item.done;
+                  // 2. 오디오 틱 사운드 주파수 분기 (강세 적용)
+                  let freq = 750;
+                  if (currentBeatIndex === 0) {
+                    freq = 1200; // 제1박 고음 강세 (Ding!)
+                  } else if (currentTsBeats === 6 && currentBeatIndex === 3) {
+                    freq = 960;  // 6/8박자의 제4박 중간 강세 (Dong!)
+                  } else {
+                    freq = 750;  // 일반 박자 (Tok)
+                  }
+
+                  playMetroClick(freq);
+
+                  // 다음 박자로 인덱스 이동
+                  currentBeatIndex = (currentBeatIndex + 1) % currentTsBeats;
+                }
+
+                // 체크리스트 토글 & 추가
+                function toggleChecklistItem(itemId) {
+                  const allChecklists = getPracticeChecklists();
+                  let list = allChecklists[currentPracticeStudentId] || [];
+                  const item = list.find(i => i.id === itemId);
+                  if (item) {
+                    item.done = !item.done;
+                    savePracticeChecklists(allChecklists);
+                    renderPracticePortal();
+
+                    // 메트로놈 틱 소리로 가벼운 체크 피드백
+                    playMetroClick(1200);
+
+                    if (list.every(i => i.done)) {
+                      showToast('🎉 대단해요! 오늘의 연습 목표를 모두 완수했습니다! 요정 레벨 UP! 🧚‍♀️');
+                    } else if (item.done) {
+                      showToast('연습 목표 하나를 멋지게 달성했습니다! ✨');
+                    }
+                  }
+                }
+
+                function openAddPracticeModal() {
+                  document.getElementById('custom-practice-title').value = '';
+                  document.getElementById('custom-practice-meta').value = '';
+                  openModal('modal-add-practice');
+                }
+
+                function handleSaveCustomPracticeGoal(e) {
+                  e.preventDefault();
+                  const title = document.getElementById('custom-practice-title').value.trim();
+                  const meta = document.getElementById('custom-practice-meta').value.trim();
+
+                  const allChecklists = getPracticeChecklists();
+                  let list = allChecklists[currentPracticeStudentId] || [];
+
+                  list.push({
+                    id: 'c_' + Date.now(),
+                    title,
+                    meta,
+                    isTeacherHw: false,
+                    done: false
+                  });
+
+                  allChecklists[currentPracticeStudentId] = list;
+                  savePracticeChecklists(allChecklists);
+                  closeModal('modal-add-practice');
+                  renderPracticePortal();
+                  showToast('새 연습 목표가 추가되었습니다! 화이팅 🎵');
+                }
+
+                function deleteChecklistItem(itemId) {
+                  const allChecklists = getPracticeChecklists();
+                  let list = allChecklists[currentPracticeStudentId] || [];
+                  allChecklists[currentPracticeStudentId] = list.filter(i => i.id !== itemId);
                   savePracticeChecklists(allChecklists);
                   renderPracticePortal();
-
-                  // 메트로놈 틱 소리로 가벼운 체크 피드백
-                  playMetroClick(1200);
-
-                  if (list.every(i => i.done)) {
-                    showToast('🎉 대단해요! 오늘의 연습 목표를 모두 완수했습니다! 요정 레벨 UP! 🧚‍♀️');
-                  } else if (item.done) {
-                    showToast('연습 목표 하나를 멋지게 달성했습니다! ✨');
-                  }
                 }
-              }
 
-              function openAddPracticeModal() {
-                document.getElementById('custom-practice-title').value = '';
-                document.getElementById('custom-practice-meta').value = '';
-                openModal('modal-add-practice');
-              }
-
-              function handleSaveCustomPracticeGoal(e) {
-                e.preventDefault();
-                const title = document.getElementById('custom-practice-title').value.trim();
-                const meta = document.getElementById('custom-practice-meta').value.trim();
-
-                const allChecklists = getPracticeChecklists();
-                let list = allChecklists[currentPracticeStudentId] || [];
-
-                list.push({
-                  id: 'c_' + Date.now(),
-                  title,
-                  meta,
-                  isTeacherHw: false,
-                  done: false
-                });
-
-                allChecklists[currentPracticeStudentId] = list;
-                savePracticeChecklists(allChecklists);
-                closeModal('modal-add-practice');
-                renderPracticePortal();
-                showToast('새 연습 목표가 추가되었습니다! 화이팅 🎵');
-              }
-
-              function deleteChecklistItem(itemId) {
-                const allChecklists = getPracticeChecklists();
-                let list = allChecklists[currentPracticeStudentId] || [];
-                allChecklists[currentPracticeStudentId] = list.filter(i => i.id !== itemId);
-                savePracticeChecklists(allChecklists);
-                renderPracticePortal();
-              }
-
-              // 질문 카테고리 & 질문 추가
-              function selectQuestionCategory(cat) {
-                selectedQuestionCat = cat;
-                const btns = document.querySelectorAll('.q-cat-btn');
-                btns.forEach(b => {
-                  if (b.innerText === cat) {
-                    b.className = 'q-cat-btn px-2 py-0.5 rounded text-[11px] font-semibold bg-purple-600 text-white';
-                  } else {
-                    b.className = 'q-cat-btn px-2 py-0.5 rounded text-[11px] font-semibold bg-white text-slate-600 border border-slate-200';
-                  }
-                });
-              }
-
-              function handleAddQuestion(e) {
-                e.preventDefault();
-                const text = document.getElementById('question-input-text').value.trim();
-                if (!text) return;
-
-                const questions = getQuestions();
-                questions.unshift({
-                  id: 'q_' + Date.now(),
-                  studentId: currentPracticeStudentId,
-                  text,
-                  category: selectedQuestionCat,
-                  date: new Date().toISOString().replace('T', ' ').substring(0, 16),
-                  answered: false
-                });
-
-                saveQuestions(questions);
-                document.getElementById('question-input-text').value = '';
-                renderPracticePortal();
-                showToast('선생님께 드릴 질문이 저장되었습니다! 다음 레슨 때 확인해 드릴게요 📝');
-              }
-
-              function toggleQuestionResolved(qId) {
-                const questions = getQuestions();
-                const q = questions.find(item => item.id === qId);
-                if (q) {
-                  q.answered = !q.answered;
-                  saveQuestions(questions);
-                  renderPracticePortal();
-                  showToast(q.answered ? '질문이 해결 완료로 표시되었습니다 ✅' : '질문이 답변 대기 상태로 변경되었습니다 ⏳');
-                }
-              }
-
-              // =======================================================
-              // ⏱️ Web Audio API 스마트 메트로놈 & 타이머 로직
-              // =======================================================
-              let audioCtx = null;
-              let metroInterval = null;
-              let isMetroRunning = false;
-              let currentBpm = 84;
-
-              function playMetroClick(freq = 880) {
-                try {
-                  if (!audioCtx) {
-                    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                  }
-                  if (audioCtx.state === 'suspended') {
-                    audioCtx.resume();
-                  }
-                  const osc = audioCtx.createOscillator();
-                  const gain = audioCtx.createGain();
-                  osc.type = 'triangle';
-                  osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
-                  gain.gain.setValueAtTime(0.25, audioCtx.currentTime);
-                  gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.04);
-                  osc.connect(gain);
-                  gain.connect(audioCtx.destination);
-                  osc.start();
-                  osc.stop(audioCtx.currentTime + 0.04);
-                } catch (err) {
-                  console.error(err);
-                }
-              }
-
-              function getTempoTerm(bpm) {
-                if (bpm < 60) return 'Largo';
-                if (bpm < 76) return 'Adagio';
-                if (bpm < 108) return 'Andante';
-                if (bpm < 120) return 'Moderato';
-                if (bpm < 168) return 'Allegro';
-                return 'Presto';
-              }
-
-              function changeBpm(val) {
-                currentBpm = parseInt(val);
-                document.getElementById('metro-bpm-val').innerText = currentBpm;
-                document.getElementById('metro-slider').value = currentBpm;
-                document.getElementById('metro-tempo-term').innerText = getTempoTerm(currentBpm);
-
-                if (isMetroRunning) {
-                  clearInterval(metroInterval);
-                  const ms = (60 / currentBpm) * 1000;
-                  metroInterval = setInterval(() => triggerMetroBeat(), ms);
-                }
-              }
-
-              function changeBpmBy(delta) {
-                let next = Math.max(40, Math.min(208, currentBpm + delta));
-                changeBpm(next);
-              }
-
-              function toggleMetronome() {
-                if (isMetroRunning) {
-                  clearInterval(metroInterval);
-                  isMetroRunning = false;
-                  currentBeatIndex = 0;
-                  document.getElementById('metro-btn-icon').innerText = '▶';
-                  document.getElementById('metro-btn-text').innerText = '메트로놈 시작';
-                  document.getElementById('metro-play-btn').className = 'w-full py-2.5 rounded-xl font-bold text-xs bg-purple-600 hover:bg-purple-700 text-white shadow-md shadow-purple-600/20 transition flex items-center justify-center space-x-2';
-                  renderMetroBeatLights();
-                } else {
-                  isMetroRunning = true;
-                  currentBeatIndex = 0;
-                  triggerMetroBeat();
-                  const ms = (60 / currentBpm) * 1000;
-                  metroInterval = setInterval(() => triggerMetroBeat(), ms);
-                  document.getElementById('metro-btn-icon').innerText = '⏸';
-                  document.getElementById('metro-btn-text').innerText = '메트로놈 정지';
-                  document.getElementById('metro-play-btn').className = 'w-full py-2.5 rounded-xl font-bold text-xs bg-rose-600 hover:bg-rose-700 text-white shadow-md shadow-rose-600/20 transition flex items-center justify-center space-x-2 animate-pulse';
-                }
-              }
-
-              // ================= PWA 설치 및 Service Worker 로직 =================
-              let deferredPrompt = null;
-
-              window.addEventListener('beforeinstallprompt', (e) => {
-                e.preventDefault();
-                deferredPrompt = e;
-
-                const headerBtn = document.getElementById('header-install-btn');
-                if (headerBtn) headerBtn.classList.remove('hidden');
-
-                if (!isAppStandalone() && !localStorage.getItem('fairy_pwa_banner_dismissed')) {
-                  const banner = document.getElementById('pwa-floating-banner');
-                  if (banner) banner.classList.remove('hidden');
-                }
-              });
-
-              window.addEventListener('appinstalled', () => {
-                deferredPrompt = null;
-                dismissInstallBanner();
-                showToast('연습요정이 홈 화면에 설치되었습니다! 🎉');
-              });
-
-              function isAppStandalone() {
-                return (window.matchMedia('(display-mode: standalone)').matches) || (window.navigator.standalone === true);
-              }
-
-              function triggerPwaInstall() {
-                if (deferredPrompt) {
-                  triggerNativeInstall();
-                } else {
-                  openInstallModal();
-                }
-              }
-
-              function triggerNativeInstall() {
-                if (deferredPrompt) {
-                  deferredPrompt.prompt();
-                  deferredPrompt.userChoice.then((choiceResult) => {
-                    if (choiceResult.outcome === 'accepted') {
-                      showToast('연습요정이 홈 화면에 설치되었습니다! 🎉');
-                      dismissInstallBanner();
-                    }
-                    deferredPrompt = null;
-                  });
-                } else {
-                  openInstallModal();
-                }
-              }
-
-              function dismissInstallBanner() {
-                const banner = document.getElementById('pwa-floating-banner');
-                if (banner) banner.classList.add('hidden');
-                localStorage.setItem('fairy_pwa_banner_dismissed', 'true');
-              }
-
-              function openInstallModal() {
-                const modal = document.getElementById('modal-pwa-install');
-                if (modal) {
-                  modal.classList.remove('hidden');
-                  autoDetectPwaPlatform();
-                }
-              }
-
-              function autoDetectPwaPlatform() {
-                const ua = navigator.userAgent || '';
-                if (/iPad|iPhone|iPod/.test(ua) && !window.MSStream) {
-                  selectPwaTab('ios');
-                } else if (/Android/.test(ua)) {
-                  selectPwaTab('android');
-                } else {
-                  selectPwaTab('desktop');
-                }
-              }
-
-              function selectPwaTab(tab) {
-                ['ios', 'android', 'desktop'].forEach(t => {
-                  const btn = document.getElementById(`pwa-tab-btn-${t}`);
-                  const content = document.getElementById(`pwa-tab-content-${t}`);
-                  if (btn && content) {
-                    if (t === tab) {
-                      btn.className = 'flex-1 py-2 text-xs font-bold text-indigo-600 border-b-2 border-indigo-600 bg-indigo-50/50 transition';
-                      content.classList.remove('hidden');
+                // 질문 카테고리 & 질문 추가
+                function selectQuestionCategory(cat) {
+                  selectedQuestionCat = cat;
+                  const btns = document.querySelectorAll('.q-cat-btn');
+                  btns.forEach(b => {
+                    if (b.innerText === cat) {
+                      b.className = 'q-cat-btn px-2 py-0.5 rounded text-[11px] font-semibold bg-purple-600 text-white';
                     } else {
-                      btn.className = 'flex-1 py-2 text-xs font-semibold text-slate-500 hover:text-slate-800 border-b-2 border-transparent transition';
-                      content.classList.add('hidden');
+                      b.className = 'q-cat-btn px-2 py-0.5 rounded text-[11px] font-semibold bg-white text-slate-600 border border-slate-200';
                     }
-                  }
-                });
-              }
-
-              // 서비스 워커 등록
-              if ('serviceWorker' in navigator) {
-                window.addEventListener('load', () => {
-                  navigator.serviceWorker.register('./sw.js').then((reg) => {
-                    console.log('연습요정 Service Worker 등록 성공:', reg.scope);
-                  }).catch((err) => {
-                    console.log('Service Worker 등록 실패:', err);
                   });
-                });
-              }
+                }
 
-              // 초기화 실행
-              window.addEventListener('DOMContentLoaded', () => {
-                initData();
-                renderCalendar();
-                renderDashboardStats();
-                renderMakeupQueue();
-                renderNotesList();
-                renderStudentsList();
-                initSupabaseClient();
+                function handleAddQuestion(e) {
+                  e.preventDefault();
+                  const text = document.getElementById('question-input-text').value.trim();
+                  if (!text) return;
 
-                // 모바일 첫 방문 시 홈화면 설치 플로팅 배너 노출
-                if (!isAppStandalone() && !localStorage.getItem('fairy_pwa_banner_dismissed')) {
-                  setTimeout(() => {
+                  const questions = getQuestions();
+                  questions.unshift({
+                    id: 'q_' + Date.now(),
+                    studentId: currentPracticeStudentId,
+                    text,
+                    category: selectedQuestionCat,
+                    date: new Date().toISOString().replace('T', ' ').substring(0, 16),
+                    answered: false
+                  });
+
+                  saveQuestions(questions);
+                  document.getElementById('question-input-text').value = '';
+                  renderPracticePortal();
+                  showToast('선생님께 드릴 질문이 저장되었습니다! 다음 레슨 때 확인해 드릴게요 📝');
+                }
+
+                function toggleQuestionResolved(qId) {
+                  const questions = getQuestions();
+                  const q = questions.find(item => item.id === qId);
+                  if (q) {
+                    q.answered = !q.answered;
+                    saveQuestions(questions);
+                    renderPracticePortal();
+                    showToast(q.answered ? '질문이 해결 완료로 표시되었습니다 ✅' : '질문이 답변 대기 상태로 변경되었습니다 ⏳');
+                  }
+                }
+
+                // =======================================================
+                // ⏱️ Web Audio API 스마트 메트로놈 & 타이머 로직
+                // =======================================================
+                let audioCtx = null;
+                let metroInterval = null;
+                let isMetroRunning = false;
+                let currentBpm = 84;
+
+                function playMetroClick(freq = 880) {
+                  try {
+                    if (!audioCtx) {
+                      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                    }
+                    if (audioCtx.state === 'suspended') {
+                      audioCtx.resume();
+                    }
+                    const osc = audioCtx.createOscillator();
+                    const gain = audioCtx.createGain();
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+                    gain.gain.setValueAtTime(0.25, audioCtx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.04);
+                    osc.connect(gain);
+                    gain.connect(audioCtx.destination);
+                    osc.start();
+                    osc.stop(audioCtx.currentTime + 0.04);
+                  } catch (err) {
+                    console.error(err);
+                  }
+                }
+
+                function getTempoTerm(bpm) {
+                  if (bpm < 60) return 'Largo';
+                  if (bpm < 76) return 'Adagio';
+                  if (bpm < 108) return 'Andante';
+                  if (bpm < 120) return 'Moderato';
+                  if (bpm < 168) return 'Allegro';
+                  return 'Presto';
+                }
+
+                function changeBpm(val) {
+                  currentBpm = parseInt(val);
+                  document.getElementById('metro-bpm-val').innerText = currentBpm;
+                  document.getElementById('metro-slider').value = currentBpm;
+                  document.getElementById('metro-tempo-term').innerText = getTempoTerm(currentBpm);
+
+                  if (isMetroRunning) {
+                    clearInterval(metroInterval);
+                    const ms = (60 / currentBpm) * 1000;
+                    metroInterval = setInterval(() => triggerMetroBeat(), ms);
+                  }
+                }
+
+                function changeBpmBy(delta) {
+                  let next = Math.max(40, Math.min(208, currentBpm + delta));
+                  changeBpm(next);
+                }
+
+                function toggleMetronome() {
+                  if (isMetroRunning) {
+                    clearInterval(metroInterval);
+                    isMetroRunning = false;
+                    currentBeatIndex = 0;
+                    document.getElementById('metro-btn-icon').innerText = '▶';
+                    document.getElementById('metro-btn-text').innerText = '메트로놈 시작';
+                    document.getElementById('metro-play-btn').className = 'w-full py-2.5 rounded-xl font-bold text-xs bg-purple-600 hover:bg-purple-700 text-white shadow-md shadow-purple-600/20 transition flex items-center justify-center space-x-2';
+                    renderMetroBeatLights();
+                  } else {
+                    isMetroRunning = true;
+                    currentBeatIndex = 0;
+                    triggerMetroBeat();
+                    const ms = (60 / currentBpm) * 1000;
+                    metroInterval = setInterval(() => triggerMetroBeat(), ms);
+                    document.getElementById('metro-btn-icon').innerText = '⏸';
+                    document.getElementById('metro-btn-text').innerText = '메트로놈 정지';
+                    document.getElementById('metro-play-btn').className = 'w-full py-2.5 rounded-xl font-bold text-xs bg-rose-600 hover:bg-rose-700 text-white shadow-md shadow-rose-600/20 transition flex items-center justify-center space-x-2 animate-pulse';
+                  }
+                }
+
+                // ================= PWA 설치 및 Service Worker 로직 =================
+                let deferredPrompt = null;
+
+                window.addEventListener('beforeinstallprompt', (e) => {
+                  e.preventDefault();
+                  deferredPrompt = e;
+
+                  const headerBtn = document.getElementById('header-install-btn');
+                  if (headerBtn) headerBtn.classList.remove('hidden');
+
+                  if (!isAppStandalone() && !localStorage.getItem('fairy_pwa_banner_dismissed')) {
                     const banner = document.getElementById('pwa-floating-banner');
                     if (banner) banner.classList.remove('hidden');
-                  }, 1200);
+                  }
+                });
+
+                window.addEventListener('appinstalled', () => {
+                  deferredPrompt = null;
+                  dismissInstallBanner();
+                  showToast('연습요정이 홈 화면에 설치되었습니다! 🎉');
+                });
+
+                function isAppStandalone() {
+                  return (window.matchMedia('(display-mode: standalone)').matches) || (window.navigator.standalone === true);
                 }
-              });
+
+                function triggerPwaInstall() {
+                  if (deferredPrompt) {
+                    triggerNativeInstall();
+                  } else {
+                    openInstallModal();
+                  }
+                }
+
+                function triggerNativeInstall() {
+                  if (deferredPrompt) {
+                    deferredPrompt.prompt();
+                    deferredPrompt.userChoice.then((choiceResult) => {
+                      if (choiceResult.outcome === 'accepted') {
+                        showToast('연습요정이 홈 화면에 설치되었습니다! 🎉');
+                        dismissInstallBanner();
+                      }
+                      deferredPrompt = null;
+                    });
+                  } else {
+                    openInstallModal();
+                  }
+                }
+
+                function dismissInstallBanner() {
+                  const banner = document.getElementById('pwa-floating-banner');
+                  if (banner) banner.classList.add('hidden');
+                  localStorage.setItem('fairy_pwa_banner_dismissed', 'true');
+                }
+
+                function openInstallModal() {
+                  const modal = document.getElementById('modal-pwa-install');
+                  if (modal) {
+                    modal.classList.remove('hidden');
+                    autoDetectPwaPlatform();
+                  }
+                }
+
+                function autoDetectPwaPlatform() {
+                  const ua = navigator.userAgent || '';
+                  if (/iPad|iPhone|iPod/.test(ua) && !window.MSStream) {
+                    selectPwaTab('ios');
+                  } else if (/Android/.test(ua)) {
+                    selectPwaTab('android');
+                  } else {
+                    selectPwaTab('desktop');
+                  }
+                }
+
+                function selectPwaTab(tab) {
+                  ['ios', 'android', 'desktop'].forEach(t => {
+                    const btn = document.getElementById(`pwa-tab-btn-${t}`);
+                    const content = document.getElementById(`pwa-tab-content-${t}`);
+                    if (btn && content) {
+                      if (t === tab) {
+                        btn.className = 'flex-1 py-2 text-xs font-bold text-indigo-600 border-b-2 border-indigo-600 bg-indigo-50/50 transition';
+                        content.classList.remove('hidden');
+                      } else {
+                        btn.className = 'flex-1 py-2 text-xs font-semibold text-slate-500 hover:text-slate-800 border-b-2 border-transparent transition';
+                        content.classList.add('hidden');
+                      }
+                    }
+                  });
+                }
+
+                // 서비스 워커 등록
+                if ('serviceWorker' in navigator) {
+                  window.addEventListener('load', () => {
+                    navigator.serviceWorker.register('./sw.js').then((reg) => {
+                      console.log('연습요정 Service Worker 등록 성공:', reg.scope);
+                    }).catch((err) => {
+                      console.log('Service Worker 등록 실패:', err);
+                    });
+                  });
+                }
+
+                // 초기화 실행
+                window.addEventListener('DOMContentLoaded', () => {
+                  initData();
+                  renderCalendar();
+                  renderDashboardStats();
+                  renderMakeupQueue();
+                  renderNotesList();
+                  renderStudentsList();
+                  initSupabaseClient();
+
+                  // 모바일 첫 방문 시 홈화면 설치 플로팅 배너 노출
+                  if (!isAppStandalone() && !localStorage.getItem('fairy_pwa_banner_dismissed')) {
+                    setTimeout(() => {
+                      const banner = document.getElementById('pwa-floating-banner');
+                      if (banner) banner.classList.remove('hidden');
+                    }, 1200);
+                  }
+                });
   </script>
 </body>
 
