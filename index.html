@@ -3408,7 +3408,7 @@
         const isToday = dateStr === todayStr;
 
         const cell = document.createElement('div');
-        cell.className = `h-14 md:h-16 p-1.5 rounded-xl border transition cursor-pointer flex flex-col justify-between ${isSelected
+        cell.className = `h-14 md:h-16 p-1 sm:p-1.5 rounded-xl border transition cursor-pointer flex flex-col justify-between overflow-hidden ${isSelected
           ? 'border-brand-500 bg-brand-50/60 ring-2 ring-brand-500/20 shadow-sm'
           : isToday
             ? 'border-slate-300 bg-white font-semibold'
@@ -3416,10 +3416,10 @@
           }`;
         cell.onclick = () => selectDate(dateStr);
 
-        // 상단 날짜 숫자 & 출결 도트
+        // 상단 날짜 숫자 & 출결 도트 (모바일 7열 셀 밖으로 넘치지 않도록 최대 3개 표시)
         let badgeHtml = '';
         if (dayLessons.length > 0) {
-          const dots = dayLessons.map(l => {
+          const dots = dayLessons.slice(0, 3).map(l => {
             let color = 'bg-slate-300';
             if (l.status === '출석') color = 'bg-emerald-500';
             else if (l.status === '당일취소') color = 'bg-amber-500';
@@ -3427,18 +3427,18 @@
             else if (l.status === '보강') color = 'bg-blue-500';
             else if (l.status === '순연' || l.status === '스킵') color = 'bg-slate-400';
             else if (l.status && l.status.startsWith('기타')) color = 'bg-purple-500';
-            return `<span class="w-1.5 h-1.5 rounded-full ${color}"></span>`;
+            return `<span class="w-1.5 h-1.5 rounded-full shrink-0 ${color}"></span>`;
           }).join('');
-          badgeHtml = `<div class="flex items-center space-x-1">${dots}</div>`;
+          badgeHtml = `<div class="flex items-center gap-0.5 shrink-0">${dots}</div>`;
         }
 
         cell.innerHTML = `
-          <div class="flex items-center justify-between">
-            <span class="text-xs ${isToday ? 'px-1.5 py-0.5 rounded-md bg-brand-500 text-white font-bold' : isSelected ? 'text-brand-600 font-bold' : 'text-slate-700'}">${d}</span>
+          <div class="flex items-center justify-between gap-1 min-w-0">
+            <span class="text-xs leading-none shrink-0 ${isToday ? 'px-1.5 py-0.5 rounded-md bg-brand-500 text-white font-bold' : isSelected ? 'text-brand-600 font-bold' : 'text-slate-700'}">${d}</span>
             ${badgeHtml}
           </div>
-          <div class="text-[10px] text-slate-500 truncate">
-            ${dayLessons.length > 0 ? `${dayLessons.length}개 수업` : ''}
+          <div class="text-[10px] text-slate-500 truncate whitespace-nowrap">
+            ${dayLessons.length > 0 ? `${dayLessons.length}건` : ''}
           </div>
         `;
         grid.appendChild(cell);
@@ -3584,35 +3584,36 @@
         card.className = 'p-3.5 rounded-xl border border-slate-200 bg-white hover:border-slate-300 transition shadow-xs';
 
         // 상태별 스타일 (5대 출결 상태)
-        let statusBadge = '<span class="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-slate-100 text-slate-500">예정</span>';
-        if (l.status === '출석') statusBadge = '<span class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">출석 완료 (-1회)</span>';
-        else if (l.status === '당일취소') statusBadge = '<span class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-amber-50 text-amber-800 border border-amber-200" title="학생 사유 당일 취소 (규정 1회 차감)">당일 취소 (규정 차감 -1)</span>';
-        else if (l.status === '결석') statusBadge = '<span class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-rose-50 text-rose-700 border border-rose-200">결석 (보강 필요 ⚠️)</span>';
-        else if (l.status === '보강') statusBadge = '<span class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200">보강 완료 (-1회)</span>';
-        else if (l.status === '순연' || l.status === '스킵') statusBadge = '<span class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 border border-slate-300">순연 (사전 연기)</span>';
+        let statusBadge = '<span class="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-slate-100 text-slate-500 whitespace-nowrap shrink-0">예정</span>';
+        if (l.status === '출석') statusBadge = '<span class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 whitespace-nowrap shrink-0">출석 완료 (-1회)</span>';
+        else if (l.status === '당일취소') statusBadge = '<span class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-amber-50 text-amber-800 border border-amber-200 whitespace-nowrap shrink-0" title="학생 사유 당일 취소 (규정 1회 차감)">당일 취소 (-1)</span>';
+        else if (l.status === '결석') statusBadge = '<span class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-rose-50 text-rose-700 border border-rose-200 whitespace-nowrap shrink-0">결석 (보강 필요 ⚠️)</span>';
+        else if (l.status === '보강') statusBadge = '<span class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200 whitespace-nowrap shrink-0">보강 완료 (-1회)</span>';
+        else if (l.status === '순연' || l.status === '스킵') statusBadge = '<span class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 border border-slate-300 whitespace-nowrap shrink-0">순연 (사전 연기)</span>';
         else if (l.status && l.status.startsWith('기타')) {
           const detail = l.status.replace(/^기타(:|\s)?/, '').trim() || '직접입력';
-          statusBadge = `<span class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-purple-50 text-purple-700 border border-purple-200" title="${l.status}">기타: ${detail}</span>`;
+          statusBadge = `<span class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-purple-50 text-purple-700 border border-purple-200 whitespace-nowrap shrink-0 max-w-[140px] truncate" title="${l.status}">기타: ${detail}</span>`;
         }
 
         const isEtc = l.status && l.status.startsWith('기타');
 
         card.innerHTML = `
-          <div class="flex items-start justify-between">
-            <div class="flex items-center space-x-2.5">
-              <div class="w-9 h-9 rounded-full bg-brand-50 border border-brand-100 text-brand-600 flex items-center justify-center font-bold text-xs">
+          <div class="flex items-start justify-between gap-2">
+            <div class="flex items-center space-x-2.5 min-w-0">
+              <div class="w-9 h-9 rounded-full bg-brand-50 border border-brand-100 text-brand-600 flex items-center justify-center font-bold text-xs shrink-0">
                 ${student.name.slice(0, 1)}
               </div>
-              <div>
-                <div class="flex items-center space-x-1.5">
-                  <span class="font-bold text-sm text-slate-900">${student.name}</span>
-                  <span class="text-[11px] px-1.5 py-0.5 rounded bg-slate-100 text-slate-600">${student.subject}</span>
-                  <span class="text-[11px] text-brand-600 font-semibold">${student.usedPass || 0}회 완료 / ${student.totalPass}회</span>
+              <div class="min-w-0">
+                <div class="flex items-center flex-wrap gap-1.5">
+                  <span class="font-bold text-sm text-slate-900 whitespace-nowrap">${student.name}</span>
+                  <span class="text-[11px] px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 whitespace-nowrap">${student.subject}</span>
                 </div>
-                <div class="text-xs text-slate-500 mt-0.5 flex items-center space-x-2">
-                  <span>⏰ ${l.time}</span>
+                <div class="text-xs text-slate-500 mt-1 flex items-center flex-wrap gap-x-1.5 gap-y-0.5">
+                  <span class="whitespace-nowrap">⏰ ${l.time}</span>
                   <span>•</span>
-                  <span>${l.type}</span>
+                  <span class="whitespace-nowrap">${l.type}</span>
+                  <span>•</span>
+                  <span class="text-[11px] text-brand-600 font-semibold whitespace-nowrap">${student.usedPass || 0}회 완료 / ${student.totalPass}회</span>
                 </div>
               </div>
             </div>

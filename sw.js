@@ -1,5 +1,5 @@
-// 연습요정 (Practice Fairy) Service Worker - v18.0.0 (모바일 상단 헤더 중복 제거 및 반응형 개선)
-const CACHE_NAME = 'fairy-cache-v18';
+// 연습요정 (Practice Fairy) Service Worker - v19.0.0 (모바일 캘린더 셀 도트 넘침 및 수업 카드 줄바꿈 정렬 수정)
+const CACHE_NAME = 'fairy-cache-v19';
 const STATIC_ASSETS = [
   './',
   './index.html',
