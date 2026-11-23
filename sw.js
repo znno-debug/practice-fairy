@@ -1,5 +1,5 @@
-// 연습요정 (Practice Fairy) Service Worker - v19.0.0 (모바일 캘린더 셀 도트 넘침 및 수업 카드 줄바꿈 정렬 수정)
-const CACHE_NAME = 'fairy-cache-v19';
+// 연습요정 (Practice Fairy) Service Worker - v20.0.0 (모바일 주간 캘린더 1열 카드 스택 전환 및 중복 요일 헤더 숨김)
+const CACHE_NAME = 'fairy-cache-v20';
 const STATIC_ASSETS = [
   './',
   './index.html',
