@@ -1,5 +1,5 @@
-// 연습요정 (Practice Fairy) Service Worker - v17.0.0 (공유 리포트 단축 URL + Supabase 스냅샷 조회)
-const CACHE_NAME = 'fairy-cache-v17';
+// 연습요정 (Practice Fairy) Service Worker - v18.0.0 (모바일 상단 헤더 중복 제거 및 반응형 개선)
+const CACHE_NAME = 'fairy-cache-v18';
 const STATIC_ASSETS = [
   './',
   './index.html',

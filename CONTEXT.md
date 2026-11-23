@@ -1,6 +1,6 @@
 # CONTEXT — 연습요정 (Practice Fairy)
 
-> **최종 갱신**: 2026-11-21 · 기준 커밋 `342d9bd` · `sw.js` 캐시 `fairy-cache-v17`
+> **최종 갱신**: 2026-11-23 · `sw.js` 캐시 `fairy-cache-v18`
 > **한 줄 요약**: 음악 1:1 레슨 선생님용 출결·수강료·레슨노트 관리 + 수강생 연습일지 PWA. 학부모에게는 카카오톡 카드로 1:1 리포트(`share.html`)를 보냄.
 > **현재 단계**: 기능 시제품 완성, Supabase Auth 연동, GitHub Pages 배포 완료. 지금은 **카카오 공유 마무리와 모바일 다듬기** 단계.
 > 이 문서는 작업 시작 전에 가장 먼저 읽고, 작업이 끝나면 곧바로 갱신한다(→ `CLAUDE.md` / `GEMINI.md`).
@@ -47,7 +47,7 @@
 
 ## 4. 코드와 문서를 대조하며 찾은 점 (주의)
 
-1. **⚠️ `supabase_schema.sql`이 실제 코드보다 예전 버전입니다.** `index.html`은 7개 테이블 모두에 `user_id`를 보내는데, SQL 파일에는 `user_id` 컬럼이 없고 RLS 정책도 `"Allow public access ..."`(전체 공개)로 되어 있습니다. Supabase 대시보드에 실제로 적용된 스키마와 정책을 확인한 뒤 SQL 파일을 맞춰 두어야 합니다(`auth.uid() = user_id` 정책).
+1. **`supabase_schema.sql` 최신화 완료 (2026-11-23)**: 1~7번 테이블 `user_id UUID` 컬럼 및 `auth.uid() = user_id` RLS 정책, 8번 테이블(`fairy_shared_reports_v1`) 비로그인 학부모 열람(`SELECT`) + 작성자 쓰기 RLS 정책을 반영했습니다. Supabase SQL Editor에서 최신 SQL을 한 번 실행해 운영 DB와 맞춰 주세요.
 2. **Kakao 공유 일원화는 코드상으로 끝난 상태입니다.** `Kakao.Share.sendDefault` 호출은 `sendKakaoReportCard()` 안 한 곳뿐이고, onclick 호출부는 두 곳(`index.html:1877` 공유 모달, `:3865` 노트 카드 하단)이며 둘 다 이 함수를 씁니다. 남은 것은 **실기기 검증**입니다.
 3. 카카오 피드 카드는 `imageWidth: 800, imageHeight: 400`으로 선언했지만 실제 `icon-512.png`는 512×512입니다. 카드에서 이미지가 잘리거나 늘어나 보이면 800×400 썸네일을 따로 만드는 것을 검토하세요.
 4. 수강료 골든타임 공유(`executeShareKakaoTuition`)는 Kakao SDK가 아니라 `navigator.share`(텍스트 공유)를 씁니다. 의도된 방식이며 통합 대상이 아닙니다.
@@ -57,14 +57,15 @@
 
 - [ ] **① 카카오 공유 최종 검증**: `fairy_shared_reports_v1` 단축 URL(`share.html?id=...`) 전환 및 `share.html` Supabase REST 조회 연동 완료(캐시 `v17`). **Supabase SQL Editor에서 `supabase_schema.sql` 하단 `fairy_shared_reports_v1` 생성 SQL 실행 필요**. 그 뒤 실기기 카톡에서 두 진입점(공유 모달, 노트 카드 하단)으로 카드가 정상 발송되고 `[레슨 리포트 상세보기]` 버튼이 열리는지 확인.
 - [ ] **② 카카오 개발자센터 앱(ID `1659300`) 기본 정보에 `icon-512.png` 앱 아이콘 등록** (사용자가 웹 콘솔에서 직접 진행. 플랫폼 > Web 사이트 도메인에 `https://znno-debug.github.io`가 등록되어 있는지도 함께 확인).
-- [ ] **③ 모바일(폭 ≤ 430px) 상단 헤더 반응형 다듬기**: `index.html:143` `<header>`의 타이틀과 버튼(백업/복원, 로그인 이메일, 로그아웃 등)이 겹치는 문제 수정. 그 뒤 `sw.js` 캐시를 한 단계 올리고 커밋·푸시.
-- [ ] (추가) `supabase_schema.sql`을 실제 운영 스키마(`user_id` + RLS)에 맞게 갱신 (4장 1번).
-- [ ] (추가) `README.md` 최신화 (Supabase Auth, 카카오 카드 공유, 배포 URL).
+- [x] **③ 모바일(폭 ≤ 430px) 상단 헤더 반응형 다듬기**: `index.html:143` `<header>` 내 중복된 선생님 프로필 버튼(`#header-teacher-img`/`#header-teacher-name` ID 중복 포함)을 제거하고 모바일 패딩/간격을 컴팩트하게 정리. `sw.js` 캐시 `v18` 상향 완료.
+- [x] (추가) `supabase_schema.sql`을 실제 운영 스키마(`user_id` + RLS)에 맞게 갱신 (4장 1번).
+- [x] (추가) `README.md` 최신화 (Supabase Auth, 5대 출결, 카카오 카드 공유, 배포 URL).
 
 ## 6. 변경 이력
 
 | 날짜 | 내용 |
 | :--- | :--- |
+| 2026-11-23 | 모바일 상단 헤더 중복 프로필 버튼 제거 및 반응형 간격 정리(캐시 `v18`), `supabase_schema.sql` 유저별 `user_id`/RLS 정책 최신화, `README.md` 최신화 |
 | 2026-11-21 | `fairy_shared_reports_v1` 테이블 추가 및 단축 공유 URL(`share.html?id=...`) 전환(긴 `?d=` 제거), `share.html` Supabase REST 조회 연동, 캐시 v17 |
 | 2026-11-21 | 공유 코드 병합 사고 복구(HEAD로 되돌린 뒤 unifiedLink·resolvedId만 다시 적용), ExecutionParams 제외, 캐시 v16 |
 | 2026-11-20 | `CONTEXT.md` 신설(이 문서), `CLAUDE.md`/`GEMINI.md` 에이전트 공통 지침 추가, `handover_notes.md` → `docs/`로 이동(보관용) |

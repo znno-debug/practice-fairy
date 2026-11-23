@@ -164,17 +164,17 @@
       </div>
 
       <!-- 상단 액션 & 선생님 프로필 -->
-      <div class="flex items-center space-x-1.5 sm:space-x-2.5 shrink-0">
+      <div class="flex items-center space-x-1 sm:space-x-2.5 shrink-0">
         <!-- 데이터 백업 / 복원 빠른 버튼 (상단 바) -->
         <div class="inline-flex items-center rounded-lg border border-slate-200 bg-slate-50 p-0.5 shadow-2xs shrink-0">
           <button type="button" onclick="exportAllDataToJson()" title="전체 데이터를 JSON 파일로 백업 다운로드"
-            class="inline-flex items-center space-x-1 px-2 py-1 text-[11px] sm:text-xs font-bold text-slate-700 hover:bg-white hover:text-brand-600 rounded-md transition cursor-pointer whitespace-nowrap">
+            class="inline-flex items-center space-x-1 px-1.5 sm:px-2 py-1 text-[11px] sm:text-xs font-bold text-slate-700 hover:bg-white hover:text-brand-600 rounded-md transition cursor-pointer whitespace-nowrap">
             <span>📥</span>
             <span class="hidden sm:inline">백업</span>
           </button>
           <span class="w-px h-3.5 bg-slate-200"></span>
           <button type="button" onclick="triggerBackupRestore()" title="JSON 백업 파일을 업로드하여 데이터 복원"
-            class="inline-flex items-center space-x-1 px-2 py-1 text-[11px] sm:text-xs font-bold text-slate-700 hover:bg-white hover:text-indigo-600 rounded-md transition cursor-pointer whitespace-nowrap">
+            class="inline-flex items-center space-x-1 px-1.5 sm:px-2 py-1 text-[11px] sm:text-xs font-bold text-slate-700 hover:bg-white hover:text-indigo-600 rounded-md transition cursor-pointer whitespace-nowrap">
             <span>📤</span>
             <span class="hidden sm:inline">복원</span>
           </button>
@@ -194,22 +194,6 @@
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
           </svg>
           <span>새 레슨노트 작성</span>
-        </button>
-        <button onclick="openTeacherProfileModal()"
-          class="relative flex items-center space-x-2 pl-1.5 sm:pl-2 border-l border-slate-200 hover:opacity-80 transition cursor-pointer group text-left shrink-0"
-          title="프로필 · 계좌 · 백업 설정">
-          <div class="relative">
-            <img id="header-teacher-img"
-              src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80"
-              alt="선생님 프로필"
-              class="w-8 h-8 rounded-full object-cover ring-2 ring-brand-100 group-hover:ring-brand-400 transition">
-            <span
-              class="md:hidden absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-white border border-slate-200 flex items-center justify-center text-[9px] shadow-2xs">⚙️</span>
-          </div>
-          <div class="hidden md:block whitespace-nowrap">
-            <span id="header-teacher-name" class="text-xs font-bold text-slate-800 block leading-tight">김민주 선생님</span>
-            <span class="text-[10px] text-brand-600 font-medium">설정 · 계좌 · 백업 ⚙️</span>
-          </div>
         </button>
 
         <!-- 선생님 프로필 영역 + 현재 로그인 이메일 + 로그아웃 버튼 -->
@@ -2235,8 +2219,7 @@
       if (mobileEmail) mobileEmail.innerText = emailText;
       if (modalEmail) modalEmail.innerText = emailText;
       if (logoutBtn) {
-        if (user) logoutBtn.classList.remove('hidden');
-        else logoutBtn.classList.add('hidden');
+        logoutBtn.classList.toggle('md:inline-flex', Boolean(user));
       }
     }
 
