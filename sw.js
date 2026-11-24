@@ -1,5 +1,5 @@
-// 연습요정 (Practice Fairy) Service Worker - v25.0.0 (탈퇴 확인창 카카오 계정 표시 보완)
-const CACHE_NAME = 'fairy-cache-v25';
+// 연습요정 (Practice Fairy) Service Worker - v26.0.0 (뒤로 가기 시 소셜 버튼 '이동 중' 고정 수정)
+const CACHE_NAME = 'fairy-cache-v26';
 const STATIC_ASSETS = [
   './',
   './index.html',

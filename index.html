@@ -2319,6 +2319,12 @@
       });
     }
 
+    // 카카오/구글 화면에서 '뒤로 가기'로 돌아오면 브라우저가 페이지를 그대로 복원(bfcache)해서
+    // 버튼이 '이동 중...'·비활성 상태로 남는다 → 복원될 때마다 버튼을 새로 그린다.
+    window.addEventListener('pageshow', (event) => {
+      if (event.persisted) renderSocialLoginButtons();
+    });
+
     async function handleOAuthLogin(provider) {
       const config = OAUTH_PROVIDERS.find(p => p.id === provider);
       const providerName = getOAuthProviderLabel(provider);
@@ -2337,7 +2343,8 @@
 
       const btn = document.getElementById(`auth-oauth-${provider}`);
       const labelEl = btn?.querySelector('.oauth-label');
-      if (btn) btn.disabled = true;
+      // 이동 중에는 모든 소셜 버튼을 잠가 다른 버튼이 겹쳐 눌리지 않게 한다
+      document.querySelectorAll('#auth-social-buttons button').forEach(b => { b.disabled = true; });
       if (labelEl) labelEl.innerText = `${providerName} 로그인 화면으로 이동 중...`;
 
       try {
@@ -2371,8 +2378,7 @@
         const errText = translateOAuthError(err?.message || String(err), providerName);
         showAuthAlert(errText, 'error');
         showToast(errText);
-        if (btn) btn.disabled = false;
-        if (labelEl) labelEl.innerText = config?.label || `${providerName}로 계속하기`;
+        renderSocialLoginButtons();
       }
     }
 
