@@ -1,5 +1,5 @@
-// 연습요정 (Practice Fairy) Service Worker - v27.0.0 (약관 동의·이메일 인증번호·탈퇴 화면)
-const CACHE_NAME = 'fairy-cache-v27';
+// 연습요정 (Practice Fairy) Service Worker - v28.0.0 (로그아웃·탈퇴 후 화면 초기화)
+const CACHE_NAME = 'fairy-cache-v28';
 const STATIC_ASSETS = [
   './',
   './index.html',

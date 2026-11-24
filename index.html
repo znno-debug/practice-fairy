@@ -2908,17 +2908,38 @@
       applyAuthMetadataToProfile(currentAuthUser);
       localStorage.setItem(STORAGE_KEY_LAST_UID, currentAuthUser.id);
 
+      rerenderAllViews();
+      await pullAllFromSupabase();
+      return true;
+    }
+
+    // 로그아웃·탈퇴 후 로그인 화면을 처음 상태로 되돌린다 (이름·이메일·약관 체크·인증번호 비우기)
+    function resetAuthScreen() {
+      ['auth-teacher-name', 'auth-email', 'auth-password', 'auth-otp'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.value = '';
+      });
+      const terms = document.getElementById('auth-terms-field');
+      if (terms) terms.innerHTML = ''; // 회원가입 화면을 열 때 체크 해제 상태로 다시 그려짐
+      pendingSignup = null;
+      clearInterval(otpCooldownTimer);
+      switchAuthMode('login');
+      const overlay = document.getElementById('auth-overlay');
+      if (overlay) {
+        overlay.classList.remove('hidden');
+        overlay.scrollTop = 0;
+      }
+    }
+
+    // 뒤쪽 화면(캘린더·수강생·노트 등)을 현재 기기 저장소 기준으로 다시 그린다
+    function rerenderAllViews() {
       renderTeacherProfileHeader();
       renderCalendar();
       renderDashboardStats();
       renderMakeupQueue();
       renderNotesList();
       renderStudentsList();
-      if (typeof renderPracticePortal === 'function') {
-        renderPracticePortal();
-      }
-      await pullAllFromSupabase();
-      return true;
+      if (typeof renderPracticePortal === 'function') renderPracticePortal();
     }
 
     async function handleLogout() {
@@ -2931,11 +2952,9 @@
       }
       currentAuthUser = null;
       updateAuthHeaderUI(null);
+      setCloudSyncBadge('local', '💾 로컬');
       closeModal('modal-teacher-profile');
-      const overlay = document.getElementById('auth-overlay');
-      if (overlay) overlay.classList.remove('hidden');
-      const pwInput = document.getElementById('auth-password');
-      if (pwInput) pwInput.value = '';
+      resetAuthScreen();
       showToast('로그아웃되었습니다.');
     }
 
@@ -3058,15 +3077,17 @@
         STORAGE_KEY_QUESTIONS,
         STORAGE_KEY_SESSIONS
       ].forEach(k => localStorage.removeItem(k));
+      localStorage.removeItem(STORAGE_KEY_LAST_UID);
 
       currentAuthUser = null;
       updateAuthHeaderUI(null);
+      setCloudSyncBadge('local', '💾 로컬');
       closeModal('modal-delete-account');
       closeModal('modal-teacher-profile');
-      const overlay = document.getElementById('auth-overlay');
-      if (overlay) overlay.classList.remove('hidden');
-      const pwInput = document.getElementById('auth-password');
-      if (pwInput) pwInput.value = '';
+      // 지운 데이터가 뒤쪽 화면에 남지 않도록, 처음 방문한 기기와 같은 상태로 다시 그림
+      initData();
+      rerenderAllViews();
+      resetAuthScreen();
 
       if (btn) {
         btn.disabled = false;
