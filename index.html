@@ -1453,7 +1453,7 @@
             </div>
             <div class="col-span-2">
               <label class="block text-[11px] font-semibold text-slate-600 mb-1">계좌번호 (- 포함 가능)</label>
-              <input type="text" id="prof-account-number" placeholder="예: 3333-01-2345678" required
+              <input type="text" id="prof-account-number" placeholder="예: 3333-01-2345678"
                 class="w-full text-xs border border-slate-200 rounded-lg p-2 bg-white focus:ring-2 focus:ring-brand-500 focus:outline-none">
             </div>
           </div>
@@ -1734,8 +1734,7 @@
         </div>
         <div
           class="text-[11px] text-slate-600 bg-white/85 rounded-xl p-2.5 border border-amber-100 flex items-center justify-between">
-          <span class="truncate">🏦 입금 계좌: <strong class="text-slate-800 font-semibold" id="gold-bank-info">카카오뱅크
-              3333-01-2345678 (김민주)</strong></span>
+          <span class="truncate">🏦 입금 계좌: <strong class="text-slate-800 font-semibold" id="gold-bank-info">-</strong></span>
           <button type="button" onclick="copyGoldAccountOnly()"
             class="text-[10px] text-brand-600 font-bold hover:underline shrink-0 ml-2">계좌복사</button>
         </div>
@@ -2055,11 +2054,12 @@
     const defaultTeacherProfile = {
       name: '김민주',
       subject: '피아노 전문 레슨',
-      phone: '010-9876-1234',
-      bio: '독일 국립음대 석사 졸 | 유·초등 및 콩쿠르 전문 지도 8년차',
-      bankName: '카카오뱅크',
-      accountNumber: '3333-01-2345678',
-      accountHolder: '김민주',
+      // 연락처·소개·입금 계좌는 새 계정에서 빈칸으로 시작 (예시 계좌가 학부모 안내에 나가지 않도록)
+      phone: '',
+      bio: '',
+      bankName: '',
+      accountNumber: '',
+      accountHolder: '',
       avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80'
     };
 
@@ -3413,8 +3413,38 @@
       }
     }
 
+    // 예전 버전이 새 계정에 넣던 예시 연락처·소개·계좌. 그대로 남아 있으면 빈칸으로 본다.
+    const LEGACY_DEMO_PROFILE = {
+      phone: '010-9876-1234',
+      bio: '독일 국립음대 석사 졸 | 유·초등 및 콩쿠르 전문 지도 8년차',
+      accountNumber: '3333-01-2345678'
+    };
+
+    function stripLegacyDemoProfile(prof) {
+      if (!prof) return prof;
+      const clean = { ...prof };
+      if (clean.phone === LEGACY_DEMO_PROFILE.phone) clean.phone = '';
+      if (clean.bio === LEGACY_DEMO_PROFILE.bio) clean.bio = '';
+      if (clean.accountNumber === LEGACY_DEMO_PROFILE.accountNumber) {
+        clean.accountNumber = '';
+        clean.bankName = '';
+        clean.accountHolder = '';
+      }
+      return clean;
+    }
+
     function getTeacherProfile() {
-      return JSON.parse(localStorage.getItem(STORAGE_KEY_TEACHER) || JSON.stringify(defaultTeacherProfile));
+      return stripLegacyDemoProfile(JSON.parse(localStorage.getItem(STORAGE_KEY_TEACHER) || JSON.stringify(defaultTeacherProfile)));
+    }
+
+    function hasBankAccount(teacher) {
+      return !!(teacher && String(teacher.accountNumber || '').trim());
+    }
+
+    // 수강료 안내 문구의 '입금 계좌' 줄. 계좌가 없으면 줄을 빼서 빈 계좌가 안내되지 않게 한다.
+    function formatBankLineForMessage(teacher) {
+      if (!hasBankAccount(teacher)) return '\n';
+      return `• 입금 계좌: ${teacher.bankName || ''} ${teacher.accountNumber} (예금주: ${teacher.accountHolder || teacher.name})\n\n`;
     }
     function saveTeacherProfile(data) {
       localStorage.setItem(STORAGE_KEY_TEACHER, JSON.stringify(data));
@@ -3696,7 +3726,7 @@
             `• 수강 과목: ${s.subject}\n` +
             `• 다음 회차: ${s.totalPass}회 레슨\n` +
             `• 수강료: ${feeFormatted}원\n` +
-            `• 입금 계좌: ${teacher.bankName} ${teacher.accountNumber} (예금주: ${teacher.accountHolder})\n\n` +
+            formatBankLineForMessage(teacher) +
             `늘 열정적으로 음악을 즐겨주셔서 감사합니다. 다음 수업 때 뵙겠습니다! ✨`;
         } else {
           return `[연습요정 🧚‍♀️ 다음 달 레슨비 안내]\n\n` +
@@ -3706,7 +3736,7 @@
             `• 수강 과목: ${s.subject}\n` +
             `• 등록 회차: ${s.totalPass}회 레슨\n` +
             `• 수강료: ${feeFormatted}원\n` +
-            `• 입금 계좌: ${teacher.bankName} ${teacher.accountNumber} (예금주: ${teacher.accountHolder})\n\n` +
+            formatBankLineForMessage(teacher) +
             `다음 주 수업 때 뵙겠습니다. 늘 따뜻한 음악 열정에 감사드립니다! 🎵`;
         }
       } else {
@@ -3717,7 +3747,7 @@
             `• 수강 과목: ${s.subject}\n` +
             `• 등록 회차: 다음 ${s.totalPass}회 레슨\n` +
             `• 수업료: ${feeFormatted}원\n` +
-            `• 입금 계좌: ${teacher.bankName} ${teacher.accountNumber} (예금주: ${teacher.accountHolder})\n\n` +
+            formatBankLineForMessage(teacher) +
             `늘 믿고 맡겨주셔서 감사드리며, 이번 주도 가정에 행복이 가득하시길 바랍니다. 감사합니다! ✨`;
         } else {
           return `[연습요정 🧚‍♀️ 다음 달 레슨비 안내]\n\n` +
@@ -3726,7 +3756,7 @@
             `• 수강 과목: ${s.subject}\n` +
             `• 등록 회차: 다음 ${s.totalPass}회 레슨\n` +
             `• 수업료: ${feeFormatted}원\n` +
-            `• 입금 계좌: ${teacher.bankName} ${teacher.accountNumber} (예금주: ${teacher.accountHolder})\n\n` +
+            formatBankLineForMessage(teacher) +
             `늘 격려와 믿음으로 함께해 주셔서 감사드리며, 다음 달도 ${s.name}의 멋진 음악 성장을 위해 최선을 다해 지도하겠습니다! ✨`;
         }
       }
@@ -3752,7 +3782,11 @@
       if (subjectEl) subjectEl.innerText = s.subject;
       if (passEl) passEl.innerText = `${s.totalPass}회 (${s.usedPass || 0}회 완료)`;
       if (feeEl) feeEl.innerText = `${feeFormatted}원`;
-      if (bankEl) bankEl.innerText = `${teacher.bankName} ${teacher.accountNumber} (${teacher.accountHolder})`;
+      if (bankEl) {
+        bankEl.innerText = hasBankAccount(teacher)
+          ? `${teacher.bankName || ''} ${teacher.accountNumber} (${teacher.accountHolder || teacher.name})`
+          : '아직 등록 전 · 선생님 프로필에서 등록해 주세요';
+      }
 
       const badgeEl = document.getElementById('gold-pass-badge');
       const subtitleEl = document.getElementById('gold-modal-subtitle');
@@ -3826,7 +3860,11 @@
 
     function copyGoldAccountOnly() {
       const teacher = getTeacherProfile();
-      const text = `${teacher.bankName} ${teacher.accountNumber} ${teacher.accountHolder}`;
+      if (!hasBankAccount(teacher)) {
+        showToast('입금 계좌가 아직 없어요. 선생님 프로필에서 먼저 등록해 주세요.');
+        return;
+      }
+      const text = `${teacher.bankName || ''} ${teacher.accountNumber} ${teacher.accountHolder || teacher.name}`;
       if (copyTextWithFallback(text)) {
         showToast(`📋 계좌번호(${text})가 복사되었습니다!`);
       } else {
@@ -5137,7 +5175,7 @@
         },
         teacher: {
           name: teacherName,
-          bankName: (teacher && teacher.bankName) || '카카오뱅크',
+          bankName: (teacher && teacher.bankName) || '',
           accountNumber: (teacher && teacher.accountNumber) || '',
           accountHolder: (teacher && teacher.accountHolder) || teacherName
         }

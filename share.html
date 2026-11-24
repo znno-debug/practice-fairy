@@ -199,13 +199,13 @@
           <div class="p-3 bg-white rounded-2xl border border-slate-200/80 space-y-1.5">
             <div class="flex items-center justify-between text-[11px]">
               <span class="text-slate-500 font-medium">입금 계좌</span>
-              <span class="font-bold text-slate-800" id="bill-account-holder">예금주: 김민주</span>
+              <span class="font-bold text-slate-800" id="bill-account-holder"></span>
             </div>
             <div class="flex items-center justify-between bg-slate-50 p-2.5 rounded-xl border border-slate-200">
               <div class="font-mono text-xs font-bold text-slate-900 tracking-tight truncate" id="bill-bank-info">
-                카카오뱅크 3333-01-2345678
+                입금 계좌는 선생님께 문의해 주세요
               </div>
-              <button type="button" onclick="copyBillAccount()" class="px-2.5 py-1 bg-slate-900 hover:bg-black text-white rounded-lg text-[11px] font-bold transition shrink-0 ml-2 active:scale-95 cursor-pointer">
+              <button type="button" id="bill-copy-btn" onclick="copyBillAccount()" class="px-2.5 py-1 bg-slate-900 hover:bg-black text-white rounded-lg text-[11px] font-bold transition shrink-0 ml-2 active:scale-95 cursor-pointer">
                 복사
               </button>
             </div>
@@ -319,9 +319,9 @@
     const defaultTeacher = {
       name: '김민주',
       subject: '피아노 전문 레슨',
-      bankName: '카카오뱅크',
-      accountNumber: '3333-01-2345678',
-      accountHolder: '김민주'
+      bankName: '',
+      accountNumber: '',
+      accountHolder: ''
     };
 
     function getParam(name) {
@@ -380,7 +380,7 @@
             },
             teacher: {
               name: parsed[15] || '김민주',
-              bankName: parsed[16] || '카카오뱅크',
+              bankName: parsed[16] || '',
               accountNumber: parsed[17] || '',
               accountHolder: parsed[18] || parsed[15] || '김민주'
             }
@@ -553,8 +553,15 @@
       const feeVal = student.fee || 350000;
       document.getElementById('bill-amount').innerText = `${feeVal.toLocaleString()}원`;
       document.getElementById('bill-session-badge').innerText = `다음 ${total}회 기준`;
-      document.getElementById('bill-account-holder').innerText = `예금주: ${teacher.accountHolder}`;
-      document.getElementById('bill-bank-info').innerText = `${teacher.bankName} ${teacher.accountNumber}`;
+      // 계좌가 없거나 예전 예시 계좌(3333-01-2345678)면 계좌 대신 문의 안내를 보여 준다
+      const accountNo = String(teacher.accountNumber || '').trim();
+      const hasAccount = !!accountNo && accountNo !== '3333-01-2345678';
+      document.getElementById('bill-account-holder').innerText = hasAccount ? `예금주: ${teacher.accountHolder || teacher.name || ''}` : '';
+      document.getElementById('bill-bank-info').innerText = hasAccount
+        ? `${teacher.bankName || ''} ${accountNo}`
+        : '입금 계좌는 선생님께 문의해 주세요';
+      const copyBtn = document.getElementById('bill-copy-btn');
+      if (copyBtn) copyBtn.classList.toggle('hidden', !hasAccount);
 
       // 만약 잔여 횟수가 2회 초과로 여유가 있다면 살짝 덜 강조하거나 접어둘 수 있음
       if (remain > 2) {

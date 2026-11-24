@@ -1,5 +1,5 @@
-// 연습요정 (Practice Fairy) Service Worker - v28.0.0 (로그아웃·탈퇴 후 화면 초기화)
-const CACHE_NAME = 'fairy-cache-v28';
+// 연습요정 (Practice Fairy) Service Worker - v29.0.0 (새 계정 연락처·계좌 빈칸 시작)
+const CACHE_NAME = 'fairy-cache-v29';
 const STATIC_ASSETS = [
   './',
   './index.html',
