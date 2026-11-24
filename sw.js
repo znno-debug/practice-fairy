@@ -1,5 +1,5 @@
-// 연습요정 (Practice Fairy) Service Worker - v26.0.0 (뒤로 가기 시 소셜 버튼 '이동 중' 고정 수정)
-const CACHE_NAME = 'fairy-cache-v26';
+// 연습요정 (Practice Fairy) Service Worker - v27.0.0 (약관 동의·이메일 인증번호·탈퇴 화면)
+const CACHE_NAME = 'fairy-cache-v27';
 const STATIC_ASSETS = [
   './',
   './index.html',
