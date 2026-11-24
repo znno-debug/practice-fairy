@@ -59,7 +59,7 @@
 
 ## 5. 남은 마무리 작업
 
-- [ ] **① 카카오 공유 최종 검증**: `fairy_shared_reports_v1` 단축 URL(`share.html?id=...`) 전환 및 `share.html` Supabase REST 조회 연동 완료(캐시 `v17`). **Supabase SQL Editor에서 `supabase_schema.sql` 하단 `fairy_shared_reports_v1` 생성 SQL 실행 필요**. 그 뒤 실기기 카톡에서 두 진입점(공유 모달, 노트 카드 하단)으로 카드가 정상 발송되고 `[레슨 리포트 상세보기]` 버튼이 열리는지 확인.
+- [ ] **① 카카오 공유 최종 검증**: `fairy_shared_reports_v1` 단축 URL(`share.html?id=...`) 전환 및 `share.html` Supabase REST 조회 연동 완료(캐시 `v17`). (2026-11-25 확인: `fairy_shared_reports_v1` 테이블과 `delete_my_account` RPC 모두 운영 DB에 있음 → SQL 실행 완료). 남은 것: 실기기 카톡에서 두 진입점(공유 모달, 노트 카드 하단)으로 카드가 정상 발송되고 `[레슨 리포트 상세보기]` 버튼이 열리는지 확인.
 - [x] **② 카카오 개발자센터 앱(ID `1659300`) 기본 정보에 앱 아이콘 등록** (2026-11-24 `icons/icon-192.png`로 등록 완료) (사용자가 웹 콘솔에서 직접 진행. 플랫폼 > Web 사이트 도메인에 `https://znno-debug.github.io`가 등록되어 있는지도 함께 확인).
 - [x] **③ 모바일(폭 ≤ 430px) 상단 헤더 반응형 다듬기**: `index.html:143` `<header>` 내 중복된 선생님 프로필 버튼(`#header-teacher-img`/`#header-teacher-name` ID 중복 포함)을 제거하고 모바일 패딩/간격을 컴팩트하게 정리. `sw.js` 캐시 `v18` 상향 완료.
 - [x] (추가) `supabase_schema.sql`을 실제 운영 스키마(`user_id` + RLS)에 맞게 갱신 (4장 1번).
@@ -73,7 +73,16 @@
 - [ ] **⑧ 가입 화면 2차 개선(선택)**: 로그인/회원가입 탭 없애고 "카카오로 시작하기" 중심 화면, 비밀번호 8자+확인칸+보기 버튼, 최근 로그인 방법 표시.
 - [ ] (iOS 출시 시) Apple 로그인: `OAUTH_PROVIDERS`의 `apple` 줄 주석 해제 + Apple Developer/Supabase 설정.
 
-- [x] **앱스토어 심사 대비 회원 탈퇴(`delete_my_account`) & 개인정보처리방침(`privacy.html`) 추가**: `supabase_schema.sql`에 `delete_my_account()` RPC 추가, `index.html` 로그인/프로필 모달 연결, 캐시 `v22`. (**Supabase SQL Editor에서 최신 `supabase_schema.sql` 실행 필요**)
+- [x] **앱스토어 심사 대비 회원 탈퇴(`delete_my_account`) & 개인정보처리방침(`privacy.html`) 추가**: `supabase_schema.sql`에 `delete_my_account()` RPC 추가, `index.html` 로그인/프로필 모달 연결, 캐시 `v22`. (2026-11-25 실사이트 탈퇴 테스트로 RPC 동작 확인)
+
+## 5-1. 정식 배포 전 필수 체크 (리마인드)
+
+> 정식 배포·홍보 전에 아래를 다시 확인한다. 에이전트는 "정식 배포/출시/오픈" 이야기가 나오면 이 목록을 먼저 알린다.
+
+- [ ] **인증 메일 스팸함 문제 (2026-11-25 보류 결정)**: 자체 도메인 구매 → Brevo 도메인 인증(DKIM·DMARC) → Supabase SMTP 발신 주소를 도메인 주소로 변경. 도메인을 바꾸면 앱 주소 변경에 맞춰 카카오(플랫폼 도메인·Redirect), Google(JS 원본), Supabase(Site URL·Redirect URLs)도 함께 갱신.
+- [ ] **개인정보처리방침 문의처**: `privacy.html` 3장이 GitHub 저장소로만 안내됨 → 개인정보 보호책임자 이름·연락 이메일 기재.
+- [ ] **Supabase 무료 플랜 제약**: 7일간 사용이 없으면 프로젝트가 일시 정지되고 자동 백업이 없음 → 정식 운영 시 Pro 플랜 또는 정기 백업 검토.
+- [ ] **발송 한도**: Brevo 무료 하루 300통, Supabase 인증 메일 시간당 30통(Rate Limits) → 가입 몰림 대비 확인.
 
 ## 6. 변경 이력
 
