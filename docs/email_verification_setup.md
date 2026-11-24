@@ -53,6 +53,9 @@ Supabase Dashboard → **Authentication > Sign In / Providers** → **Email** �
 4. 인증 전에 창을 닫았다가 나중에 로그인하면, 앱이 새 인증번호를 다시 보내고 입력 화면으로 안내합니다
 
 ### 알아 둘 점
+- **2026-11-25 실제 테스트 결과**: Brevo SMTP 연결·문구 변경·Confirm email 완료 후 가입 시 인증 메일 발송 확인.
+  - 인증번호가 **8자리**로 옴(Supabase 기본값). 6자리로 바꾸려면 Authentication > Sign In / Providers > Email > **Email OTP Length**를 6으로. 앱은 6~8자리 모두 받음.
+  - 메일이 **스팸함**으로 감. 보내는 주소가 개인 Gmail이라 Brevo가 발신 주소를 `…@…brevosend.com`으로 바꿔 보내기 때문. 근본 해결은 자체 도메인을 사서 Brevo에서 도메인 인증(DKIM·DMARC)을 하는 것.
 - 이미 가입된 이메일로 다시 가입하면 "이미 가입된 이메일입니다" 안내가 나옵니다.
 - [인증번호 다시 받기]는 60초에 한 번 누를 수 있습니다.
 - Confirm email을 켜기 전에 가입한 기존 계정은 그대로 로그인됩니다.

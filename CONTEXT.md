@@ -68,7 +68,8 @@
 - [x] **④ 소셜 로그인 콘솔 설정** (2026-11-24 완료): 카카오(로그인 ON, Redirect URI, 닉네임 필수·사진 선택, Client Secret), Google(프로덕션 게시, 웹 클라이언트), Supabase(Kakao·Google ON, Kakao "Allow users without an email" ON, Site URL·Redirect URLs). 로컬(localhost) Redirect URL은 미등록.
 - [x] **⑤ 카카오 로그인 KOE205 해결** (2026-11-24 완료, 코드 수정 없음): 앱 기본 정보에 아이콘(`icons/icon-192.png`)·대표 도메인(`https://znno-debug.github.io`) 등록 → 카카오비즈니스 통합 약관 동의(필수만) → **개인 개발자 비즈 앱 전환**(목적: 이메일 필수 동의) → 동의항목 이메일 **선택 동의**(목적: 회원 식별 및 계정 안내). 닉네임 필수·사진 선택 유지, Supabase "Allow users without an email" ON 유지. iPhone Safari에서 카카오 로그인 성공 확인. (앱 아이콘 등록으로 ② 작업도 처리됨 — 카톡 공유 카드 표시 확인 필요)
 - [ ] **⑥ 소셜 로그인 남은 실기기 테스트**: 구글 로그인, 로그아웃→다른 계정 로그인 시 데이터 분리, 같은 이메일 계정 합쳐짐 여부(Supabase Users의 Providers 열), 탈퇴 확인창 표시, 뒤로 가기 버튼 복구(v26), 카카오톡 인앱 브라우저.
-- [ ] **⑦ 이메일 인증번호 켜기 (사용자 진행)** — 2026-11-25 대시보드 확인: 커스텀 SMTP 꺼짐, Confirm email 꺼짐, 메일 문구는 SMTP 연결 전까지 수정 불가. 도메인이 없으니 Brevo(추천) 또는 Gmail 앱 비밀번호로 SMTP 연결 필요: `docs/email_verification_setup.md` 순서대로 ① 커스텀 SMTP 연결(기본 메일 서버는 팀원 주소로만 발송 → 비밀번호 재설정 메일도 일반 사용자에게 안 갈 수 있음) ② Confirm signup 메일에 `{{ .Token }}` ③ Confirm email ON. 2026-11-24 기준 `mailer_autoconfirm: true`(인증 없이 가입됨).
+- [x] **⑦ 이메일 인증번호 켜기** (2026-11-25 완료): Brevo SMTP(`smtp-relay.brevo.com:587`, 발신자 인증된 Gmail 주소, 이름 `연습요정`) 연결 → Confirm signup 메일을 `{{ .Token }}` 문구로 변경 → Confirm email ON(`mailer_autoconfirm: false`). 실제 가입 테스트(`+test2`)에서 인증 메일 발송 확인.
+- [ ] **⑨ 인증 메일 품질**: 인증번호가 8자리로 옴(Email OTP Length 6으로 변경 검토), 메일이 스팸함으로 감(Gmail 발신 → Brevo가 brevosend.com 주소로 바꿔 보냄). 근본 해결은 자체 도메인 구매 + Brevo 도메인 인증.
 - [ ] **⑧ 가입 화면 2차 개선(선택)**: 로그인/회원가입 탭 없애고 "카카오로 시작하기" 중심 화면, 비밀번호 8자+확인칸+보기 버튼, 최근 로그인 방법 표시.
 - [ ] (iOS 출시 시) Apple 로그인: `OAUTH_PROVIDERS`의 `apple` 줄 주석 해제 + Apple Developer/Supabase 설정.
 
@@ -78,6 +79,7 @@
 
 | 날짜 | 내용 |
 | :--- | :--- |
+| 2026-11-25 | Supabase 이메일 인증 설정 완료(Brevo 커스텀 SMTP, 인증번호 메일 문구, Confirm email ON). 실사이트 가입 테스트에서 인증 메일 도착 확인: 8자리 번호, 스팸함 도착(남은 작업 ⑨) |
 | 2026-11-24 | **새 계정은 연락처·소개·입금 계좌 빈칸으로 시작**(`defaultTeacherProfile`): 예시 계좌가 학부모 수강료 안내에 나가는 위험 제거. 예전 예시값(`010-9876-1234`, 예시 약력, `3333-01-2345678`)이 남은 기존 계정은 `stripLegacyDemoProfile`로 빈칸 처리(저장 시 클라우드에도 반영). 계좌가 없으면 수강료 안내 문구에서 계좌 줄 생략, 안내 모달은 '등록 전' 표시·복사 시 등록 안내, `share.html` 납부 카드는 '선생님께 문의' 표시·복사 버튼 숨김. 프로필 계좌번호 필수 입력 해제. 예시 수강생·수업·노트는 그대로 유지, 캐시 `v29` |
 | 2026-11-24 | 테스트 계정으로 이메일 가입→탈퇴 실사이트 검증(약관 필수 체크, 탈퇴 화면, Supabase 사용자 삭제 확인). 발견 사항 수정: 로그아웃·탈퇴 후 로그인 화면 초기화(`resetAuthScreen`: 이름·이메일·약관 체크·인증번호 비움), 탈퇴 후 배지를 '💾 로컬'로 되돌리고 뒤쪽 화면을 처음 방문 상태로 다시 그림(`rerenderAllViews`), 탈퇴 시 마지막 로그인 계정 ID도 삭제. 참고: 새 계정은 예시 데이터(수강생 4명 등)로 시작하는 것이 현재 설계(다른 계정 데이터는 `fairy_last_auth_uid_v1` 비교로 초기화됨), 캐시 `v28` |
 | 2026-11-24 | **가입·탈퇴 흐름을 일반 앱 방식으로 개선**: ① 약관 동의(전체 동의, [필수] 만 14세·이용약관·개인정보) — 이메일 가입은 가입 화면에서, 소셜 첫 로그인·동의 기록 없는 기존 계정은 로그인 직후 동의 화면(`ensureTermsConsent`, `user_metadata.terms_agreed_at/terms_version`), 거절 시 로그아웃 ② 이메일 6자리 인증번호 화면(`verify_email` 모드, 다시 받기 60초 제한, 미인증 계정 로그인 시 자동 재발송, 이미 가입된 이메일 안내) — Supabase Confirm email을 켜야 동작 ③ 회원 탈퇴 전용 화면(`modal-delete-account`: 삭제될 데이터 개수 안내, 백업 버튼, 카카오/구글 연결 끊는 방법, 확인 체크 후 탈퇴). `privacy.html`에 `#privacy`/`#terms` 앵커, 소셜 로그인 수집 항목, 가입 연령(만 14세) 조항 추가. 가이드 `docs/email_verification_setup.md`, 캐시 `v27` |
