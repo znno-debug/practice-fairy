@@ -199,3 +199,36 @@ CREATE POLICY "Public read shared reports"
 CREATE POLICY "Owner write shared reports"
   ON public.fairy_shared_reports_v1 FOR ALL TO authenticated
   USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
+
+-- ============================================================================
+-- 🗑️ 앱 내 회원 탈퇴(계정 및 모든 데이터 영구 삭제) RPC 함수
+-- 앱스토어 심사 필수 요건: 로그인한 본인(auth.uid())만 자신의 데이터 + auth.users 삭제 가능
+-- ============================================================================
+CREATE OR REPLACE FUNCTION public.delete_my_account()
+RETURNS VOID
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, auth
+AS $$
+DECLARE
+  v_uid UUID := auth.uid();
+BEGIN
+  IF v_uid IS NULL THEN
+    RAISE EXCEPTION 'Not authenticated';
+  END IF;
+
+  DELETE FROM public.fairy_shared_reports_v1 WHERE user_id = v_uid;
+  DELETE FROM public.fairy_sessions_v1 WHERE user_id = v_uid;
+  DELETE FROM public.fairy_questions_v1 WHERE user_id = v_uid;
+  DELETE FROM public.fairy_practice_v1 WHERE user_id = v_uid;
+  DELETE FROM public.fairy_notes_v1 WHERE user_id = v_uid;
+  DELETE FROM public.fairy_lessons_v1 WHERE user_id = v_uid;
+  DELETE FROM public.fairy_students_v1 WHERE user_id = v_uid;
+  DELETE FROM public.fairy_teacher_profile_v1 WHERE user_id = v_uid;
+
+  DELETE FROM auth.users WHERE id = v_uid;
+END;
+$$;
+
+REVOKE ALL ON FUNCTION public.delete_my_account() FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.delete_my_account() TO authenticated;

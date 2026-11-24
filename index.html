@@ -104,6 +104,16 @@
       <!-- 안내 / 에러 메시지 박스 -->
       <div id="auth-alert-box" class="hidden p-3 rounded-xl text-xs font-medium leading-relaxed"></div>
 
+      <!-- 소셜 로그인 (버튼은 OAUTH_PROVIDERS 설정으로 자동 생성) -->
+      <div id="auth-social-section" class="space-y-3">
+        <div id="auth-social-buttons" class="space-y-2"></div>
+        <div class="flex items-center gap-3 text-[11px] font-semibold text-slate-400">
+          <div class="flex-1 h-px bg-slate-200"></div>
+          <span>또는 이메일로</span>
+          <div class="flex-1 h-px bg-slate-200"></div>
+        </div>
+      </div>
+
       <!-- 이메일 / 비밀번호 입력 폼 -->
       <form id="auth-form" onsubmit="handleAuthSubmit(event)" class="space-y-4">
         <div id="auth-name-field" class="hidden">
@@ -111,14 +121,20 @@
           <input type="text" id="auth-teacher-name" placeholder="예: 김민주"
             class="w-full text-sm border border-slate-200 rounded-xl p-3 focus:ring-2 focus:ring-brand-500 focus:outline-none">
         </div>
-        <div>
+        <div id="auth-email-field">
           <label class="block text-xs font-bold text-slate-700 mb-1">이메일 주소 *</label>
           <input type="email" id="auth-email" required autocomplete="email" placeholder="teacher@example.com"
             class="w-full text-sm border border-slate-200 rounded-xl p-3 focus:ring-2 focus:ring-brand-500 focus:outline-none">
         </div>
-        <div>
-          <label class="block text-xs font-bold text-slate-700 mb-1">비밀번호 * <span
-              class="text-[11px] font-normal text-slate-400">(6자 이상)</span></label>
+        <div id="auth-password-field">
+          <div class="flex items-center justify-between mb-1">
+            <label id="auth-password-label" class="block text-xs font-bold text-slate-700">비밀번호 * <span
+                class="text-[11px] font-normal text-slate-400">(6자 이상)</span></label>
+            <button type="button" id="auth-forgot-btn" onclick="switchAuthMode('reset')"
+              class="text-[11px] font-semibold text-brand-600 hover:text-brand-700 hover:underline cursor-pointer">
+              비밀번호를 잊으셨나요?
+            </button>
+          </div>
           <input type="password" id="auth-password" required minlength="6" autocomplete="current-password"
             placeholder="••••••••"
             class="w-full text-sm border border-slate-200 rounded-xl p-3 focus:ring-2 focus:ring-brand-500 focus:outline-none">
@@ -129,12 +145,15 @@
         </button>
       </form>
 
-      <!-- 하단 모드 전환 링크 -->
-      <div class="pt-3 border-t border-slate-100 text-center">
+      <!-- 하단 모드 전환 & 약관 링크 -->
+      <div class="pt-3 border-t border-slate-100 text-center space-y-2">
         <button type="button" id="auth-switch-link" onclick="toggleAuthMode()"
           class="text-xs font-semibold text-slate-600 hover:text-brand-600 transition cursor-pointer">
           아직 계정이 없으신가요? <span class="text-brand-600 font-bold underline">새 선생님 회원가입</span>
         </button>
+        <div class="text-[11px] text-slate-400">
+          <a href="privacy.html" target="_blank" rel="noopener" class="hover:text-slate-600 underline">개인정보처리방침 및 이용약관</a>
+        </div>
       </div>
     </div>
   </div>
@@ -1397,6 +1416,18 @@
           </div>
         </div>
 
+        <!-- 약관 & 계정 관리 (회원 탈퇴) -->
+        <div class="p-3.5 bg-rose-50/50 rounded-xl border border-rose-100 flex flex-wrap items-center justify-between gap-2">
+          <a href="privacy.html" target="_blank" rel="noopener"
+            class="text-[11px] font-semibold text-slate-500 hover:text-slate-800 underline">
+            개인정보처리방침 · 이용약관
+          </a>
+          <button type="button" id="btn-delete-account" onclick="handleDeleteAccount()"
+            class="px-3 py-1.5 text-[11px] font-bold text-rose-600 hover:text-white bg-white hover:bg-rose-600 border border-rose-200 hover:border-rose-600 rounded-lg transition cursor-pointer">
+            회원 탈퇴 (계정 삭제)
+          </button>
+        </div>
+
         <div class="pt-3 border-t border-slate-100 flex items-center justify-end space-x-2">
           <button type="button" onclick="closeModal('modal-teacher-profile')"
             class="px-4 py-2 text-xs font-medium text-slate-600 hover:bg-slate-100 rounded-lg transition">취소</button>
@@ -2158,25 +2189,74 @@
     // ================= ☁️ Supabase 7개 테이블 실시간 동기화 엔진 =================
     // ================= 🔐 Supabase Auth (이메일/비밀번호 로그인 & 회원가입) =================
     function switchAuthMode(mode) {
-      currentAuthMode = mode === 'signup' ? 'signup' : 'login';
+      if (mode === 'signup' || mode === 'reset' || mode === 'update_password') {
+        currentAuthMode = mode;
+      } else {
+        currentAuthMode = 'login';
+      }
       const tabLogin = document.getElementById('auth-tab-login');
       const tabSignup = document.getElementById('auth-tab-signup');
       const nameField = document.getElementById('auth-name-field');
+      const emailField = document.getElementById('auth-email-field');
+      const emailInput = document.getElementById('auth-email');
+      const passwordField = document.getElementById('auth-password-field');
+      const passwordInput = document.getElementById('auth-password');
+      const passwordLabel = document.getElementById('auth-password-label');
+      const forgotBtn = document.getElementById('auth-forgot-btn');
       const submitBtn = document.getElementById('auth-submit-btn');
       const switchLink = document.getElementById('auth-switch-link');
       const alertBox = document.getElementById('auth-alert-box');
       if (alertBox) alertBox.classList.add('hidden');
+      const socialSection = document.getElementById('auth-social-section');
+      if (socialSection) {
+        socialSection.classList.toggle('hidden', currentAuthMode === 'reset' || currentAuthMode === 'update_password');
+      }
 
       if (currentAuthMode === 'signup') {
         if (tabLogin) tabLogin.className = 'py-2.5 rounded-xl text-slate-500 hover:text-slate-900 transition cursor-pointer';
         if (tabSignup) tabSignup.className = 'py-2.5 rounded-xl bg-white text-brand-600 shadow-xs transition cursor-pointer';
         if (nameField) nameField.classList.remove('hidden');
+        if (emailField) emailField.classList.remove('hidden');
+        if (emailInput) emailInput.required = true;
+        if (passwordField) passwordField.classList.remove('hidden');
+        if (passwordInput) { passwordInput.required = true; passwordInput.autocomplete = 'new-password'; }
+        if (passwordLabel) passwordLabel.innerHTML = '비밀번호 * <span class="text-[11px] font-normal text-slate-400">(6자 이상)</span>';
+        if (forgotBtn) forgotBtn.classList.add('hidden');
         if (submitBtn) submitBtn.innerText = '새 선생님 계정으로 가입하기';
         if (switchLink) switchLink.innerHTML = '이미 계정이 있으신가요? <span class="text-brand-600 font-bold underline">로그인하기</span>';
+      } else if (currentAuthMode === 'reset') {
+        if (tabLogin) tabLogin.className = 'py-2.5 rounded-xl bg-white text-brand-600 shadow-xs transition cursor-pointer';
+        if (tabSignup) tabSignup.className = 'py-2.5 rounded-xl text-slate-500 hover:text-slate-900 transition cursor-pointer';
+        if (nameField) nameField.classList.add('hidden');
+        if (emailField) emailField.classList.remove('hidden');
+        if (emailInput) emailInput.required = true;
+        if (passwordField) passwordField.classList.add('hidden');
+        if (passwordInput) passwordInput.required = false;
+        if (forgotBtn) forgotBtn.classList.add('hidden');
+        if (submitBtn) submitBtn.innerText = '비밀번호 재설정 링크 받기';
+        if (switchLink) switchLink.innerHTML = '비밀번호가 기억나셨나요? <span class="text-brand-600 font-bold underline">로그인으로 돌아가기</span>';
+      } else if (currentAuthMode === 'update_password') {
+        if (tabLogin) tabLogin.className = 'py-2.5 rounded-xl bg-white text-brand-600 shadow-xs transition cursor-pointer';
+        if (tabSignup) tabSignup.className = 'py-2.5 rounded-xl text-slate-500 hover:text-slate-900 transition cursor-pointer';
+        if (nameField) nameField.classList.add('hidden');
+        if (emailField) emailField.classList.add('hidden');
+        if (emailInput) emailInput.required = false;
+        if (passwordField) passwordField.classList.remove('hidden');
+        if (passwordInput) { passwordInput.required = true; passwordInput.value = ''; passwordInput.autocomplete = 'new-password'; }
+        if (passwordLabel) passwordLabel.innerHTML = '새 비밀번호 * <span class="text-[11px] font-normal text-slate-400">(6자 이상)</span>';
+        if (forgotBtn) forgotBtn.classList.add('hidden');
+        if (submitBtn) submitBtn.innerText = '새 비밀번호 저장하기';
+        if (switchLink) switchLink.innerHTML = '<span class="text-brand-600 font-bold underline">로그인 화면으로 돌아가기</span>';
       } else {
         if (tabLogin) tabLogin.className = 'py-2.5 rounded-xl bg-white text-brand-600 shadow-xs transition cursor-pointer';
         if (tabSignup) tabSignup.className = 'py-2.5 rounded-xl text-slate-500 hover:text-slate-900 transition cursor-pointer';
         if (nameField) nameField.classList.add('hidden');
+        if (emailField) emailField.classList.remove('hidden');
+        if (emailInput) emailInput.required = true;
+        if (passwordField) passwordField.classList.remove('hidden');
+        if (passwordInput) { passwordInput.required = true; passwordInput.autocomplete = 'current-password'; }
+        if (passwordLabel) passwordLabel.innerHTML = '비밀번호 * <span class="text-[11px] font-normal text-slate-400">(6자 이상)</span>';
+        if (forgotBtn) forgotBtn.classList.remove('hidden');
         if (submitBtn) submitBtn.innerText = '이메일로 로그인하기';
         if (switchLink) switchLink.innerHTML = '아직 계정이 없으신가요? <span class="text-brand-600 font-bold underline">새 선생님 회원가입</span>';
       }
@@ -2209,8 +2289,161 @@
       return `로그인/인증 오류: ${rawMsg}`;
     }
 
+    // ================= 소셜 로그인 (Supabase OAuth) =================
+    // 새 로그인 수단은 이 배열에 한 줄만 추가하면 버튼과 로그인 처리가 함께 생깁니다.
+    // (Supabase Dashboard > Authentication > Providers에서 해당 Provider도 켜야 합니다.)
+    const OAUTH_PROVIDERS = [
+      { id: 'kakao', label: '카카오로 계속하기', icon: '💬', className: 'bg-[#FEE500] hover:bg-[#FDD800] text-[#191919] border-[#FEE500]' },
+      { id: 'google', label: 'Google로 계속하기', icon: 'G', className: 'bg-white hover:bg-slate-50 text-slate-800 border-slate-300', queryParams: { prompt: 'select_account' } },
+      // { id: 'apple', label: 'Apple로 계속하기', icon: '', className: 'bg-black hover:bg-slate-800 text-white border-black' },
+    ];
+
+    function getOAuthProviderLabel(providerId) {
+      const p = OAUTH_PROVIDERS.find(x => x.id === providerId);
+      return p ? p.label.replace('로 계속하기', '') : providerId;
+    }
+
+    function renderSocialLoginButtons() {
+      const wrap = document.getElementById('auth-social-buttons');
+      if (!wrap) return;
+      wrap.innerHTML = '';
+      OAUTH_PROVIDERS.forEach(p => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.id = `auth-oauth-${p.id}`;
+        btn.className = `w-full py-3 px-4 border rounded-xl font-bold text-sm shadow-xs transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60 disabled:cursor-wait ${p.className}`;
+        btn.innerHTML = `<span class="w-5 text-center font-black">${p.icon}</span><span class="oauth-label"></span>`;
+        btn.querySelector('.oauth-label').innerText = p.label;
+        btn.onclick = () => handleOAuthLogin(p.id);
+        wrap.appendChild(btn);
+      });
+    }
+
+    async function handleOAuthLogin(provider) {
+      const config = OAUTH_PROVIDERS.find(p => p.id === provider);
+      const providerName = getOAuthProviderLabel(provider);
+      const alertBox = document.getElementById('auth-alert-box');
+      if (alertBox) alertBox.classList.add('hidden');
+
+      if (!window.supabase) {
+        const sdkErr = 'Supabase 인증 라이브러리를 불러오지 못했습니다. 인터넷 연결을 확인하고 페이지를 새로고침해 주세요.';
+        showAuthAlert(sdkErr, 'error');
+        showToast(sdkErr);
+        return;
+      }
+      if (!supabaseClient) {
+        supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+      }
+
+      const btn = document.getElementById(`auth-oauth-${provider}`);
+      const labelEl = btn?.querySelector('.oauth-label');
+      if (btn) btn.disabled = true;
+      if (labelEl) labelEl.innerText = `${providerName} 로그인 화면으로 이동 중...`;
+
+      try {
+        const options = { redirectTo: window.location.origin + window.location.pathname, skipBrowserRedirect: true };
+        if (config?.scopes) options.scopes = config.scopes;
+        if (config?.queryParams) options.queryParams = config.queryParams;
+        const { data, error } = await supabaseClient.auth.signInWithOAuth({ provider, options });
+        if (error) throw error;
+        if (!data?.url) throw new Error('로그인 주소를 만들지 못했습니다.');
+
+        // 사전 점검: Provider가 꺼져 있으면 Supabase가 400 JSON을 주므로, 이동 전에 앱 안에서 친절히 안내
+        try {
+          const pre = await fetch(data.url, { redirect: 'manual' });
+          if (pre.status >= 400) {
+            const body = await pre.json().catch(() => ({}));
+            throw new Error(body.msg || body.error_description || `HTTP ${pre.status}`);
+          }
+        } catch (preErr) {
+          if (preErr instanceof TypeError) {
+            console.warn('[OAuth 사전 점검 생략]', preErr); // 네트워크/CORS 문제면 그대로 이동
+          } else {
+            throw preErr;
+          }
+        }
+
+        // 카카오/구글 로그인 페이지로 이동 → 로그인 후 이 페이지로 돌아오면
+        // initSupabaseClient() → onAuthSessionEstablished()가 세션 처리와 클라우드 동기화를 이어받습니다.
+        window.location.assign(data.url);
+      } catch (err) {
+        console.error(`[OAuth ${provider} 실패 상세]:`, err);
+        const errText = translateOAuthError(err?.message || String(err), providerName);
+        showAuthAlert(errText, 'error');
+        showToast(errText);
+        if (btn) btn.disabled = false;
+        if (labelEl) labelEl.innerText = config?.label || `${providerName}로 계속하기`;
+      }
+    }
+
+    function translateOAuthError(rawMsg, providerName = '소셜') {
+      const msg = String(rawMsg || '').toLowerCase();
+      if (msg.includes('expired') || msg.includes('otp_expired')) {
+        return `인증 링크가 만료되었거나 이미 사용되었습니다. 다시 요청해 주세요. (${rawMsg})`;
+      }
+      if (msg.includes('provider is not enabled') || msg.includes('unsupported provider')) {
+        return `${providerName} 로그인이 아직 서버에서 활성화되지 않았습니다. 관리자 설정(Supabase Providers)을 확인해 주세요. (${rawMsg})`;
+      }
+      if (msg.includes('access_denied') || msg.includes('denied') || msg.includes('cancel')) {
+        return `${providerName} 로그인이 취소되었거나 동의가 완료되지 않았습니다. 다시 시도해 주세요.`;
+      }
+      if (msg.includes('email') && (msg.includes('missing') || msg.includes('not found') || msg.includes('external provider'))) {
+        return `${providerName} 계정의 이메일 정보를 받지 못했습니다. 로그인 동의 화면에서 이메일 제공에 동의해 주세요. (${rawMsg})`;
+      }
+      if (msg.includes('redirect')) {
+        return `${providerName} 로그인 후 돌아올 주소가 등록되어 있지 않습니다. 관리자 설정(Redirect URL)을 확인해 주세요. (${rawMsg})`;
+      }
+      return `${providerName} 로그인 중 문제가 발생했습니다: ${rawMsg}`;
+    }
+
+    // OAuth 로그인 후 오류와 함께 돌아온 경우(?error=... 또는 #error=...) 안내하고 주소창을 정리
+    function consumeOAuthRedirectError() {
+      const search = new URLSearchParams(window.location.search);
+      const hash = new URLSearchParams((window.location.hash || '').replace(/^#/, ''));
+      const err = search.get('error') || hash.get('error');
+      if (!err) return false;
+      const desc = search.get('error_description') || hash.get('error_description') || err;
+      ['error', 'error_code', 'error_description', 'code', 'state'].forEach(k => search.delete(k));
+      const qs = search.toString();
+      history.replaceState(null, '', window.location.pathname + (qs ? `?${qs}` : ''));
+      const overlay = document.getElementById('auth-overlay');
+      if (overlay) overlay.classList.remove('hidden');
+      const errText = translateOAuthError(desc);
+      console.error('[OAuth 리다이렉트 오류]:', err, desc);
+      showAuthAlert(errText, 'error');
+      showToast(errText);
+      return true;
+    }
+
+    // 로그인한 계정의 표시 이름 (카카오 로그인은 이메일이 없을 수 있음)
+    function getAuthDisplayName(user) {
+      if (!user) return '';
+      const m = user.user_metadata || {};
+      return (m.teacher_name || m.full_name || m.name || m.nickname || m.user_name || m.preferred_username || '').trim();
+    }
+
+    // 소셜 로그인 프로필(이름·사진)을 아직 기본값인 선생님 프로필에만 반영
+    function applyAuthMetadataToProfile(user) {
+      if (!user) return;
+      const m = user.user_metadata || {};
+      const metaName = getAuthDisplayName(user);
+      const metaAvatar = m.avatar_url || m.picture || '';
+      const prof = getTeacherProfile();
+      let changed = false;
+      if (metaName && prof.name === defaultTeacherProfile.name && metaName !== prof.name) {
+        prof.name = metaName;
+        if (!prof.accountHolder || prof.accountHolder === defaultTeacherProfile.accountHolder) prof.accountHolder = metaName;
+        changed = true;
+      }
+      if (metaAvatar && (!prof.avatarUrl || prof.avatarUrl === defaultTeacherProfile.avatarUrl)) {
+        prof.avatarUrl = metaAvatar;
+        changed = true;
+      }
+      if (changed) localStorage.setItem(STORAGE_KEY_TEACHER, JSON.stringify(prof));
+    }
+
     function updateAuthHeaderUI(user) {
-      const emailText = user?.email || '비로그인';
+      const emailText = user ? (user.email || getAuthDisplayName(user) || `${getOAuthProviderLabel(user.app_metadata?.provider || '')} 계정`) : '비로그인';
       const desktopEmail = document.getElementById('header-user-email');
       const mobileEmail = document.getElementById('header-user-email-mobile');
       const modalEmail = document.getElementById('modal-user-email');
@@ -2245,17 +2478,49 @@
       const teacherName = (document.getElementById('auth-teacher-name')?.value || '').trim();
       const submitBtn = document.getElementById('auth-submit-btn');
 
-      if (!email || !password) {
+      if (currentAuthMode === 'reset') {
+        if (!email) {
+          showAuthAlert('비밀번호를 재설정할 이메일 주소를 입력해 주세요.', 'error');
+          return;
+        }
+      } else if (currentAuthMode === 'update_password') {
+        if (!password || password.length < 6) {
+          showAuthAlert('새 비밀번호는 6자 이상 입력해 주세요.', 'error');
+          return;
+        }
+      } else if (!email || !password) {
         showAuthAlert('이메일과 비밀번호를 모두 입력해 주세요.', 'error');
         return;
       }
 
       if (submitBtn) submitBtn.disabled = true;
-      const prevBtnText = submitBtn ? submitBtn.innerText : '이메일로 로그인하기';
-      if (submitBtn) submitBtn.innerText = '인증 처리 중...';
+      if (submitBtn) submitBtn.innerText = '처리 중...';
 
       try {
-        if (currentAuthMode === 'signup') {
+        if (currentAuthMode === 'reset') {
+          const redirectTo = window.location.origin + window.location.pathname;
+          const { error } = await supabaseClient.auth.resetPasswordForEmail(email, { redirectTo });
+          if (error) throw error;
+          showAuthAlert(
+            `${email} 주소로 비밀번호 재설정 메일을 보냈습니다. 메일함(스팸함 포함)의 링크를 눌러 새 비밀번호를 설정해 주세요.`,
+            'success'
+          );
+          showToast('비밀번호 재설정 메일을 발송했습니다! ✉️');
+        } else if (currentAuthMode === 'update_password') {
+          const { data, error } = await supabaseClient.auth.updateUser({ password });
+          if (error) throw error;
+          if (window.location.hash && window.location.hash.includes('type=recovery')) {
+            history.replaceState(null, '', window.location.pathname + window.location.search);
+          }
+          const { data: sessData } = await supabaseClient.auth.getSession();
+          if (sessData?.session) {
+            await onAuthSessionEstablished(sessData.session);
+            showToast('새 비밀번호가 저장되고 로그인되었습니다! 🔐');
+          } else {
+            switchAuthMode('login');
+            showAuthAlert('비밀번호가 변경되었습니다. 새 비밀번호로 로그인해 주세요.', 'success');
+          }
+        } else if (currentAuthMode === 'signup') {
           const { data, error } = await supabaseClient.auth.signUp({
             email,
             password,
@@ -2299,7 +2564,13 @@
       } finally {
         if (submitBtn) {
           submitBtn.disabled = false;
-          submitBtn.innerText = currentAuthMode === 'signup' ? '새 선생님 계정으로 가입하기' : '이메일로 로그인하기';
+          const btnLabels = {
+            signup: '새 선생님 계정으로 가입하기',
+            reset: '비밀번호 재설정 링크 받기',
+            update_password: '새 비밀번호 저장하기',
+            login: '이메일로 로그인하기'
+          };
+          submitBtn.innerText = btnLabels[currentAuthMode] || '이메일로 로그인하기';
         }
       }
     }
@@ -2312,7 +2583,7 @@
       if (overlay) overlay.classList.add('hidden');
 
       const lastUid = localStorage.getItem(STORAGE_KEY_LAST_UID);
-      const metaName = signupTeacherName || currentAuthUser.user_metadata?.teacher_name || '';
+      const metaName = signupTeacherName || getAuthDisplayName(currentAuthUser);
 
       // 다른 선생님 계정으로 로그인한 경우 이전 계정의 로컬 캐시 초기화
       if (lastUid && lastUid !== currentAuthUser.id) {
@@ -2328,6 +2599,8 @@
           }
         }
       }
+      // 카카오/구글 프로필 이름·사진을 기본 프로필에 반영 (클라우드에 프로필이 있으면 아래 pull에서 덮어씀)
+      applyAuthMetadataToProfile(currentAuthUser);
       localStorage.setItem(STORAGE_KEY_LAST_UID, currentAuthUser.id);
 
       renderTeacherProfileHeader();
@@ -2358,6 +2631,100 @@
       const pwInput = document.getElementById('auth-password');
       if (pwInput) pwInput.value = '';
       showToast('로그아웃되었습니다.');
+    }
+
+    async function handleDeleteAccount() {
+      if (!currentAuthUser) {
+        alert('로그인된 계정이 없습니다.');
+        return;
+      }
+
+      const email = currentAuthUser.email || '';
+      const firstConfirm = confirm(
+        `정말로 회원 탈퇴를 진행하시겠습니까?\n\n` +
+        `계정(${email})과 클라우드 및 이 기기에 저장된 모든 수강생, 수업 일정, 레슨 노트, 공유 리포트 데이터가 영구 삭제되며 복구할 수 없습니다.`
+      );
+      if (!firstConfirm) return;
+
+      const typed = prompt('계정을 영구 삭제하려면 아래 입력창에 "탈퇴" 두 글자를 정확히 입력해 주세요.');
+      if (typed === null) return;
+      if (typed.trim() !== '탈퇴') {
+        alert('"탈퇴"가 정확히 입력되지 않아 취소되었습니다.');
+        return;
+      }
+
+      const btn = document.getElementById('btn-delete-account');
+      const prevText = btn ? btn.innerText : '';
+      if (btn) {
+        btn.disabled = true;
+        btn.innerText = '계정 삭제 중...';
+      }
+
+      const uid = currentAuthUser.id;
+      let rpcDeleted = false;
+
+      try {
+        if (supabaseClient) {
+          const { error: rpcError } = await supabaseClient.rpc('delete_my_account');
+          if (!rpcError) {
+            rpcDeleted = true;
+          } else {
+            console.warn('delete_my_account RPC 호출 실패, 테이블 단위 삭제 fallback 시도:', rpcError.message || rpcError);
+            const tables = [
+              'fairy_shared_reports_v1',
+              STORAGE_KEY_SESSIONS,
+              STORAGE_KEY_QUESTIONS,
+              STORAGE_KEY_PRACTICE,
+              STORAGE_KEY_NOTES,
+              STORAGE_KEY_LESSONS,
+              STORAGE_KEY_STUDENTS,
+              STORAGE_KEY_TEACHER
+            ];
+            for (const tbl of tables) {
+              await supabaseClient.from(tbl).delete().eq('user_id', uid);
+            }
+          }
+          await supabaseClient.auth.signOut();
+        }
+      } catch (err) {
+        console.error('회원 탈퇴 처리 중 오류:', err);
+        if (btn) {
+          btn.disabled = false;
+          btn.innerText = prevText;
+        }
+        alert('회원 탈퇴 처리 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.');
+        return;
+      }
+
+      // 로컬 저장소 데이터 초기화
+      [
+        STORAGE_KEY_TEACHER,
+        STORAGE_KEY_STUDENTS,
+        STORAGE_KEY_LESSONS,
+        STORAGE_KEY_NOTES,
+        STORAGE_KEY_PRACTICE,
+        STORAGE_KEY_QUESTIONS,
+        STORAGE_KEY_SESSIONS
+      ].forEach(k => localStorage.removeItem(k));
+
+      currentAuthUser = null;
+      updateAuthHeaderUI(null);
+      closeModal('modal-teacher-profile');
+      const overlay = document.getElementById('auth-overlay');
+      if (overlay) overlay.classList.remove('hidden');
+      const pwInput = document.getElementById('auth-password');
+      if (pwInput) pwInput.value = '';
+
+      if (btn) {
+        btn.disabled = false;
+        btn.innerText = prevText;
+      }
+
+      if (rpcDeleted) {
+        showToast('회원 탈퇴 및 모든 데이터 삭제가 완료되었습니다.');
+      } else {
+        alert('데이터 삭제 및 로그아웃이 완료되었습니다.\n(참고: 로그인 계정 자체의 완전 삭제를 위해서는 Supabase SQL Editor에서 최신 supabase_schema.sql의 delete_my_account 함수를 실행해 주세요.)');
+      }
     }
 
     // ================= ☁️ Supabase 7개 테이블 유저별(user_id) 실시간 동기화 엔진 =================
@@ -2414,21 +2781,51 @@
     }
 
     async function initSupabaseClient() {
+      renderSocialLoginButtons();
       if (!SUPABASE_URL || !SUPABASE_ANON_KEY || !window.supabase) {
         setCloudSyncBadge('local', '💾 로컬');
         return;
       }
       try {
+        const hadOAuthError = consumeOAuthRedirectError();
         supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        const isRecoveryHash = (window.location.hash || '').includes('type=recovery');
+        const isOAuthReturn = /access_token=|[?&]code=/.test(window.location.hash + window.location.search);
+
+        supabaseClient.auth.onAuthStateChange((event) => {
+          if (event === 'PASSWORD_RECOVERY') {
+            const overlay = document.getElementById('auth-overlay');
+            if (overlay) overlay.classList.remove('hidden');
+            switchAuthMode('update_password');
+            showAuthAlert('이메일 인증이 확인되었습니다. 새로 사용할 비밀번호를 입력해 주세요.', 'success');
+          }
+        });
+
         const { data: { session }, error } = await supabaseClient.auth.getSession();
         if (error) throw error;
 
-        if (session && session.user) {
+        if (isRecoveryHash) {
+          const overlay = document.getElementById('auth-overlay');
+          if (overlay) overlay.classList.remove('hidden');
+          switchAuthMode('update_password');
+          showAuthAlert('이메일 인증이 확인되었습니다. 새로 사용할 비밀번호를 입력해 주세요.', 'success');
+        } else if (session && session.user) {
+          if (isOAuthReturn) {
+            // 소셜 로그인 후 주소창에 남은 토큰/코드 제거
+            history.replaceState(null, '', window.location.pathname);
+          }
           await onAuthSessionEstablished(session);
+          if (isOAuthReturn) {
+            const provider = getOAuthProviderLabel(session.user.app_metadata?.provider || '');
+            showToast(`${provider} 계정으로 로그인되었습니다! 🧚‍♀️`);
+          }
         } else {
           // 비로그인 상태: 로그인/회원가입 화면 표시
           const overlay = document.getElementById('auth-overlay');
           if (overlay) overlay.classList.remove('hidden');
+          if (isOAuthReturn && !hadOAuthError) {
+            showAuthAlert('소셜 로그인 정보를 확인하지 못했습니다. 잠시 후 다시 시도해 주세요.', 'error');
+          }
         }
       } catch (err) {
         console.error('Supabase 초기화 오류:', err);

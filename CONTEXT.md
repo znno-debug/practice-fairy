@@ -1,6 +1,6 @@
 # CONTEXT — 연습요정 (Practice Fairy)
 
-> **최종 갱신**: 2026-11-24 · `sw.js` 캐시 `fairy-cache-v21`
+> **최종 갱신**: 2026-11-24 · `sw.js` 캐시 `fairy-cache-v24`
 > **한 줄 요약**: 음악 1:1 레슨 선생님용 출결·수강료·레슨노트 관리 + 수강생 연습일지 PWA. 학부모에게는 카카오톡 카드로 1:1 리포트(`share.html`)를 보냄.
 > **현재 단계**: 기능 시제품 완성, Supabase Auth 연동, GitHub Pages 배포 완료. 지금은 **카카오 공유 마무리와 모바일 다듬기** 단계.
 > 이 문서는 작업 시작 전에 가장 먼저 읽고, 작업이 끝나면 곧바로 갱신한다(→ `CLAUDE.md` / `GEMINI.md`).
@@ -15,7 +15,7 @@
 | Supabase 프로젝트 | `https://zpfcocrqvmrotuiwpkru.supabase.co` (Auth + PostgreSQL + JS SDK v2) | `index.html:1926` (`SUPABASE_URL`, `SUPABASE_ANON_KEY`) |
 | Supabase 테이블 (7개) | `fairy_teacher_profile_v1`, `fairy_students_v1`, `fairy_lessons_v1`, `fairy_notes_v1`, `fairy_practice_v1`, `fairy_questions_v1`, `fairy_sessions_v1` | `supabase_schema.sql`, `index.html:1950~` (LocalStorage 키와 같은 이름) |
 | 카카오 개발자센터 | 앱 ID `1659300`, JS SDK `2.7.2`, `KAKAO_JS_KEY`는 `index.html:1933` | `index.html:25`, `:1933` |
-| PWA | `sw.js` (현재 `fairy-cache-v21`), `manifest.json`, `icons/`, 루트 `icon-512.png` | |
+| PWA | `sw.js` (현재 `fairy-cache-v24`), `manifest.json`, `icons/`, 루트 `icon-512.png` | |
 | 로컬 테스트 서버 | `python3 server.py` → `http://localhost:8080` (같은 Wi-Fi 기기용 IP 자동 표시) | `server.py` |
 | 기술 스택 | HTML5 + Vanilla JS + Tailwind CSS(CDN) + Supabase + Web Audio API + Service Worker + LocalStorage | |
 
@@ -25,6 +25,7 @@
 | :--- | :--- | :--- |
 | `index.html` (~5,400줄) | 메인 앱: 수업 캘린더, 레슨 노트, 수강생 관리, 마이 연습실, Auth 화면(`#auth-overlay`), PWA 설치 UI | 모든 로직이 이 파일 하나에 들어 있음 |
 | `share.html` | 학부모/성인 수강생용 1:1 리포트. 링크 안 데이터만으로 열림(로그인 없음) | `?id=...&d=<base64url JSON 배열>`을 읽고, 예전 `#d=` 해시 방식도 지원 |
+| `privacy.html` | 개인정보처리방침 및 서비스 이용약관 페이지 | 로그인 화면(`#auth-overlay`) 및 선생님 프로필 모달에서 연결 (스토어 심사 필수) |
 | `sw.js` | 서비스 워커. HTML은 네트워크 우선, `/icons/`는 캐시 우선 | **HTML 수정 시 버전 +1 필수** |
 | `manifest.json` | PWA 매니페스트 (상대 경로) | |
 | `supabase_schema.sql` | 7개 테이블 + RLS 정책 SQL | **핵심 자산, 삭제 금지**. ⚠️ 4장 참고 |
@@ -32,6 +33,7 @@
 | `icon-512.png` (루트) | 카카오 피드 카드 썸네일 (`imageUrl`) | 512×512 정사각형 |
 | `server.py` | 로컬 테스트 서버 | |
 | `README.md` | 기능 소개 (11-06 기준이라 일부 내용이 예전 상태) | |
+| `docs/social_login_setup.md` | 카카오·구글 소셜 로그인 웹 콘솔 설정 가이드 (카카오 개발자센터 / Google Cloud / Supabase) | 콘솔 설정이 바뀌면 함께 갱신 |
 | `docs/handover_notes.md` | 예전 인수인계 문서 (설문 원본 수치·셀링 포인트·결정 이력) | 보관용. 현재 상태는 이 문서(`CONTEXT.md`)가 기준이며, 이 파일은 갱신하지 않음 |
 
 ## 3. 핵심 결정 사항 (요약)
@@ -41,6 +43,7 @@
 - **수강료 골든타임**: 잔여 0~1회가 되면 모달이 뜨고 입금 계좌가 들어간 안내문을 자동 완성한 뒤 Web Share API로 공유(`executeShareKakaoTuition`).
 - **보강 대기 위젯**: 결석 학생만 모아서 보강 일정을 잡게 함.
 - **포지셔닝 피봇 (11-13)**: "출결 장부 앱"에서 **"수강료 누락을 막고 재등록률을 올리는 레슨 프로페셔널 패키지"**로 전환. 초기에는 유료화를 미루고 무료 배포로 사용자를 붙잡는다.
+- **소셜 로그인 (11-24)**: 카카오·구글 로그인은 Supabase OAuth(`signInWithOAuth`)로 처리. 버튼은 `index.html`의 `OAUTH_PROVIDERS` 배열에서 자동 생성되며, 공통 핸들러는 `handleOAuthLogin(provider)`. Apple은 주석 처리된 한 줄로 대기 중. 돌아온 뒤에는 기존 `initSupabaseClient()` → `onAuthSessionEstablished()` 흐름을 그대로 사용.
 - **멀티유저 (11-20)**: Supabase Auth 이메일/비밀번호 로그인. 7개 테이블을 `user_id` 기준으로 동기화하고, 유저별 PK 네임스페이스 적용.
 - **카카오 공유 일원화 (11-20, `172b641`)**: 레슨 리포트 공유는 모두 `sendKakaoReportCard(noteId)` 하나로 처리(피드 카드 + `[레슨 리포트 상세보기]` 버튼, 링크는 GitHub Pages 절대경로).
 - 시장 검증 (N=14, 뮬 설문): 10명 이하 소규모 레슨 78.6%, 횟수권 64.3%, 카톡 전달 64.3%, 관리 앱 지출 0%, 문제를 겪은 응답자 100%가 수강료 누락/안내 시점 놓침을 경험.
@@ -61,10 +64,18 @@
 - [x] (추가) `supabase_schema.sql`을 실제 운영 스키마(`user_id` + RLS)에 맞게 갱신 (4장 1번).
 - [x] (추가) `README.md` 최신화 (Supabase Auth, 5대 출결, 카카오 카드 공유, 배포 URL).
 
+- [ ] **④ 소셜 로그인 콘솔 설정 (사용자 진행)**: `docs/social_login_setup.md` 순서대로 카카오 개발자센터(로그인 활성화·동의항목·Redirect URI·Client Secret) → Google Cloud(동의 화면·웹 클라이언트) → Supabase(Kakao/Google Provider ON, Redirect URLs). 2026-11-24 기준 Supabase에서 두 Provider 모두 꺼져 있음. 설정 후 실기기 Safari/Chrome에서 로그인·동기화 확인.
+- [ ] (iOS 출시 시) Apple 로그인: `OAUTH_PROVIDERS`의 `apple` 줄 주석 해제 + Apple Developer/Supabase 설정.
+
+- [x] **앱스토어 심사 대비 회원 탈퇴(`delete_my_account`) & 개인정보처리방침(`privacy.html`) 추가**: `supabase_schema.sql`에 `delete_my_account()` RPC 추가, `index.html` 로그인/프로필 모달 연결, 캐시 `v22`. (**Supabase SQL Editor에서 최신 `supabase_schema.sql` 실행 필요**)
+
 ## 6. 변경 이력
 
 | 날짜 | 내용 |
 | :--- | :--- |
+| 2026-11-24 | **카카오·구글 소셜 로그인 추가**: 로그인 화면 소셜 버튼(`OAUTH_PROVIDERS` 기반 자동 생성, 비밀번호 재설정 화면에서는 숨김), `handleOAuthLogin(provider)` 공통 핸들러(이동 전 Provider 활성 여부 사전 점검), 리다이렉트 오류(`?error=`/`#error=`) 안내 및 주소창 정리, 소셜 프로필 이름·사진을 기본 선생님 프로필에 반영, 이메일 없는 카카오 계정의 헤더 표시 보완, 설정 가이드 `docs/social_login_setup.md`, 캐시 `v24` |
+| 2026-11-24 | 로그인 화면 `비밀번호를 잊으셨나요?`(이메일 재설정 링크 발송 + `PASSWORD_RECOVERY` 새 비밀번호 설정) 추가, 캐시 `v23` |
+| 2026-11-24 | 앱스토어 심사 대비 `privacy.html`(개인정보처리방침·이용약관) 신설, `handleDeleteAccount()` 및 Supabase `delete_my_account()` RPC 추가, 캐시 `v22` |
 | 2026-11-24 | **배포 장애 수정**: v20에서 주간 캘린더 함수에 `const weekdayHeader`가 두 번 선언되어 메인 스크립트 전체가 SyntaxError로 멈춤(앱 모든 버튼 무반응). 예전 `remove('hidden')` 두 줄 삭제, 캐시 `v21` |
 | 2026-11-24 | 모바일 주간 캘린더 1열 요일별 리스트 전환(이름 잘림 해결) 및 중복 요일 헤더 숨김(캐시 `v20`) |
 | 2026-11-24 | 모바일 월간 캘린더 셀 도트 넘침(`max 3개` + `N건`) 및 당일 수업 카드 이름·과목·회차·배지 줄바꿈 정렬 수정(캐시 `v19`) |

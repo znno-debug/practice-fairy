@@ -1,9 +1,10 @@
-// 연습요정 (Practice Fairy) Service Worker - v21.0.0 (주간 캘린더 weekdayHeader 중복 선언 SyntaxError 수정)
-const CACHE_NAME = 'fairy-cache-v21';
+// 연습요정 (Practice Fairy) Service Worker - v24.0.0 (카카오·구글 소셜 로그인 추가)
+const CACHE_NAME = 'fairy-cache-v24';
 const STATIC_ASSETS = [
   './',
   './index.html',
   './share.html',
+  './privacy.html',
   './manifest.json',
   './icon-512.png',
   './icons/icon-192.png',
