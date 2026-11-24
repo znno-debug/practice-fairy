@@ -64,6 +64,11 @@
       background: #e2e8f0;
       border-radius: 4px;
     }
+  
+    /* 접근성: 키보드 이동 시 현재 위치가 잘 보이도록 */
+    :focus-visible { outline: 3px solid #e11d48; outline-offset: 2px; border-radius: 6px; }
+    /* 접근성: 흰 배경 위 연회색 글자 대비 보강 (slate-400 → slate-500, 대비 4.5:1 이상) */
+    body .text-slate-400 { color: #64748b; }
   </style>
 </head>
 
@@ -300,7 +305,7 @@
             title="프로필 · 계좌 · 백업 설정">
             <div class="relative">
               <img id="header-teacher-img"
-                src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80"
+                src="icons/avatar-default.svg"
                 alt="선생님 프로필"
                 class="w-8 h-8 rounded-full object-cover ring-2 ring-brand-100 group-hover:ring-brand-400 transition">
               <span
@@ -835,7 +840,7 @@
                   <span
                     class="whitespace-nowrap flex-shrink-0 text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 border border-slate-200 inline-flex items-center space-x-1"
                     title="선생님이나 학부모님에게 공유되지 않는 학생 본인만의 비밀 일지입니다.">
-                    <svg class="w-2.5 h-2.5 text-slate-500" fill="currentColor" viewBox="20 20">
+                    <svg class="w-2.5 h-2.5 text-slate-500" fill="currentColor" viewBox="0 0 20 20">
                       <path fill-rule="evenodd"
                         d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z"
                         clip-rule="evenodd" />
@@ -1557,6 +1562,10 @@
           </div>
         </div>
 
+        <p id="stud-child-privacy-hint" class="text-[11px] leading-relaxed text-sky-800 bg-sky-50 border border-sky-100 rounded-xl px-3 py-2">
+          🔒 만 14세 미만 학생의 정보는 보호자(학부모)께 동의를 받은 뒤 입력해 주세요. 주민번호·주소 같은 정보는 적지 않아도 됩니다.
+        </p>
+
         <div>
           <label class="block text-xs font-bold text-slate-700 mb-1" id="label-stud-name">수강생 이름 *</label>
           <input type="text" id="form-stud-name" placeholder="예: 이지우" required
@@ -1781,14 +1790,14 @@
   <!-- ================= PWA 홈 화면 설치 플로팅 배너 ================= -->
   <div id="pwa-floating-banner"
     class="hidden fixed bottom-20 md:bottom-6 left-4 right-4 max-w-md mx-auto z-50 bg-slate-900/95 text-white p-3 rounded-2xl shadow-2xl backdrop-blur-md flex items-center justify-between border border-slate-700 animate-in fade-in slide-in-from-bottom duration-300">
-    <div class="flex items-center space-x-3 overflow-hidden cursor-pointer" onclick="triggerPwaInstall()">
+    <div class="flex items-center space-x-3 overflow-hidden cursor-pointer" role="button" tabindex="0" onclick="triggerPwaInstall()" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();triggerPwaInstall();}">
       <img src="icons/icon-192.png" alt="연습요정" class="w-10 h-10 rounded-xl shadow-md flex-shrink-0">
       <div class="truncate">
         <div class="flex items-center space-x-1.5">
           <span class="text-xs font-bold text-white">연습요정 앱으로 열기</span>
           <span class="text-[9px] bg-brand-500 text-white font-extrabold px-1.5 py-0.2 rounded-full">추천</span>
         </div>
-        <p class="text-[11px] text-slate-300 truncate">홈 화면에 추가하면 1초만에 바로 실행!</p>
+        <p class="text-[11px] text-slate-300 truncate">홈 화면에 추가하면 앱처럼 바로 실행!</p>
       </div>
     </div>
     <div class="flex items-center space-x-1.5 flex-shrink-0 ml-2">
@@ -2060,7 +2069,7 @@
       bankName: '',
       accountNumber: '',
       accountHolder: '',
-      avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80'
+      avatarUrl: 'icons/avatar-default.svg' // 실제 인물 사진 대신 기본 아이콘 (이미지 이용권·오해 방지)
     };
 
     // 학생 기본 연습 체크리스트 더미
@@ -3417,7 +3426,8 @@
     const LEGACY_DEMO_PROFILE = {
       phone: '010-9876-1234',
       bio: '독일 국립음대 석사 졸 | 유·초등 및 콩쿠르 전문 지도 8년차',
-      accountNumber: '3333-01-2345678'
+      accountNumber: '3333-01-2345678',
+      avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80'
     };
 
     function stripLegacyDemoProfile(prof) {
@@ -3425,6 +3435,7 @@
       const clean = { ...prof };
       if (clean.phone === LEGACY_DEMO_PROFILE.phone) clean.phone = '';
       if (clean.bio === LEGACY_DEMO_PROFILE.bio) clean.bio = '';
+      if (clean.avatarUrl === LEGACY_DEMO_PROFILE.avatarUrl) clean.avatarUrl = defaultTeacherProfile.avatarUrl;
       if (clean.accountNumber === LEGACY_DEMO_PROFILE.accountNumber) {
         clean.accountNumber = '';
         clean.bankName = '';
@@ -4061,10 +4072,10 @@
     }
     function getNotes() {
       let notes = JSON.parse(localStorage.getItem(STORAGE_KEY_NOTES) || '[]');
-      if (notes.length === 0) {
+      if (localStorage.getItem(STORAGE_KEY_NOTES) === null) {
         notes = defaultNotes;
         saveNotes(notes);
-      } else if (!notes.some(n => n.studentId === 's4')) {
+      } else if (hasStudentLocally('s4') && !notes.some(n => n.studentId === 's4')) {
         const s4Note = defaultNotes.find(n => n.studentId === 's4');
         if (s4Note) {
           notes.push(s4Note);
@@ -4827,13 +4838,78 @@
             <button onclick="openChargeModal('${s.id}')" class="font-bold text-brand-600 hover:text-brand-700 flex items-center space-x-1">
               <span>+ 수강권 충전 (4/8/12회)</span>
             </button>
-            <button onclick="openNoteForStudent('${s.id}')" class="font-bold text-slate-700 hover:text-slate-900">
-              ${isAdult ? '새 리포트 쓰기 →' : '새 노트 쓰기 →'}
-            </button>
+            <div class="flex items-center gap-3">
+              <button onclick="deleteStudent('${s.id}')" class="font-semibold text-slate-500 hover:text-rose-600" aria-label="${s.name} 수강생 삭제">삭제</button>
+              <button onclick="openNoteForStudent('${s.id}')" class="font-bold text-slate-700 hover:text-slate-900">
+                ${isAdult ? '새 리포트 쓰기 →' : '새 노트 쓰기 →'}
+              </button>
+            </div>
           </div>
         `;
         grid.appendChild(card);
       });
+    }
+
+    // 수강생 개별 삭제 (학부모·수강생의 개인정보 삭제 요청 대응): 기기 + 클라우드 + 공유 리포트 링크까지 삭제
+    function hasStudentLocally(studentId) {
+      try {
+        return JSON.parse(localStorage.getItem(STORAGE_KEY_STUDENTS) || '[]').some(s => s.id === studentId);
+      } catch (e) {
+        return false;
+      }
+    }
+
+    async function deleteStudent(studentId) {
+      const student = getStudents().find(s => s.id === studentId);
+      if (!student) return;
+      const notes = getNotes().filter(n => n.studentId === studentId);
+      const lessons = getLessons().filter(l => l.studentId === studentId);
+      const ok = confirm(
+        `${student.name} 수강생을 삭제할까요?\n\n` +
+        `함께 삭제되는 내용: 수업 일정 ${lessons.length}건, 레슨 노트 ${notes.length}건, 연습 기록·질문, 학부모에게 보낸 리포트 링크\n\n` +
+        `삭제하면 되돌릴 수 없어요. 필요하면 먼저 [프로필 & 설정 → 백업]을 받아 두세요.`
+      );
+      if (!ok) return;
+
+      const noteIds = notes.map(n => n.id);
+      const writeLocal = (key, value) => localStorage.setItem(key, JSON.stringify(value));
+      writeLocal(STORAGE_KEY_STUDENTS, getStudents().filter(s => s.id !== studentId));
+      writeLocal(STORAGE_KEY_LESSONS, getLessons().filter(l => l.studentId !== studentId));
+      writeLocal(STORAGE_KEY_NOTES, getNotes().filter(n => n.studentId !== studentId));
+      writeLocal(STORAGE_KEY_QUESTIONS, getQuestions().filter(q => q.studentId !== studentId));
+      const practice = getPracticeChecklists(); delete practice[studentId]; writeLocal(STORAGE_KEY_PRACTICE, practice);
+      const sessions = getPracticeSessions(); delete sessions[studentId]; writeLocal(STORAGE_KEY_SESSIONS, sessions);
+      if (currentPracticeStudentId === studentId) currentPracticeStudentId = (getStudents()[0] || {}).id || '';
+
+      rerenderAllViews();
+
+      if (supabaseClient && currentAuthUser) {
+        const uid = currentAuthUser.id;
+        const sidList = [studentId, toCloudId(studentId)];
+        setCloudSyncBadge('syncing');
+        try {
+          const results = await Promise.all([
+            supabaseClient.from(STORAGE_KEY_STUDENTS).delete().eq('user_id', uid).in('id', sidList),
+            supabaseClient.from(STORAGE_KEY_LESSONS).delete().eq('user_id', uid).in('studentId', sidList),
+            supabaseClient.from(STORAGE_KEY_NOTES).delete().eq('user_id', uid).in('studentId', sidList),
+            supabaseClient.from(STORAGE_KEY_QUESTIONS).delete().eq('user_id', uid).in('studentId', sidList),
+            supabaseClient.from(STORAGE_KEY_PRACTICE).delete().eq('user_id', uid).in('studentId', sidList),
+            supabaseClient.from(STORAGE_KEY_SESSIONS).delete().eq('user_id', uid).in('studentId', sidList),
+            noteIds.length
+              ? supabaseClient.from(SHARED_REPORT_TABLE).delete().eq('user_id', uid).in('id', noteIds.flatMap(id => [id, toCloudId(id)]))
+              : Promise.resolve({ error: null })
+          ]);
+          const failed = results.find(r => r.error);
+          if (failed) throw failed.error;
+          setCloudSyncBadge('synced');
+        } catch (err) {
+          console.error('수강생 클라우드 삭제 실패:', err);
+          setCloudSyncBadge('error');
+          showToast('기기에서는 삭제했지만 클라우드 삭제에 실패했어요. 인터넷 연결을 확인한 뒤 다시 시도해 주세요.');
+          return;
+        }
+      }
+      showToast(`${student.name} 수강생과 관련 기록을 모두 삭제했습니다.`);
     }
 
     function setStudentFilterType(type) {
@@ -4884,6 +4960,33 @@
     function openModal(id) {
       document.getElementById(id).classList.remove('hidden');
     }
+
+    // 접근성: Esc 키로 맨 위에 열린 창 닫기 (로그인·약관 동의·타이머 창은 제외)
+    const ESC_EXCLUDED_MODALS = ['modal-session-timer'];
+    document.addEventListener('keydown', (e) => {
+      if (e.key !== 'Escape') return;
+      const open = [...document.querySelectorAll('[id^="modal-"]')]
+        .filter(el => !el.classList.contains('hidden') && !ESC_EXCLUDED_MODALS.includes(el.id) && el.getClientRects().length > 0);
+      if (!open.length) return;
+      open.sort((x, y) => (parseInt(getComputedStyle(x).zIndex) || 0) - (parseInt(getComputedStyle(y).zIndex) || 0));
+      closeModal(open[open.length - 1].id);
+    });
+
+    // 접근성: 글자 없는 아이콘 버튼(✕ 등)에 화면낭독기용 이름 붙이기
+    function labelIconButtons(root) {
+      (root.querySelectorAll ? root.querySelectorAll('button:not([aria-label])') : []).forEach(btn => {
+        const text = (btn.textContent || '').replace(/[\s\u2190-\u2BFF\uFE0F\u{1F000}-\u{1FAFF}]/gu, '');
+        if (text) return;
+        const raw = (btn.textContent || '').trim();
+        const label = btn.getAttribute('title') || (raw === '✕' || raw === '×' || /closeModal|dismiss/.test(btn.getAttribute('onclick') || '') ? '닫기' : '');
+        if (label) btn.setAttribute('aria-label', label);
+      });
+    }
+    document.addEventListener('DOMContentLoaded', () => {
+      labelIconButtons(document);
+      new MutationObserver(muts => muts.forEach(m => m.addedNodes.forEach(n => n.nodeType === 1 && labelIconButtons(n.parentNode || n))))
+        .observe(document.body, { childList: true, subtree: true });
+    });
     function closeModal(id) {
       document.getElementById(id).classList.add('hidden');
     }
@@ -4962,6 +5065,8 @@
       const labelGrade = document.getElementById('label-stud-grade');
       const inputGrade = document.getElementById('form-stud-grade');
 
+      const childHint = document.getElementById('stud-child-privacy-hint');
+      if (childHint) childHint.classList.toggle('hidden', type === 'adult');
       if (type === 'adult') {
         if (labelPhone) labelPhone.innerText = '카톡 연락처 (수강생 본인)';
         if (labelGrade) labelGrade.innerText = '소속/구분 (성인)';
@@ -5430,7 +5535,7 @@
 
     function getPracticeChecklists() {
       const data = JSON.parse(localStorage.getItem(STORAGE_KEY_PRACTICE) || JSON.stringify(defaultChecklists));
-      if (!data['s4'] && defaultChecklists['s4']) {
+      if (hasStudentLocally('s4') && !data['s4'] && defaultChecklists['s4']) {
         data['s4'] = defaultChecklists['s4'];
         savePracticeChecklists(data);
       }
@@ -5443,7 +5548,7 @@
 
     function getQuestions() {
       const data = JSON.parse(localStorage.getItem(STORAGE_KEY_QUESTIONS) || JSON.stringify(defaultQuestions));
-      if (!data.some(q => q.studentId === 's4')) {
+      if (hasStudentLocally('s4') && !data.some(q => q.studentId === 's4')) {
         const s4q = defaultQuestions.find(q => q.studentId === 's4');
         if (s4q) {
           data.push(s4q);
@@ -5627,7 +5732,7 @@
     // =======================================================
     function getPracticeSessions() {
       const data = JSON.parse(localStorage.getItem(STORAGE_KEY_SESSIONS) || JSON.stringify(defaultSessions));
-      if (!data['s4'] && defaultSessions['s4']) {
+      if (hasStudentLocally('s4') && !data['s4'] && defaultSessions['s4']) {
         data['s4'] = defaultSessions['s4'];
         savePracticeSessions(data);
       }

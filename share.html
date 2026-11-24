@@ -47,6 +47,11 @@
     .safe-bottom-bar {
       padding-bottom: calc(0.75rem + env(safe-area-inset-bottom, 0px));
     }
+  
+    /* 접근성: 키보드 이동 시 현재 위치가 잘 보이도록 */
+    :focus-visible { outline: 3px solid #e11d48; outline-offset: 2px; border-radius: 6px; }
+    /* 접근성: 흰 배경 위 연회색 글자 대비 보강 (slate-400 → slate-500, 대비 4.5:1 이상) */
+    body .text-slate-400 { color: #64748b; }
   </style>
 </head>
 <body class="min-h-screen text-slate-900 pb-28 flex justify-center">
@@ -284,7 +289,7 @@
           <img src="icons/icon-192.png" alt="연습요정" class="w-9 h-9 rounded-xl shadow-xs">
           <div>
             <h3 class="font-bold text-slate-900 text-sm">스마트폰 홈 화면에 추가</h3>
-            <p class="text-[10px] text-slate-500">앱스토어 설치 없이 1초만에 추가</p>
+            <p class="text-[10px] text-slate-500">앱스토어 설치 없이 바로 추가</p>
           </div>
         </div>
         <button onclick="closeShareInstallModal()" class="text-slate-400 hover:text-slate-600 font-bold">✕</button>
