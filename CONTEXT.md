@@ -1,6 +1,6 @@
 # CONTEXT — 연습요정 (Practice Fairy)
 
-> **최종 갱신**: 2026-11-24 · `sw.js` 캐시 `fairy-cache-v20`
+> **최종 갱신**: 2026-11-24 · `sw.js` 캐시 `fairy-cache-v21`
 > **한 줄 요약**: 음악 1:1 레슨 선생님용 출결·수강료·레슨노트 관리 + 수강생 연습일지 PWA. 학부모에게는 카카오톡 카드로 1:1 리포트(`share.html`)를 보냄.
 > **현재 단계**: 기능 시제품 완성, Supabase Auth 연동, GitHub Pages 배포 완료. 지금은 **카카오 공유 마무리와 모바일 다듬기** 단계.
 > 이 문서는 작업 시작 전에 가장 먼저 읽고, 작업이 끝나면 곧바로 갱신한다(→ `CLAUDE.md` / `GEMINI.md`).
@@ -15,7 +15,7 @@
 | Supabase 프로젝트 | `https://zpfcocrqvmrotuiwpkru.supabase.co` (Auth + PostgreSQL + JS SDK v2) | `index.html:1926` (`SUPABASE_URL`, `SUPABASE_ANON_KEY`) |
 | Supabase 테이블 (7개) | `fairy_teacher_profile_v1`, `fairy_students_v1`, `fairy_lessons_v1`, `fairy_notes_v1`, `fairy_practice_v1`, `fairy_questions_v1`, `fairy_sessions_v1` | `supabase_schema.sql`, `index.html:1950~` (LocalStorage 키와 같은 이름) |
 | 카카오 개발자센터 | 앱 ID `1659300`, JS SDK `2.7.2`, `KAKAO_JS_KEY`는 `index.html:1933` | `index.html:25`, `:1933` |
-| PWA | `sw.js` (현재 `fairy-cache-v17`), `manifest.json`, `icons/`, 루트 `icon-512.png` | |
+| PWA | `sw.js` (현재 `fairy-cache-v21`), `manifest.json`, `icons/`, 루트 `icon-512.png` | |
 | 로컬 테스트 서버 | `python3 server.py` → `http://localhost:8080` (같은 Wi-Fi 기기용 IP 자동 표시) | `server.py` |
 | 기술 스택 | HTML5 + Vanilla JS + Tailwind CSS(CDN) + Supabase + Web Audio API + Service Worker + LocalStorage | |
 
@@ -65,6 +65,7 @@
 
 | 날짜 | 내용 |
 | :--- | :--- |
+| 2026-11-24 | **배포 장애 수정**: v20에서 주간 캘린더 함수에 `const weekdayHeader`가 두 번 선언되어 메인 스크립트 전체가 SyntaxError로 멈춤(앱 모든 버튼 무반응). 예전 `remove('hidden')` 두 줄 삭제, 캐시 `v21` |
 | 2026-11-24 | 모바일 주간 캘린더 1열 요일별 리스트 전환(이름 잘림 해결) 및 중복 요일 헤더 숨김(캐시 `v20`) |
 | 2026-11-24 | 모바일 월간 캘린더 셀 도트 넘침(`max 3개` + `N건`) 및 당일 수업 카드 이름·과목·회차·배지 줄바꿈 정렬 수정(캐시 `v19`) |
 | 2026-11-23 | 모바일 상단 헤더 중복 프로필 버튼 제거 및 반응형 간격 정리(캐시 `v18`), `supabase_schema.sql` 유저별 `user_id`/RLS 정책 최신화, `README.md` 최신화 |

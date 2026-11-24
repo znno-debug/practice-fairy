@@ -1,5 +1,5 @@
-// 연습요정 (Practice Fairy) Service Worker - v20.0.0 (모바일 주간 캘린더 1열 카드 스택 전환 및 중복 요일 헤더 숨김)
-const CACHE_NAME = 'fairy-cache-v20';
+// 연습요정 (Practice Fairy) Service Worker - v21.0.0 (주간 캘린더 weekdayHeader 중복 선언 SyntaxError 수정)
+const CACHE_NAME = 'fairy-cache-v21';
 const STATIC_ASSETS = [
   './',
   './index.html',
