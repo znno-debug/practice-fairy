@@ -1,5 +1,5 @@
-// 연습요정 (Practice Fairy) Service Worker - v24.0.0 (카카오·구글 소셜 로그인 추가)
-const CACHE_NAME = 'fairy-cache-v24';
+// 연습요정 (Practice Fairy) Service Worker - v25.0.0 (탈퇴 확인창 카카오 계정 표시 보완)
+const CACHE_NAME = 'fairy-cache-v25';
 const STATIC_ASSETS = [
   './',
   './index.html',

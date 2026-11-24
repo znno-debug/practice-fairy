@@ -2639,10 +2639,10 @@
         return;
       }
 
-      const email = currentAuthUser.email || '';
+      const accountLabel = currentAuthUser.email || getAuthDisplayName(currentAuthUser) || `${getOAuthProviderLabel(currentAuthUser.app_metadata?.provider || '')} 계정`;
       const firstConfirm = confirm(
         `정말로 회원 탈퇴를 진행하시겠습니까?\n\n` +
-        `계정(${email})과 클라우드 및 이 기기에 저장된 모든 수강생, 수업 일정, 레슨 노트, 공유 리포트 데이터가 영구 삭제되며 복구할 수 없습니다.`
+        `계정(${accountLabel})과 클라우드 및 이 기기에 저장된 모든 수강생, 수업 일정, 레슨 노트, 공유 리포트 데이터가 영구 삭제되며 복구할 수 없습니다.`
       );
       if (!firstConfirm) return;
 

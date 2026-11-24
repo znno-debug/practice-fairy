@@ -1,6 +1,6 @@
 # CONTEXT — 연습요정 (Practice Fairy)
 
-> **최종 갱신**: 2026-11-24 · `sw.js` 캐시 `fairy-cache-v24`
+> **최종 갱신**: 2026-11-24 · `sw.js` 캐시 `fairy-cache-v25`
 > **한 줄 요약**: 음악 1:1 레슨 선생님용 출결·수강료·레슨노트 관리 + 수강생 연습일지 PWA. 학부모에게는 카카오톡 카드로 1:1 리포트(`share.html`)를 보냄.
 > **현재 단계**: 기능 시제품 완성, Supabase Auth 연동, GitHub Pages 배포 완료. 지금은 **카카오 공유 마무리와 모바일 다듬기** 단계.
 > 이 문서는 작업 시작 전에 가장 먼저 읽고, 작업이 끝나면 곧바로 갱신한다(→ `CLAUDE.md` / `GEMINI.md`).
@@ -64,7 +64,8 @@
 - [x] (추가) `supabase_schema.sql`을 실제 운영 스키마(`user_id` + RLS)에 맞게 갱신 (4장 1번).
 - [x] (추가) `README.md` 최신화 (Supabase Auth, 5대 출결, 카카오 카드 공유, 배포 URL).
 
-- [ ] **④ 소셜 로그인 콘솔 설정 (사용자 진행)**: `docs/social_login_setup.md` 순서대로 카카오 개발자센터(로그인 활성화·동의항목·Redirect URI·Client Secret) → Google Cloud(동의 화면·웹 클라이언트) → Supabase(Kakao/Google Provider ON, Redirect URLs). 2026-11-24 기준 Supabase에서 두 Provider 모두 꺼져 있음. 설정 후 실기기 Safari/Chrome에서 로그인·동기화 확인.
+- [x] **④ 소셜 로그인 콘솔 설정** (2026-11-24 완료): 카카오(로그인 ON, Redirect URI, 닉네임 필수·사진 선택, Client Secret), Google(프로덕션 게시, 웹 클라이언트), Supabase(Kakao·Google ON, Kakao "Allow users without an email" ON, Site URL·Redirect URLs). 로컬(localhost) Redirect URL은 미등록.
+- [ ] **⑤ 카카오 로그인 실기기 확인 (KOE205 위험)**: Supabase가 카카오에 `account_email`을 항상 함께 요청함(코드로 제거 불가). 이메일 동의항목이 "권한 없음"이라 로그인 직후 `KOE205` 오류가 날 수 있음. 오류가 나면 카카오 [앱 설정 > 비즈니스]에서 개인 비즈 앱 전환(본인인증) 후 이메일을 **선택 동의**로 켤 것.
 - [ ] (iOS 출시 시) Apple 로그인: `OAUTH_PROVIDERS`의 `apple` 줄 주석 해제 + Apple Developer/Supabase 설정.
 
 - [x] **앱스토어 심사 대비 회원 탈퇴(`delete_my_account`) & 개인정보처리방침(`privacy.html`) 추가**: `supabase_schema.sql`에 `delete_my_account()` RPC 추가, `index.html` 로그인/프로필 모달 연결, 캐시 `v22`. (**Supabase SQL Editor에서 최신 `supabase_schema.sql` 실행 필요**)
@@ -73,6 +74,7 @@
 
 | 날짜 | 내용 |
 | :--- | :--- |
+| 2026-11-24 | 콘솔 설정 검토: 구글 정상, 카카오는 `account_email` 자동 요청으로 KOE205 위험 확인(남은 작업 ⑤). 회원 탈퇴 확인창에서 이메일 없는 카카오 계정이 `계정()`으로 보이던 문제 수정(닉네임/"카카오 계정" 표시), 캐시 `v25` |
 | 2026-11-24 | **카카오·구글 소셜 로그인 추가**: 로그인 화면 소셜 버튼(`OAUTH_PROVIDERS` 기반 자동 생성, 비밀번호 재설정 화면에서는 숨김), `handleOAuthLogin(provider)` 공통 핸들러(이동 전 Provider 활성 여부 사전 점검), 리다이렉트 오류(`?error=`/`#error=`) 안내 및 주소창 정리, 소셜 프로필 이름·사진을 기본 선생님 프로필에 반영, 이메일 없는 카카오 계정의 헤더 표시 보완, 설정 가이드 `docs/social_login_setup.md`, 캐시 `v24` |
 | 2026-11-24 | 로그인 화면 `비밀번호를 잊으셨나요?`(이메일 재설정 링크 발송 + `PASSWORD_RECOVERY` 새 비밀번호 설정) 추가, 캐시 `v23` |
 | 2026-11-24 | 앱스토어 심사 대비 `privacy.html`(개인정보처리방침·이용약관) 신설, `handleDeleteAccount()` 및 Supabase `delete_my_account()` RPC 추가, 캐시 `v22` |
