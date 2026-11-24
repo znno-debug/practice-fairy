@@ -59,13 +59,14 @@
 ## 5. 남은 마무리 작업
 
 - [ ] **① 카카오 공유 최종 검증**: `fairy_shared_reports_v1` 단축 URL(`share.html?id=...`) 전환 및 `share.html` Supabase REST 조회 연동 완료(캐시 `v17`). **Supabase SQL Editor에서 `supabase_schema.sql` 하단 `fairy_shared_reports_v1` 생성 SQL 실행 필요**. 그 뒤 실기기 카톡에서 두 진입점(공유 모달, 노트 카드 하단)으로 카드가 정상 발송되고 `[레슨 리포트 상세보기]` 버튼이 열리는지 확인.
-- [ ] **② 카카오 개발자센터 앱(ID `1659300`) 기본 정보에 `icon-512.png` 앱 아이콘 등록** (사용자가 웹 콘솔에서 직접 진행. 플랫폼 > Web 사이트 도메인에 `https://znno-debug.github.io`가 등록되어 있는지도 함께 확인).
+- [x] **② 카카오 개발자센터 앱(ID `1659300`) 기본 정보에 앱 아이콘 등록** (2026-11-24 `icons/icon-192.png`로 등록 완료) (사용자가 웹 콘솔에서 직접 진행. 플랫폼 > Web 사이트 도메인에 `https://znno-debug.github.io`가 등록되어 있는지도 함께 확인).
 - [x] **③ 모바일(폭 ≤ 430px) 상단 헤더 반응형 다듬기**: `index.html:143` `<header>` 내 중복된 선생님 프로필 버튼(`#header-teacher-img`/`#header-teacher-name` ID 중복 포함)을 제거하고 모바일 패딩/간격을 컴팩트하게 정리. `sw.js` 캐시 `v18` 상향 완료.
 - [x] (추가) `supabase_schema.sql`을 실제 운영 스키마(`user_id` + RLS)에 맞게 갱신 (4장 1번).
 - [x] (추가) `README.md` 최신화 (Supabase Auth, 5대 출결, 카카오 카드 공유, 배포 URL).
 
 - [x] **④ 소셜 로그인 콘솔 설정** (2026-11-24 완료): 카카오(로그인 ON, Redirect URI, 닉네임 필수·사진 선택, Client Secret), Google(프로덕션 게시, 웹 클라이언트), Supabase(Kakao·Google ON, Kakao "Allow users without an email" ON, Site URL·Redirect URLs). 로컬(localhost) Redirect URL은 미등록.
-- [ ] **⑤ 카카오 로그인 KOE205 해결 (2026-11-24 실기기에서 오류 확인됨, 사용자 진행)**: Supabase가 카카오에 `account_email`을 항상 함께 요청함(코드로 제거 불가). 이메일 동의항목이 "권한 없음"이라 로그인 직후 `KOE205` 오류가 날 수 있음. 오류가 나면 카카오 [앱 설정 > 비즈니스]에서 개인 비즈 앱 전환(본인인증) 후 이메일을 **선택 동의**로 켤 것.
+- [x] **⑤ 카카오 로그인 KOE205 해결** (2026-11-24 완료, 코드 수정 없음): 앱 기본 정보에 아이콘(`icons/icon-192.png`)·대표 도메인(`https://znno-debug.github.io`) 등록 → 카카오비즈니스 통합 약관 동의(필수만) → **개인 개발자 비즈 앱 전환**(목적: 이메일 필수 동의) → 동의항목 이메일 **선택 동의**(목적: 회원 식별 및 계정 안내). 닉네임 필수·사진 선택 유지, Supabase "Allow users without an email" ON 유지. iPhone Safari에서 카카오 로그인 성공 확인. (앱 아이콘 등록으로 ② 작업도 처리됨 — 카톡 공유 카드 표시 확인 필요)
+- [ ] **⑥ 소셜 로그인 남은 실기기 테스트**: 구글 로그인, 로그아웃→다른 계정 로그인 시 데이터 분리, 같은 이메일 계정 합쳐짐 여부(Supabase Users의 Providers 열), 탈퇴 확인창 표시, 뒤로 가기 버튼 복구(v26), 카카오톡 인앱 브라우저.
 - [ ] (iOS 출시 시) Apple 로그인: `OAUTH_PROVIDERS`의 `apple` 줄 주석 해제 + Apple Developer/Supabase 설정.
 
 - [x] **앱스토어 심사 대비 회원 탈퇴(`delete_my_account`) & 개인정보처리방침(`privacy.html`) 추가**: `supabase_schema.sql`에 `delete_my_account()` RPC 추가, `index.html` 로그인/프로필 모달 연결, 캐시 `v22`. (**Supabase SQL Editor에서 최신 `supabase_schema.sql` 실행 필요**)
@@ -74,6 +75,7 @@
 
 | 날짜 | 내용 |
 | :--- | :--- |
+| 2026-11-24 | 카카오 비즈 앱 전환·이메일 선택 동의로 KOE205 해결, 실기기 카카오 로그인 성공. 이메일 없는 사용자 코드 경로 재점검(헤더·설정·탈퇴 확인창·동기화 모두 `user.id` 기준, 문제 없음) |
 | 2026-11-24 | 실기기 카카오 로그인에서 `KOE205`(설정하지 않은 동의 항목: `account_email`) 확인. 코드로는 해결 불가 → 카카오 개인 비즈 앱 전환 후 이메일 동의항목 설정 필요(남은 작업 ⑤) |
 | 2026-11-24 | 소셜 로그인 버튼 버그 수정: 카카오/구글 화면에서 뒤로 가기로 돌아오면(브라우저 페이지 복원) 버튼이 '이동 중...'으로 멈춰 있던 문제 → `pageshow` 시 버튼 다시 그리기, 이동 중에는 모든 소셜 버튼 잠금. 카카오 로그인 페이지 진입까지 실기기 확인(로그인 완료·KOE205 여부는 미확인), 캐시 `v26` |
 | 2026-11-24 | 콘솔 설정 검토: 구글 정상, 카카오는 `account_email` 자동 요청으로 KOE205 위험 확인(남은 작업 ⑤). 회원 탈퇴 확인창에서 이메일 없는 카카오 계정이 `계정()`으로 보이던 문제 수정(닉네임/"카카오 계정" 표시), 캐시 `v25` |
