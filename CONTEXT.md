@@ -68,7 +68,7 @@
 - [x] **④ 소셜 로그인 콘솔 설정** (2026-11-24 완료): 카카오(로그인 ON, Redirect URI, 닉네임 필수·사진 선택, Client Secret), Google(프로덕션 게시, 웹 클라이언트), Supabase(Kakao·Google ON, Kakao "Allow users without an email" ON, Site URL·Redirect URLs). 로컬(localhost) Redirect URL은 미등록.
 - [x] **⑤ 카카오 로그인 KOE205 해결** (2026-11-24 완료, 코드 수정 없음): 앱 기본 정보에 아이콘(`icons/icon-192.png`)·대표 도메인(`https://znno-debug.github.io`) 등록 → 카카오비즈니스 통합 약관 동의(필수만) → **개인 개발자 비즈 앱 전환**(목적: 이메일 필수 동의) → 동의항목 이메일 **선택 동의**(목적: 회원 식별 및 계정 안내). 닉네임 필수·사진 선택 유지, Supabase "Allow users without an email" ON 유지. iPhone Safari에서 카카오 로그인 성공 확인. (앱 아이콘 등록으로 ② 작업도 처리됨 — 카톡 공유 카드 표시 확인 필요)
 - [ ] **⑥ 소셜 로그인 남은 실기기 테스트**: 구글 로그인, 로그아웃→다른 계정 로그인 시 데이터 분리, 같은 이메일 계정 합쳐짐 여부(Supabase Users의 Providers 열), 탈퇴 확인창 표시, 뒤로 가기 버튼 복구(v26), 카카오톡 인앱 브라우저.
-- [ ] **⑦ 이메일 인증번호 켜기 (사용자 진행)**: `docs/email_verification_setup.md` 순서대로 ① 커스텀 SMTP 연결(기본 메일 서버는 팀원 주소로만 발송 → 비밀번호 재설정 메일도 일반 사용자에게 안 갈 수 있음) ② Confirm signup 메일에 `{{ .Token }}` ③ Confirm email ON. 2026-11-24 기준 `mailer_autoconfirm: true`(인증 없이 가입됨).
+- [ ] **⑦ 이메일 인증번호 켜기 (사용자 진행)** — 2026-11-25 대시보드 확인: 커스텀 SMTP 꺼짐, Confirm email 꺼짐, 메일 문구는 SMTP 연결 전까지 수정 불가. 도메인이 없으니 Brevo(추천) 또는 Gmail 앱 비밀번호로 SMTP 연결 필요: `docs/email_verification_setup.md` 순서대로 ① 커스텀 SMTP 연결(기본 메일 서버는 팀원 주소로만 발송 → 비밀번호 재설정 메일도 일반 사용자에게 안 갈 수 있음) ② Confirm signup 메일에 `{{ .Token }}` ③ Confirm email ON. 2026-11-24 기준 `mailer_autoconfirm: true`(인증 없이 가입됨).
 - [ ] **⑧ 가입 화면 2차 개선(선택)**: 로그인/회원가입 탭 없애고 "카카오로 시작하기" 중심 화면, 비밀번호 8자+확인칸+보기 버튼, 최근 로그인 방법 표시.
 - [ ] (iOS 출시 시) Apple 로그인: `OAUTH_PROVIDERS`의 `apple` 줄 주석 해제 + Apple Developer/Supabase 설정.
 

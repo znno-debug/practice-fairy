@@ -12,8 +12,11 @@
 
 Supabase 기본 메일 서버는 **프로젝트 팀원 이메일로만, 시간당 몇 통만** 보냅니다. 그래서 실제 선생님들이 가입하면 인증 메일이 오지 않습니다. 비밀번호 재설정 메일도 지금 같은 이유로 일반 사용자에게는 오지 않을 수 있습니다.
 
-1. 메일 발송 서비스를 하나 고릅니다. 예: **Resend**(무료 월 3,000통, 설정이 쉬움), Brevo, SendGrid, 또는 Gmail SMTP(앱 비밀번호 필요, 하루 발송량 제한)
-2. 그 서비스에서 발송용 이메일(또는 도메인)을 인증하고 **SMTP 정보**(호스트, 포트, 사용자 이름, 비밀번호)를 받습니다
+1. 메일 발송 서비스를 하나 고릅니다. **우리 앱은 자체 도메인이 없어서(github.io) 도메인 인증이 필요 없는 서비스**를 골라야 합니다.
+   - **Brevo (추천)**: 무료 하루 300통, 도메인 없이 "보내는 사람 이메일" 하나만 인증하면 됨. SMTP: `smtp-relay.brevo.com` / 포트 `587` / 사용자 이름·비밀번호는 Brevo [SMTP & API] 화면의 SMTP 로그인·SMTP 키
+   - Gmail SMTP: 구글 계정 2단계 인증 + **앱 비밀번호** 필요, 보내는 사람이 개인 Gmail 주소로 보임. SMTP: `smtp.gmail.com` / 포트 `465`
+   - Resend·SendGrid: 자체 도메인을 인증해야 일반 사용자에게 보낼 수 있어서 지금은 맞지 않음
+2. 그 서비스에서 발송용 이메일을 인증하고 **SMTP 정보**(호스트, 포트, 사용자 이름, 비밀번호)를 받습니다
 3. Supabase Dashboard → **Authentication > Emails > SMTP Settings** → **Enable custom SMTP** ON
    - Sender email: 발송용 주소 (예: `noreply@...`)
    - Sender name: `연습요정`
@@ -21,6 +24,8 @@ Supabase 기본 메일 서버는 **프로젝트 팀원 이메일로만, 시간�
 4. **Authentication > Rate Limits**에서 이메일 발송 한도가 너무 낮지 않은지 확인합니다 (예: 시간당 30통 이상)
 
 ## ② 인증 메일 문구를 "숫자 인증번호"로 바꾸기
+
+> ⚠️ Supabase는 **커스텀 SMTP를 켜기 전에는 메일 문구를 수정할 수 없게** 막아 둡니다(2026-11-25 확인). ①을 먼저 끝내야 이 단계가 열립니다.
 
 Supabase Dashboard → **Authentication > Emails > Templates** → **Confirm signup**
 
