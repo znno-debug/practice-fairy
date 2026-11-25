@@ -1,5 +1,5 @@
-// 연습요정 (Practice Fairy) Service Worker - v30.0.0 (수강생 삭제·개인정보 안내·접근성)
-const CACHE_NAME = 'fairy-cache-v30';
+// 연습요정 (Practice Fairy) Service Worker - v31.0.0 (가입 화면 개선)
+const CACHE_NAME = 'fairy-cache-v31';
 const STATIC_ASSETS = [
   './',
   './index.html',
