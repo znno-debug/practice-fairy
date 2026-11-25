@@ -1,5 +1,5 @@
-// 연습요정 (Practice Fairy) Service Worker - v31.0.0 (가입 화면 개선)
-const CACHE_NAME = 'fairy-cache-v31';
+// 연습요정 (Practice Fairy) Service Worker - v32.0.0 (카카오 공유 카드 800×400 이미지)
+const CACHE_NAME = 'fairy-cache-v32';
 const STATIC_ASSETS = [
   './',
   './index.html',
