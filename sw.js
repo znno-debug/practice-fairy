@@ -1,5 +1,5 @@
-// 연습요정 (Practice Fairy) Service Worker - v35.0.0 (공유 리포트 RPC 전용 조회, 임시 폴백 제거)
-const CACHE_NAME = 'fairy-cache-v35';
+// 연습요정 (Practice Fairy) Service Worker - v36.0.0 (학부모 연결 1단계: 학생별 고정 학부모 링크 & 실시간 현황 RPC)
+const CACHE_NAME = 'fairy-cache-v36';
 const STATIC_ASSETS = [
   './',
   './index.html',

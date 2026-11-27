@@ -62,12 +62,17 @@
     <!-- 본문 내용 -->
     <div>
       <!-- 상단 인앱 네비게이션 바 -->
-      <div class="sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-slate-200/80 px-4 h-12 flex items-center justify-between">
-        <div class="flex items-center space-x-2">
-          <span class="w-6 h-6 rounded-lg bg-gradient-to-tr from-brand-500 to-amber-400 text-white text-xs flex items-center justify-center shadow-2xs">🧚‍♀️</span>
-          <span class="text-xs font-black text-slate-900 tracking-tight" id="report-banner-badge">연습요정 모바일 레슨 리포트</span>
+      <div class="sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-slate-200/80 px-4 h-12 flex items-center justify-between gap-2">
+        <div class="flex items-center space-x-2 min-w-0">
+          <span class="w-6 h-6 rounded-lg bg-gradient-to-tr from-brand-500 to-amber-400 text-white text-xs flex items-center justify-center shadow-2xs shrink-0">🧚‍♀️</span>
+          <span class="text-xs font-black text-slate-900 tracking-tight truncate" id="report-banner-badge">연습요정 모바일 레슨 리포트</span>
         </div>
-        <span id="report-date" class="text-[11px] font-bold text-slate-500 bg-slate-100 px-2.5 py-0.5 rounded-full">2026.11.06</span>
+        <div class="flex items-center shrink-0">
+          <span id="report-date" class="text-[11px] font-bold text-slate-500 bg-slate-100 px-2.5 py-0.5 rounded-full">2026.11.06</span>
+          <button type="button" id="parent-refresh-btn" onclick="refreshParentStatus()" class="hidden text-[11px] font-bold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 px-2.5 py-1 rounded-full transition cursor-pointer">
+            ↻ 새로고침
+          </button>
+        </div>
       </div>
 
       <!-- 본문 리포트 카드 영역 -->
@@ -263,7 +268,7 @@
   </div>
 
   <!-- ================= 하단 고정 액션 바 ([계좌번호 복사], [확인 완료]) ================= -->
-  <div class="fixed bottom-0 inset-x-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200/90 shadow-lg safe-bottom-bar">
+  <div id="share-bottom-bar" class="fixed bottom-0 inset-x-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200/90 shadow-lg safe-bottom-bar">
     <div class="max-w-[480px] mx-auto px-3.5 pt-2.5 flex items-center space-x-2.5">
       <button type="button" id="bottom-btn-copy-account" onclick="copyBillAccount()" class="flex-1 py-3 px-3 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs border border-slate-200/80 transition flex items-center justify-center space-x-1.5 active:scale-98 cursor-pointer">
         <span>📋</span>
@@ -553,12 +558,450 @@
         : '입금 계좌는 선생님께 문의해 주세요';
       const copyBtn = document.getElementById('bill-copy-btn');
       if (copyBtn) copyBtn.classList.toggle('hidden', !hasAccount);
+      const bottomCopyBtn = document.getElementById('bottom-btn-copy-account');
+      if (bottomCopyBtn) bottomCopyBtn.classList.toggle('hidden', !hasAccount);
 
       // 만약 잔여 횟수가 2회 초과로 여유가 있다면 살짝 덜 강조하거나 접어둘 수 있음
       if (remain > 2) {
         billCard.classList.remove('border-amber-300');
         billCard.classList.add('border-slate-200', 'opacity-90');
       }
+    }
+
+    // ================= 학생별 고정 학부모 링크 실시간 현황 모드 (?p=<token>) =================
+    let currentParentStatusToken = '';
+
+    function escapeHtml(val) {
+      return String(val == null ? '' : val)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    function formatKoreanDate(dateStr, shortYear = false) {
+      if (!dateStr) return '';
+      const m = String(dateStr).match(/^(\d{4})-(\d{2})-(\d{2})/);
+      if (!m) return String(dateStr);
+      const y = parseInt(m[1], 10);
+      const mo = parseInt(m[2], 10);
+      const d = parseInt(m[3], 10);
+      const days = ['일', '월', '화', '수', '목', '금', '토'];
+      const dt = new Date(y, mo - 1, d);
+      const dow = isNaN(dt.getTime()) ? '' : ` (${days[dt.getDay()]})`;
+      return shortYear ? `${m[2]}.${m[3]}${dow}` : `${m[1]}.${m[2]}.${m[3]}${dow}`;
+    }
+
+    function getAttendanceBadgeInfo(status, makeupResolved) {
+      const s = String(status || '출석');
+      if (s === '출석') {
+        return { label: '✓ 출석 · 1회 차감', cls: 'text-emerald-700 bg-emerald-50 border-emerald-200' };
+      }
+      if (s === '당일취소') {
+        return { label: '당일취소 · 규정 1회 차감', cls: 'text-amber-800 bg-amber-50 border-amber-200' };
+      }
+      if (s === '결석') {
+        return makeupResolved
+          ? { label: '결석 · 보강 완료', cls: 'text-slate-600 bg-slate-100 border-slate-200' }
+          : { label: '결석 · 보강 예정 (차감 없음)', cls: 'text-rose-700 bg-rose-50 border-rose-200' };
+      }
+      if (s === '순연' || s === '스킵') {
+        return { label: '순연 · 사전 연기 (차감 없음)', cls: 'text-slate-700 bg-slate-100 border-slate-300' };
+      }
+      if (s === '보강') {
+        return { label: '✓ 보강 · 1회 차감', cls: 'text-blue-700 bg-blue-50 border-blue-200' };
+      }
+      return { label: s, cls: 'text-purple-700 bg-purple-50 border-purple-200' };
+    }
+
+    async function fetchParentStatusFromSupabase(token) {
+      if (!token) return null;
+      try {
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/get_parent_student_status`, {
+          method: 'POST',
+          headers: {
+            apikey: SUPABASE_ANON_KEY,
+            Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ p_token: token })
+        });
+        if (res.ok) {
+          const payload = await res.json();
+          return payload && typeof payload === 'object' ? payload : null;
+        }
+      } catch (e) {
+        console.warn('Supabase parent status RPC failed:', e);
+      }
+      return null;
+    }
+
+    function renderParentLinkInvalidState() {
+      const content = document.getElementById('report-content');
+      const bottomBar = document.getElementById('share-bottom-bar');
+      const dateBadge = document.getElementById('report-date');
+      const refreshBtn = document.getElementById('parent-refresh-btn');
+      const bannerBadge = document.getElementById('report-banner-badge');
+
+      if (bannerBadge) bannerBadge.innerText = '연습요정 학부모 링크';
+      if (dateBadge) dateBadge.classList.add('hidden');
+      if (refreshBtn) refreshBtn.classList.add('hidden');
+      if (bottomBar) bottomBar.classList.add('hidden');
+      document.title = '연습요정 🧚‍♀️ | 열람할 수 없는 링크';
+
+      if (content) {
+        content.innerHTML = `
+          <div class="bg-white rounded-3xl border border-slate-200/90 p-7 text-center shadow-xs space-y-4 mt-4">
+            <div class="w-14 h-14 mx-auto rounded-2xl bg-slate-100 border border-slate-200 flex items-center justify-center text-2xl">
+              🔒
+            </div>
+            <div class="space-y-1.5">
+              <h1 class="text-base font-black text-slate-900">현재 열람할 수 없는 링크예요</h1>
+              <p class="text-xs text-slate-600 leading-relaxed">
+                선생님이 링크를 잠시 끄셨거나 새 링크로 재발급되었을 수 있어요.<br>
+                담당 선생님께 <strong>새 학부모 링크</strong>를 요청해 주세요.
+              </p>
+            </div>
+            <div class="p-3 bg-slate-50 rounded-2xl border border-slate-100 text-[11px] text-slate-500 leading-relaxed">
+              연습요정은 수강생 정보 보호를 위해 비활성화되거나 교체된 링크의 열람을 즉시 차단합니다.
+            </div>
+          </div>
+        `;
+      }
+    }
+
+    function renderParentStatusView(data) {
+      const student = data.student || {};
+      const teacher = data.teacher || {};
+      const nextLesson = data.nextLesson || null;
+      const pendingMakeup = Number(data.pendingMakeupCount || 0);
+      const recentLessons = Array.isArray(data.recentLessons) ? data.recentLessons : [];
+      const recentNotes = Array.isArray(data.recentNotes) ? data.recentNotes : [];
+
+      globalTeacher = {
+        name: teacher.name || '',
+        bankName: teacher.bankName || '',
+        accountNumber: teacher.accountNumber || '',
+        accountHolder: teacher.accountHolder || teacher.name || ''
+      };
+
+      const isAdult = student.type === 'adult' || (student.grade && (student.grade.includes('성인') || student.grade.includes('취미')));
+      const studentName = student.name || '수강생';
+      const subject = student.subject || '음악';
+      const totalPass = Math.max(1, Number(student.totalPass || 8));
+      const usedPass = Math.max(0, Number(student.usedPass || 0));
+      const remainPass = Math.max(0, Number(student.remainPass != null ? student.remainPass : (totalPass - usedPass)));
+      const pct = Math.min(100, Math.round((usedPass / totalPass) * 100));
+      const isPayTime = remainPass <= 1;
+      const feeVal = Number(student.fee || 0);
+
+      const accountNo = String(teacher.accountNumber || '').trim();
+      const hasAccount = !!accountNo && accountNo !== '3333-01-2345678';
+
+      document.title = `연습요정 🧚‍♀️ | ${studentName} ${isAdult ? '님' : '학생'} 레슨 현황`;
+      const bannerBadge = document.getElementById('report-banner-badge');
+      if (bannerBadge) bannerBadge.innerText = isAdult ? '연습요정 실시간 레슨 현황' : '연습요정 학부모 실시간 현황';
+
+      const dateBadge = document.getElementById('report-date');
+      const refreshBtn = document.getElementById('parent-refresh-btn');
+      if (dateBadge) dateBadge.classList.add('hidden');
+      if (refreshBtn) refreshBtn.classList.remove('hidden');
+
+      // 최근 출결 HTML
+      const lessonsHtml = recentLessons.length > 0
+        ? recentLessons.map(l => {
+          const badge = getAttendanceBadgeInfo(l.status, l.makeupResolved);
+          const dateLabel = formatKoreanDate(l.date, true);
+          const timeLabel = l.time ? ` ${escapeHtml(l.time)}` : '';
+          const metaParts = [];
+          if (l.sessionNum) metaParts.push(`${escapeHtml(l.sessionNum)}회차`);
+          if (l.type) metaParts.push(escapeHtml(l.type));
+          return `
+            <div class="p-3 bg-slate-50 rounded-2xl border border-slate-100 flex items-center justify-between gap-2">
+              <div class="min-w-0">
+                <div class="text-xs font-bold text-slate-900">${escapeHtml(dateLabel)}${timeLabel}</div>
+                <div class="text-[11px] text-slate-500 mt-0.5">${metaParts.join(' · ') || '레슨 기록'}</div>
+              </div>
+              <span class="text-[11px] font-bold px-2.5 py-1 rounded-full border shrink-0 ${badge.cls}">
+                ${escapeHtml(badge.label)}
+              </span>
+            </div>
+          `;
+        }).join('')
+        : `<div class="p-4 bg-slate-50 rounded-2xl border border-slate-100 text-center text-xs text-slate-500">아직 기록된 출결 내역이 없어요.</div>`;
+
+      // 최근 레슨 노트 요약 HTML
+      const notesHtml = recentNotes.length > 0
+        ? recentNotes.map(n => {
+          const embedUrl = getYouTubeEmbedUrl(n.youtubeUrl);
+          const safeYoutube = n.youtubeUrl && /^https?:\/\//i.test(n.youtubeUrl) ? n.youtubeUrl : '';
+          return `
+            <div class="p-3.5 bg-slate-50/90 rounded-2xl border border-slate-200/80 space-y-2.5">
+              <div class="flex items-center justify-between gap-2 flex-wrap">
+                <span class="text-[11px] font-extrabold text-brand-600 bg-brand-50 px-2.5 py-0.5 rounded-full border border-brand-100">
+                  ${escapeHtml(formatKoreanDate(n.date, true))}${n.sessionNum ? ` · ${escapeHtml(n.sessionNum)}회차` : ''}
+                </span>
+                ${n.badge ? `<span class="text-[11px] font-bold text-amber-800 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200 truncate max-w-[200px]">${escapeHtml(n.badge)}</span>` : ''}
+              </div>
+              ${n.piece ? `
+                <div>
+                  <div class="text-[10px] font-semibold text-slate-500">진도곡</div>
+                  <div class="text-xs font-bold text-slate-900 mt-0.5">${escapeHtml(n.piece)}</div>
+                  ${n.technique ? `<div class="text-[11px] text-slate-600 mt-0.5">테크닉: ${escapeHtml(n.technique)}</div>` : ''}
+                </div>` : ''}
+              ${n.feedback ? `
+                <div class="p-2.5 bg-white rounded-xl border border-rose-100 text-xs text-slate-700 leading-relaxed">
+                  ${escapeHtml(n.feedback)}
+                </div>` : ''}
+              ${n.homework ? `
+                <div class="p-2.5 bg-indigo-50/70 rounded-xl border border-indigo-100 text-xs text-indigo-900 leading-relaxed">
+                  <span class="font-bold">${isAdult ? '🎵 개인 연습 가이드:' : '🏠 가정 연습 과제:'}</span> ${escapeHtml(n.homework)}
+                </div>` : ''}
+              ${n.parentMsg ? `
+                <div class="p-2.5 bg-amber-50/60 rounded-xl border border-amber-100 text-xs text-slate-700 leading-relaxed">
+                  <span class="font-bold text-amber-900">💌 선생님 말씀:</span> ${escapeHtml(n.parentMsg)}
+                </div>` : ''}
+              ${(embedUrl || safeYoutube) ? `
+                <a href="${escapeHtml(safeYoutube || embedUrl)}" target="_blank" rel="noopener noreferrer"
+                  class="inline-flex items-center space-x-1.5 text-[11px] font-bold text-red-600 bg-red-50 hover:bg-red-100 px-3 py-1.5 rounded-xl border border-red-200 transition">
+                  <span>▶</span>
+                  <span>수업 연주 영상 보기</span>
+                </a>` : ''}
+            </div>
+          `;
+        }).join('')
+        : `<div class="p-4 bg-slate-50 rounded-2xl border border-slate-100 text-center text-xs text-slate-500">아직 작성된 레슨 노트가 없어요.</div>`;
+
+      // 다음 수업 일정 HTML
+      let nextLessonBody = '';
+      if (nextLesson && nextLesson.date) {
+        nextLessonBody = `
+          <div class="p-3.5 bg-indigo-50/70 rounded-2xl border border-indigo-100 flex items-center justify-between gap-2">
+            <div class="min-w-0">
+              <div class="text-[11px] font-semibold text-indigo-700">예정된 다음 수업</div>
+              <div class="text-sm font-black text-slate-900 mt-0.5">${escapeHtml(formatKoreanDate(nextLesson.date))}${nextLesson.time ? ` ${escapeHtml(nextLesson.time)}` : ''}</div>
+            </div>
+            <span class="text-[11px] font-bold px-2.5 py-1 rounded-full bg-indigo-600 text-white shrink-0">${escapeHtml(nextLesson.type || '정규')}</span>
+          </div>
+          ${student.schedule ? `<div class="text-[11px] text-slate-500 px-1">정기 수업 요일: <strong class="text-slate-700">${escapeHtml(student.schedule)}</strong></div>` : ''}
+        `;
+      } else if (student.schedule) {
+        nextLessonBody = `
+          <div class="p-3.5 bg-slate-50 rounded-2xl border border-slate-100 space-y-1">
+            <div class="text-[11px] font-semibold text-slate-500">정기 수업 일정</div>
+            <div class="text-sm font-bold text-slate-900">${escapeHtml(student.schedule)}</div>
+            <p class="text-[11px] text-slate-500">선생님 캘린더에 다음 일정이 등록되면 날짜가 바로 표시됩니다.</p>
+          </div>
+        `;
+      } else {
+        nextLessonBody = `<div class="p-3.5 bg-slate-50 rounded-2xl border border-slate-100 text-xs text-slate-500">예정된 다음 수업 일정이 아직 등록되지 않았어요.</div>`;
+      }
+
+      const billCardClass = isPayTime
+        ? 'bg-gradient-to-br from-amber-50 via-white to-rose-50 rounded-3xl border-2 border-amber-300 p-4 shadow-xs space-y-3'
+        : 'bg-white rounded-3xl border border-slate-200/80 p-4 shadow-xs space-y-3';
+
+      const payBannerHtml = isPayTime
+        ? `<div class="p-2.5 rounded-2xl bg-amber-100/80 border border-amber-300 text-xs font-bold text-amber-900 leading-snug">
+            ${remainPass === 0
+              ? `🔔 이번 수강권(${totalPass}회)을 모두 완료했어요! 다음 회차 납부 시점입니다.`
+              : `🔔 남은 수업이 1회예요! 곧 다음 회차 수강료 납부 시점입니다.`}
+          </div>`
+        : '';
+
+      const content = document.getElementById('report-content');
+      if (content) {
+        content.innerHTML = `
+          <!-- 0. 상단 히어로 카드 -->
+          <div class="bg-gradient-to-br from-brand-600 via-rose-500 to-amber-500 rounded-3xl p-5 text-white relative overflow-hidden shadow-lg shadow-brand-600/15">
+            <div class="absolute -right-6 -bottom-8 opacity-15 pointer-events-none">
+              <svg class="w-36 h-36" fill="currentColor" viewBox="0 0 24 24"><path d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"/></svg>
+            </div>
+            <div class="relative z-10 space-y-3">
+              <div class="flex items-center justify-between gap-2 flex-wrap">
+                <span class="inline-block text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-white/20 backdrop-blur-md">${escapeHtml(subject)} 전문 레슨</span>
+                <span class="text-[11px] font-bold bg-black/20 px-2.5 py-0.5 rounded-full">실시간 연동</span>
+              </div>
+              <div>
+                <h1 class="text-xl font-black tracking-tight leading-snug">
+                  ${escapeHtml(studentName)} ${isAdult ? '님의' : '학생의'} 레슨 현황 🎵
+                </h1>
+                <p class="text-xs text-white/90 mt-1">
+                  담당 지도: <strong>${escapeHtml(teacher.name ? `${teacher.name} 선생님` : '담당 선생님')}</strong>
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <!-- 1. 남은 횟수 / 전체 횟수 핵심 카드 -->
+          <div class="bg-white rounded-3xl border ${isPayTime ? 'border-amber-300 ring-1 ring-amber-200' : 'border-slate-200/80'} p-4 shadow-xs space-y-3">
+            <div class="flex items-center justify-between gap-2">
+              <span class="text-xs font-bold text-slate-700">🎟️ 현재 수강권 잔여 현황</span>
+              <span class="text-xs font-extrabold ${isPayTime ? 'text-rose-600' : 'text-brand-600'}">${usedPass}회 완료 / 총 ${totalPass}회</span>
+            </div>
+            <div class="flex items-end justify-between gap-2">
+              <div>
+                <div class="text-[11px] text-slate-500 font-semibold">남은 수업 횟수</div>
+                <div class="text-3xl font-black tracking-tight ${isPayTime ? 'text-rose-600' : 'text-slate-900'} leading-none mt-1">
+                  ${remainPass}<span class="text-base font-bold ml-0.5">회</span>
+                </div>
+              </div>
+              ${pendingMakeup > 0 ? `<span class="text-[11px] font-bold px-2.5 py-1 rounded-full bg-rose-50 text-rose-700 border border-rose-200">⚠️ 보강 예정 ${pendingMakeup}건</span>` : ''}
+            </div>
+            <div class="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden">
+              <div class="${isPayTime ? 'bg-gradient-to-r from-amber-500 to-rose-500' : 'bg-gradient-to-r from-brand-500 to-rose-400'} h-2.5 rounded-full transition-all duration-500" style="width: ${pct}%"></div>
+            </div>
+            ${student.currentPiece ? `
+              <div class="pt-1 border-t border-slate-100 flex items-center justify-between gap-2 text-xs">
+                <span class="text-slate-500 font-semibold shrink-0">🎵 현재 연습곡</span>
+                <span class="font-bold text-slate-800 truncate">${escapeHtml(student.currentPiece)}</span>
+              </div>` : ''}
+          </div>
+
+          <!-- 2. 다음 수업 일정 카드 -->
+          <div class="bg-white rounded-3xl border border-slate-200/80 p-4 shadow-xs space-y-2.5">
+            <h2 class="text-xs font-bold text-slate-700 flex items-center gap-1.5">
+              <span>📅</span>
+              <span>다음 수업 일정</span>
+            </h2>
+            ${nextLessonBody}
+          </div>
+
+          <!-- 3. 수강료 납부 시점 안내 & 입금 계좌 카드 -->
+          <div id="tuition-bill-card" class="${billCardClass}">
+            <div class="flex items-center justify-between gap-2">
+              <div class="flex items-center space-x-2 min-w-0">
+                <span class="w-8 h-8 rounded-xl bg-amber-100 text-amber-800 flex items-center justify-center text-base shrink-0">💳</span>
+                <div class="min-w-0">
+                  <h3 class="text-xs font-bold text-slate-900">다음 회차 수강료(레슨비) 안내</h3>
+                  <p class="text-[10px] text-slate-500 truncate">${hasAccount ? '복사 버튼으로 계좌번호를 바로 복사할 수 있어요.' : '입금 계좌는 선생님께 문의해 주세요.'}</p>
+                </div>
+              </div>
+              <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-900 border border-amber-200 shrink-0">다음 ${totalPass}회 기준</span>
+            </div>
+
+            ${payBannerHtml}
+
+            ${feeVal > 0 ? `
+              <div class="p-3 bg-white rounded-2xl border border-slate-200/80 flex items-center justify-between">
+                <span class="text-xs font-semibold text-slate-600">수강료</span>
+                <span class="text-base font-black text-brand-600">${feeVal.toLocaleString()}원</span>
+              </div>` : ''}
+
+            <div class="p-3 bg-white rounded-2xl border border-slate-200/80 space-y-1.5">
+              <div class="flex items-center justify-between text-[11px]">
+                <span class="text-slate-500 font-medium">입금 계좌</span>
+                <span class="font-bold text-slate-800">${hasAccount ? escapeHtml(`예금주: ${teacher.accountHolder || teacher.name || ''}`) : ''}</span>
+              </div>
+              <div class="flex items-center justify-between bg-slate-50 p-2.5 rounded-xl border border-slate-200 gap-2">
+                <div class="font-mono text-xs font-bold text-slate-900 tracking-tight truncate">
+                  ${hasAccount ? escapeHtml(`${teacher.bankName || ''} ${accountNo}`.trim()) : '입금 계좌는 선생님께 문의해 주세요'}
+                </div>
+                ${hasAccount ? `
+                  <button type="button" id="bill-copy-btn" onclick="copyBillAccount()" class="px-2.5 py-1 bg-slate-900 hover:bg-black text-white rounded-lg text-[11px] font-bold transition shrink-0 active:scale-95 cursor-pointer">
+                    복사
+                  </button>` : ''}
+              </div>
+            </div>
+          </div>
+
+          <!-- 4. 최근 출결 기록 (5대 출결 표기) -->
+          <div class="bg-white rounded-3xl border border-slate-200/80 p-4 shadow-xs space-y-2.5">
+            <div class="flex items-center justify-between">
+              <h2 class="text-xs font-bold text-slate-700 flex items-center gap-1.5">
+                <span>📋</span>
+                <span>최근 출결 기록</span>
+              </h2>
+              <span class="text-[10px] font-semibold text-slate-500">최근 ${recentLessons.length}건</span>
+            </div>
+            <div class="space-y-2">
+              ${lessonsHtml}
+            </div>
+          </div>
+
+          <!-- 5. 최근 레슨 노트 요약 -->
+          <div class="bg-white rounded-3xl border border-slate-200/80 p-4 shadow-xs space-y-2.5">
+            <div class="flex items-center justify-between">
+              <h2 class="text-xs font-bold text-slate-700 flex items-center gap-1.5">
+                <span>📝</span>
+                <span>최근 레슨 노트 요약</span>
+              </h2>
+              <span class="text-[10px] font-semibold text-slate-500">최근 ${recentNotes.length}건</span>
+            </div>
+            <div class="space-y-2.5">
+              ${notesHtml}
+            </div>
+          </div>
+
+          <!-- 6. 스마트폰 홈 화면 추가 안내 카드 -->
+          <div class="bg-white rounded-3xl border border-indigo-100 p-4 flex items-center justify-between gap-2 shadow-2xs">
+            <div class="flex items-center space-x-3 min-w-0">
+              <img src="icons/icon-192.png" alt="연습요정" class="w-9 h-9 rounded-xl shadow-2xs shrink-0">
+              <div class="min-w-0">
+                <div class="text-xs font-bold text-slate-900">홈 화면에 추가해 두기</div>
+                <p class="text-[11px] text-slate-500">언제든 터치 한 번으로 최신 현황 확인</p>
+              </div>
+            </div>
+            <button type="button" onclick="openShareInstallModal()" class="px-3 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold text-xs rounded-xl border border-indigo-200 transition shrink-0 cursor-pointer">
+              추가 방법
+            </button>
+          </div>
+        `;
+      }
+
+      // 하단 고정 액션 바를 실시간 현황 모드에 맞게 조정
+      const bottomBar = document.getElementById('share-bottom-bar');
+      const bottomCopyBtn = document.getElementById('bottom-btn-copy-account');
+      const bottomConfirmBtn = document.getElementById('bottom-btn-confirm');
+      const bottomConfirmIcon = document.getElementById('bottom-btn-confirm-icon');
+      const bottomConfirmText = document.getElementById('bottom-btn-confirm-text');
+      if (bottomBar) bottomBar.classList.remove('hidden');
+      if (bottomCopyBtn) bottomCopyBtn.classList.toggle('hidden', !hasAccount);
+      if (bottomConfirmBtn) {
+        bottomConfirmBtn.onclick = refreshParentStatus;
+        bottomConfirmBtn.className = 'flex-1 py-3 px-3 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-md shadow-indigo-600/20 transition flex items-center justify-center space-x-1.5 active:scale-98 cursor-pointer';
+      }
+      if (bottomConfirmIcon) bottomConfirmIcon.innerText = '↻';
+      if (bottomConfirmText) bottomConfirmText.innerText = '최신 현황 새로고침';
+    }
+
+    async function loadParentStatus(token, isManualRefresh = false) {
+      currentParentStatusToken = token;
+      const content = document.getElementById('report-content');
+      const bottomBar = document.getElementById('share-bottom-bar');
+      const dateBadge = document.getElementById('report-date');
+      const bannerBadge = document.getElementById('report-banner-badge');
+
+      if (!isManualRefresh) {
+        if (bannerBadge) bannerBadge.innerText = '연습요정 학부모 실시간 현황';
+        if (dateBadge) dateBadge.classList.add('hidden');
+        if (bottomBar) bottomBar.classList.add('hidden');
+        if (content) {
+          content.innerHTML = `
+            <div class="bg-white rounded-3xl border border-slate-200/80 p-8 text-center shadow-xs space-y-3 mt-4">
+              <div class="w-10 h-10 mx-auto rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center text-xl animate-pulse">🧚‍♀️</div>
+              <p class="text-xs font-bold text-slate-700">최신 레슨 현황을 불러오는 중...</p>
+            </div>
+          `;
+        }
+      }
+
+      const data = await fetchParentStatusFromSupabase(token);
+      if (!data) {
+        renderParentLinkInvalidState();
+        return;
+      }
+
+      renderParentStatusView(data);
+      if (isManualRefresh) {
+        showShareToast('✓ 최신 레슨 현황으로 새로고침했어요!');
+      }
+    }
+
+    function refreshParentStatus() {
+      if (!currentParentStatusToken) return;
+      loadParentStatus(currentParentStatusToken, true);
     }
 
     function showShareToast(msg) {
@@ -575,7 +1018,12 @@
 
     // 계좌번호 복사하기 (모바일 Safari/Chrome/카톡 인앱브라우저 execCommand 폴백 지원)
     function copyBillAccount() {
-      const textToCopy = `${globalTeacher.bankName} ${globalTeacher.accountNumber} ${globalTeacher.accountHolder}`;
+      const accountNo = String((globalTeacher && globalTeacher.accountNumber) || '').trim();
+      if (!accountNo || accountNo === '3333-01-2345678') {
+        showShareToast('등록된 입금 계좌가 없습니다. 선생님께 문의해 주세요.');
+        return;
+      }
+      const textToCopy = `${globalTeacher.bankName || ''} ${accountNo} ${globalTeacher.accountHolder || ''}`.trim();
       let copied = false;
       try {
         const ta = document.createElement('textarea');
@@ -650,7 +1098,14 @@
       });
     }
 
-    window.addEventListener('DOMContentLoaded', loadReport);
+    window.addEventListener('DOMContentLoaded', () => {
+      const parentToken = getParam('p');
+      if (parentToken) {
+        loadParentStatus(parentToken);
+      } else {
+        loadReport();
+      }
+    });
   </script>
 </body>
 </html>

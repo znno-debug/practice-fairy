@@ -1,6 +1,6 @@
 # CONTEXT — 연습요정 (Practice Fairy)
 
-> **최종 갱신**: 2026-11-25 · `sw.js` 캐시 `fairy-cache-v35`
+> **최종 갱신**: 2026-11-27 · `sw.js` 캐시 `fairy-cache-v36`
 > **한 줄 요약**: 음악 1:1 레슨 선생님용 출결·수강료·레슨노트 관리 + 수강생 연습일지 PWA. 학부모에게는 카카오톡 카드로 1:1 리포트(`share.html`)를 보냄.
 > **현재 단계**: 기능 시제품 완성, Supabase Auth 연동, GitHub Pages 배포 완료. 지금은 **카카오 공유 마무리와 모바일 다듬기** 단계.
 > 이 문서는 작업 시작 전에 가장 먼저 읽고, 작업이 끝나면 곧바로 갱신한다(→ `CLAUDE.md` / `GEMINI.md`).
@@ -13,9 +13,9 @@
 | :--- | :--- | :--- |
 | 배포 (GitHub Pages) | `https://znno-debug.github.io/practice-fairy/` | `index.html` `buildShareReportUrl()`, `sendKakaoReportCard()` |
 | Supabase 프로젝트 | `https://zpfcocrqvmrotuiwpkru.supabase.co` (Auth + PostgreSQL + JS SDK v2) | `index.html:1926` (`SUPABASE_URL`, `SUPABASE_ANON_KEY`) |
-| Supabase 테이블 (7개 + 공유 리포트 1개) | `fairy_teacher_profile_v1`, `fairy_students_v1`, `fairy_lessons_v1`, `fairy_notes_v1`, `fairy_practice_v1`, `fairy_questions_v1`, `fairy_sessions_v1` | `supabase_schema.sql`, `index.html:1950~` (LocalStorage 키와 같은 이름) |
+| Supabase 테이블 (7개 + 공유 2개) | `fairy_teacher_profile_v1`, `fairy_students_v1`, `fairy_lessons_v1`, `fairy_notes_v1`, `fairy_practice_v1`, `fairy_questions_v1`, `fairy_sessions_v1`, `fairy_shared_reports_v1`, `fairy_parent_links_v1` | `supabase_schema.sql`, `index.html:1950~` (LocalStorage 키와 같은 이름) |
 | 카카오 개발자센터 | 앱 ID `1659300`, JS SDK `2.7.2`, `KAKAO_JS_KEY`는 `index.html:1933` | `index.html:25`, `:1933` |
-| PWA | `sw.js` (현재 `fairy-cache-v35`), `manifest.json`, `icons/`, 루트 `icon-512.png` | |
+| PWA | `sw.js` (현재 `fairy-cache-v36`), `manifest.json`, `icons/`, 루트 `icon-512.png` | |
 | 로컬 테스트 서버 | `python3 server.py` → `http://localhost:8080` (같은 Wi-Fi 기기용 IP 자동 표시) | `server.py` |
 | 기술 스택 | HTML5 + Vanilla JS + Tailwind CSS(CDN) + Supabase + Web Audio API(체크 효과음만) + Service Worker + LocalStorage | |
 
@@ -24,7 +24,7 @@
 | 파일 | 역할 | 비고 |
 | :--- | :--- | :--- |
 | `index.html` (~5,400줄) | 메인 앱: 수업 캘린더, 레슨 노트, 수강생 관리, 마이 연습실, Auth 화면(`#auth-overlay`), PWA 설치 UI | 모든 로직이 이 파일 하나에 들어 있음 |
-| `share.html` | 학부모/성인 수강생용 1:1 리포트. 링크 안 데이터만으로 열림(로그인 없음) | `?id=...&d=<base64url JSON 배열>`을 읽고, 예전 `#d=` 해시 방식도 지원 |
+| `share.html` | 학부모/성인 수강생용 1:1 리포트(`?id=`) 및 학생별 고정 실시간 현황(`?p=`). 로그인 없이 전용 RPC로 열람 | `?p=<token>`은 `get_parent_student_status` RPC 실시간 조회, `?id=`는 `get_shared_report` RPC 조회 |
 | `privacy.html` | 개인정보처리방침 및 서비스 이용약관 페이지 | 로그인 화면(`#auth-overlay`) 및 선생님 프로필 모달에서 연결 (스토어 심사 필수) |
 | `sw.js` | 서비스 워커. HTML은 네트워크 우선, `/icons/`는 캐시 우선 | **HTML 수정 시 버전 +1 필수** |
 | `manifest.json` | PWA 매니페스트 (상대 경로) | |
@@ -50,6 +50,7 @@
 - **소셜 로그인 (11-24)**: 카카오·구글 로그인은 Supabase OAuth(`signInWithOAuth`)로 처리. 버튼은 `index.html`의 `OAUTH_PROVIDERS` 배열에서 자동 생성되며, 공통 핸들러는 `handleOAuthLogin(provider)`. Apple은 주석 처리된 한 줄로 대기 중. 돌아온 뒤에는 기존 `initSupabaseClient()` → `onAuthSessionEstablished()` 흐름을 그대로 사용.
 - **멀티유저 (11-20)**: Supabase Auth 이메일/비밀번호 로그인. 7개 테이블을 `user_id` 기준으로 동기화하고, 유저별 PK 네임스페이스 적용.
 - **카카오 공유 일원화 (11-20, `172b641`)**: 레슨 리포트 공유는 모두 `sendKakaoReportCard(noteId)` 하나로 처리(피드 카드 + `[레슨 리포트 상세보기]` 버튼, 링크는 GitHub Pages 절대경로).
+- **학부모 고정 링크 1단계 (11-27)**: (B)안 확정 — `fairy_parent_links_v1` 테이블(3단계 확장용 `parent_user_id` 포함, anon 차단)과 화이트리스트 `SECURITY DEFINER` RPC `get_parent_student_status(p_token)`으로 실시간 조회. `index.html` 수강생 관리에서 생성·복사·카톡 카드(`sendKakaoParentLinkCard`)·켜기/끄기·재발급·학생 삭제 연동, `share.html?p=<token>`으로 열람.
 - 시장 검증 (N=14, 뮬 설문): 10명 이하 소규모 레슨 78.6%, 횟수권 64.3%, 카톡 전달 64.3%, 관리 앱 지출 0%, 문제를 겪은 응답자 100%가 수강료 누락/안내 시점 놓침을 경험.
 
 ## 4. 코드와 문서를 대조하며 찾은 점 (주의)
@@ -76,8 +77,8 @@
 - [ ] **⑨ 인증 메일 품질**: 인증번호 길이는 2026-11-25 6자리로 변경 완료(Email OTP Length 6). 남은 문제: 메일이 스팸함으로 감(Gmail 발신 → Brevo가 brevosend.com 주소로 바꿔 보냄). 근본 해결은 자체 도메인 구매 + Brevo 도메인 인증.
 - [x] **⑧ 가입 화면 2차 개선** (2026-11-25 완료, v31): 탭 제거 → 첫 화면은 카카오·Google '시작하기' + 이메일 로그인, 회원가입·비밀번호 찾기·인증은 뒤로 가기가 있는 하위 화면. 새 비밀번호 8자+영문+숫자, 확인 칸, 보기 버튼, 실시간 안내. 최근 로그인 방법 배지(`fairy_last_login_method_v1`).
 - [ ] **⑩ 학부모 연결: 링크 + 앱 이원 운영 (2026-11-27 방향 확정)**: 배경은 워킹맘 교수님 피드백("여러 수업의 남은 횟수·납부 시점을 엄마가 알 수 없고, 선생님도 물어보면 그제서야 셈"). GPS·QR 출석은 1:1 레슨에 맞지 않아 **하지 않기로 결정**(도착 ≠ 차감, 미성년자 위치정보 부담). 학생 가입보다 **학부모 가입**이 우선(보호자가 직접 동의 → 만 14세 미만 문제 해결). 앱스토어 앱 기준. 원칙: **데이터는 하나, 보는 창은 두 개**(링크=가입 없이 이 수업의 현재 상태 / 앱=여러 선생님 수업 한 화면 + 푸시 알림), 링크를 일부러 불편하게 만들지 않음, 링크에서 앱 설치 시 자동 연결.
-  - [ ] 0단계: 공유 리포트 보안 수정 (4장 6번) — **완료** (2026-11-27, v35)
-  - [ ] 1단계: 학생별 고정 학부모 링크 — 열 때마다 최신 잔여 횟수·다음 납부 시점·최근 출결·노트, 선생님이 링크 끄기/재발급 가능 (다음 세션 지시문: `docs/prompts/parent_link_phase1.md`)
+  - [x] 0단계: 공유 리포트 보안 수정 (4장 6번) — **완료** (2026-11-27, v35)
+  - [ ] 1단계: 학생별 고정 학부모 링크 — 코드·SQL 구현 완료 (2026-11-27, v36, `docs/sql/2026-11-27_parent_links.sql`). 남은 것: Supabase SQL Editor에서 SQL 실행 후 실DB 연동 검증(출석 차감 실시간 반영·링크 끄기/재발급 차단).
   - [ ] 2단계: 앱 포장(Capacitor 등 기존 HTML/JS 재사용) + Apple 로그인 + 유니버설 링크(앱 있으면 앱, 없으면 웹)
   - [ ] 3단계: 학부모 계정·아이 프로필·여러 선생님 수업 연결(읽기 전용 권한, 선생님이 공개 항목 선택)
   - [ ] 4단계: 푸시 알림(수업 완료·납부 미리 알림·보강), 선생님 카톡 공유와 중복 방지, 연결 해제
@@ -100,6 +101,7 @@
 
 | 날짜 | 내용 |
 | :--- | :--- |
+| 2026-11-27 | **학부모 연결 1단계(학생별 고정 학부모 링크) 구현**: (B)안 실시간 전용 RPC 채택. `fairy_parent_links_v1` 테이블(anon 차단, 3단계 확장용 `parent_user_id` 포함) + 화이트리스트 `get_parent_student_status(p_token)` RPC 및 `delete_my_account` 연동(`supabase_schema.sql`, `docs/sql/2026-11-27_parent_links.sql`). `index.html` 수강생 카드에 `[학부모 링크]` 관리 모달(생성·복사·`sendKakaoParentLinkCard` 카톡 카드 공유·켜기/끄기·재발급) 및 `deleteStudent` 삭제 연동 추가. `share.html?p=<token>` 실시간 현황 화면(남은 횟수·다음 수업·납부 강조/계좌 복사·최근 5대 출결·최근 레슨 노트·무효 링크 차단 안내) 구현. 캐시 `v36` |
 | 2026-11-27 | 어사이드로 운영 DB에 `2026-11-27_shared_report_lockdown.sql` 실행(Success). anon 목록 조회 차단·기존 링크 열림 확인 후 `share.html` 임시 폴백 제거, 캐시 `v35` |
 | 2026-11-27 | **공유 리포트 보안 수정**(4장 6번): `get_shared_report` RPC 추가·공개 읽기 정책 삭제(`supabase_schema.sql`, `docs/sql/2026-11-27_shared_report_lockdown.sql`), `share.html` RPC 조회(미실행 DB 폴백), 새 링크 id를 추측 불가한 해시로(`toShareReportId`, 동기식 `sha256Hex`), 수강생 삭제 시 새 id 리포트도 삭제. 쓰이지 않던 `fairy_notes_v1` 직접 조회 폴백 제거. 캐시 `v34` |
 | 2026-11-27 | 기획 결정: GPS·QR 출석 안 함, 학부모 연결을 '링크 + 앱' 이원 운영으로 진행(남은 작업 ⑩). 공유 리포트 테이블 전체 조회 보안 문제 발견(4장 6번). 다음 세션 지시문 `docs/prompts/parent_link_phase1.md` 작성. 코드 변경 없음 |
