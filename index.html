@@ -1933,6 +1933,114 @@
     </div>
   </div>
 
+  <!-- ================= 학생별 고정 학부모 링크 관리 모달 (1단계) ================= -->
+  <div id="modal-parent-link"
+    class="hidden fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+    <div
+      class="bg-white w-full max-w-md rounded-3xl shadow-2xl overflow-hidden p-6 space-y-4 animate-in fade-in zoom-in duration-150 border border-slate-200">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+        <div class="flex items-center space-x-2.5 min-w-0">
+          <span
+            class="w-9 h-9 rounded-2xl bg-indigo-50 text-indigo-600 border border-indigo-100 flex items-center justify-center text-base font-bold shrink-0">🔗</span>
+          <div class="min-w-0">
+            <h3 class="font-bold text-slate-900 text-base truncate" id="parent-link-modal-title">학부모 고정 링크</h3>
+            <p class="text-[11px] font-semibold text-slate-500 truncate" id="parent-link-modal-subtitle">언제 열어도 최신 레슨 현황이 보여요</p>
+          </div>
+        </div>
+        <button type="button" onclick="closeModal('modal-parent-link')" aria-label="닫기"
+          class="text-slate-400 hover:text-slate-600 p-1 text-sm font-bold cursor-pointer shrink-0">✕</button>
+      </div>
+
+      <!-- 로그인 안내 (비로그인 로컬 모드일 때만 표시) -->
+      <div id="parent-link-login-warn"
+        class="hidden p-3 bg-amber-50 border border-amber-200 rounded-2xl text-[11px] text-amber-800 leading-relaxed">
+        ⚠️ 클라우드 계정에 로그인해야 학부모님이 다른 스마트폰에서 실시간 현황을 열람할 수 있어요.
+      </div>
+
+      <!-- 링크 미발급 상태 -->
+      <div id="parent-link-empty-box" class="space-y-3">
+        <div class="p-4 bg-indigo-50/60 border border-indigo-100 rounded-2xl space-y-2 text-xs text-slate-700 leading-relaxed">
+          <div class="font-bold text-indigo-900">한 번만 보내 두면 끝!</div>
+          <ul class="space-y-1 text-[11px] text-slate-600">
+            <li>• 남은 횟수 / 전체 횟수와 납부 시점이 자동으로 반영돼요.</li>
+            <li>• 다음 수업 일정, 최근 출결(5대 출결), 최근 레슨 노트 요약이 보여요.</li>
+            <li>• 선생님 개인 연락처·메모·다른 학생 정보는 절대 보이지 않아요.</li>
+          </ul>
+        </div>
+        <button type="button" id="btn-create-parent-link" onclick="createParentLinkForCurrentStudent()"
+          class="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-sm rounded-xl shadow-sm transition flex items-center justify-center space-x-1.5 cursor-pointer">
+          <span>✨</span>
+          <span>학부모 고정 링크 만들기</span>
+        </button>
+      </div>
+
+      <!-- 링크 발급 완료 상태 (켜짐 / 꺼짐) -->
+      <div id="parent-link-active-box" class="hidden space-y-3">
+        <div class="p-3 bg-slate-50 rounded-2xl border border-slate-200/80 space-y-2">
+          <div class="flex items-center justify-between gap-2 text-xs">
+            <span id="parent-link-status-badge"
+              class="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-700 border border-emerald-200">● 링크 켜짐</span>
+            <span class="text-[10px] px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700 font-semibold border border-indigo-100">로그인 없이 실시간 열람</span>
+          </div>
+
+          <div id="parent-link-disabled-banner"
+            class="hidden p-2.5 bg-rose-50 border border-rose-200 rounded-xl text-[11px] font-semibold text-rose-700">
+            현재 링크가 꺼져 있어 학부모님이 열 수 없습니다. 다시 켜면 기존 주소로 바로 열람됩니다.
+          </div>
+
+          <div>
+            <label for="parent-link-url-input" class="block text-[11px] text-slate-500 mb-1">학부모 전용 고정 링크</label>
+            <input type="text" id="parent-link-url-input" readonly onclick="this.focus(); this.select();"
+              class="w-full text-xs font-mono bg-white border border-slate-300 rounded-xl p-2.5 text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 select-all">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-2">
+          <button type="button" id="btn-parent-link-copy" onclick="copyParentLinkUrl()"
+            class="py-3 px-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow-sm transition flex items-center justify-center space-x-1.5 cursor-pointer">
+            <span>📋</span>
+            <span id="btn-parent-link-copy-text">링크 복사</span>
+          </button>
+          <button type="button" id="btn-parent-link-kakao" onclick="sendKakaoParentLinkCard()"
+            class="py-3 px-3 bg-[#FEE500] hover:bg-[#FDD800] text-[#191919] font-bold text-xs rounded-xl shadow-xs transition flex items-center justify-center space-x-1.5 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed">
+            <span>💬</span>
+            <span>카톡 카드 보내기</span>
+          </button>
+        </div>
+
+        <button type="button" onclick="previewParentLinkUrl()"
+          class="w-full py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs rounded-xl transition cursor-pointer">
+          👀 학부모 화면 새 창 미리보기
+        </button>
+
+        <!-- 링크 제어 (끄기/켜기 & 새 링크 재발급) -->
+        <div class="pt-3 border-t border-slate-100 space-y-2">
+          <div class="grid grid-cols-2 gap-2">
+            <button type="button" id="btn-toggle-parent-link" onclick="toggleParentLinkActive()"
+              class="py-2.5 px-3 bg-white hover:bg-slate-50 text-slate-700 font-bold text-xs rounded-xl border border-slate-200 transition cursor-pointer">
+              ⏸️ 링크 끄기
+            </button>
+            <button type="button" id="btn-reissue-parent-link" onclick="reissueParentLink()"
+              class="py-2.5 px-3 bg-white hover:bg-rose-50 text-rose-600 font-bold text-xs rounded-xl border border-rose-200 transition cursor-pointer">
+              🔄 새 링크 재발급
+            </button>
+          </div>
+          <p class="text-[10px] text-slate-500 leading-relaxed">
+            • <strong>링크 끄기</strong>: 학부모 열람을 일시 중단합니다.<br>
+            • <strong>새 링크 재발급</strong>: 새 주소를 만들고 예전 링크는 즉시 차단합니다.
+          </p>
+        </div>
+      </div>
+
+      <div class="flex justify-end pt-1">
+        <button type="button" onclick="closeModal('modal-parent-link')"
+          class="px-4 py-2 text-xs font-semibold text-slate-500 hover:text-slate-800 rounded-xl cursor-pointer">
+          닫기
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- ================= 토스트 알림 ================= -->
   <div id="toast"
     class="fixed bottom-20 md:bottom-8 left-1/2 -translate-x-1/2 z-50 bg-slate-900/90 text-white text-xs font-medium px-4 py-2.5 rounded-full shadow-lg transition-all duration-200 opacity-0 pointer-events-none flex items-center space-x-2">
@@ -1951,7 +2059,7 @@
             window.location.replace(targetShareUrl);
             return;
           }
-          if ((params.get('d') || params.get('id')) && !window.location.pathname.endsWith('share.html')) {
+          if ((params.get('d') || params.get('id') || params.get('p')) && !window.location.pathname.endsWith('share.html')) {
             let dirPath = (window.location.pathname || '/').replace(/\/index\.html$/i, '');
             if (!dirPath.endsWith('/')) dirPath += '/';
             window.location.replace(`${window.location.origin}${dirPath}share.html${window.location.search}${window.location.hash}`);
@@ -1993,6 +2101,7 @@
     const STORAGE_KEY_PRACTICE = 'fairy_practice_v1';
     const STORAGE_KEY_QUESTIONS = 'fairy_questions_v1';
     const STORAGE_KEY_SESSIONS = 'fairy_sessions_v1';
+    const STORAGE_KEY_PARENT_LINKS = 'fairy_parent_links_v1';
 
     // 기준 오늘 날짜 (2026-11-06 금요일)
     const todayStr = '2026-11-06';
@@ -2186,6 +2295,7 @@
       localStorage.setItem(STORAGE_KEY_PRACTICE, JSON.stringify(defaultChecklists));
       localStorage.setItem(STORAGE_KEY_QUESTIONS, JSON.stringify(defaultQuestions));
       localStorage.setItem(STORAGE_KEY_SESSIONS, JSON.stringify(defaultSessions));
+      localStorage.removeItem(STORAGE_KEY_PARENT_LINKS);
     }
 
     function initData() {
@@ -3053,6 +3163,7 @@
           } else {
             console.warn('delete_my_account RPC 호출 실패, 테이블 단위 삭제 fallback 시도:', rpcError.message || rpcError);
             const tables = [
+              STORAGE_KEY_PARENT_LINKS,
               'fairy_shared_reports_v1',
               STORAGE_KEY_SESSIONS,
               STORAGE_KEY_QUESTIONS,
@@ -3089,7 +3200,8 @@
         STORAGE_KEY_NOTES,
         STORAGE_KEY_PRACTICE,
         STORAGE_KEY_QUESTIONS,
-        STORAGE_KEY_SESSIONS
+        STORAGE_KEY_SESSIONS,
+        STORAGE_KEY_PARENT_LINKS
       ].forEach(k => localStorage.removeItem(k));
       localStorage.removeItem(STORAGE_KEY_LAST_UID);
 
@@ -3403,6 +3515,9 @@
           });
           localStorage.setItem(STORAGE_KEY_SESSIONS, JSON.stringify(sessionsMap));
         }
+
+        // 학생별 고정 학부모 링크(fairy_parent_links_v1) 불러오기 (테이블 미적용 DB에서도 기존 동기화가 멈추지 않도록 독립 처리)
+        await fetchParentLinksFromSupabase();
 
         renderTeacherProfileHeader();
         renderCalendar();
@@ -4770,11 +4885,14 @@
         return;
       }
 
+      const parentLinksMap = getParentLinksMap();
+
       filtered.forEach(s => {
         const remainPass = Math.max(0, s.totalPass - s.usedPass);
         const isExpiring = remainPass <= 1;
         const isAdult = s.type === 'adult';
         const feeFormatted = (s.fee || 350000).toLocaleString();
+        const pLink = parentLinksMap[s.id] || null;
 
         const card = document.createElement('div');
         card.className = `bg-white rounded-2xl border ${isExpiring ? 'border-amber-300 ring-1 ring-amber-300/50' : 'border-slate-200'} p-5 shadow-sm space-y-4 transition`;
@@ -4838,6 +4956,24 @@
             </button>
           </div>` : ''}
 
+          <!-- 학생별 고정 학부모 링크 (1단계) -->
+          <div class="p-2.5 rounded-xl bg-indigo-50/60 border border-indigo-100 flex items-center justify-between gap-2">
+            <div class="min-w-0">
+              <div class="flex items-center gap-1.5 flex-wrap">
+                <span class="text-[11px] font-bold text-indigo-900">🔗 ${isAdult ? '실시간 현황 링크' : '학부모 고정 링크'}</span>
+                ${pLink
+            ? (pLink.is_active
+              ? '<span class="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-700">켜짐</span>'
+              : '<span class="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-slate-200 text-slate-600">꺼짐</span>')
+            : '<span class="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-white text-slate-500 border border-slate-200">미발급</span>'}
+              </div>
+              <div class="text-[10px] text-indigo-700/80 truncate mt-0.5">${pLink ? (pLink.is_active ? '열 때마다 남은 횟수·일정·출결 자동 반영' : '링크가 꺼져 있어 현재 열람 차단됨') : '한 번 보내면 언제든 최신 현황 확인'}</div>
+            </div>
+            <button type="button" onclick="openParentLinkModal('${s.id}')" class="px-2.5 py-1.5 text-xs font-bold bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition shadow-xs shrink-0 cursor-pointer">
+              ${pLink ? '링크 관리' : '학부모 링크'}
+            </button>
+          </div>
+
           <!-- 수강생 관리 액션 바 -->
           <div class="pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
             <button onclick="openChargeModal('${s.id}')" class="font-bold text-brand-600 hover:text-brand-700 flex items-center space-x-1">
@@ -4871,7 +5007,7 @@
       const lessons = getLessons().filter(l => l.studentId === studentId);
       const ok = confirm(
         `${student.name} 수강생을 삭제할까요?\n\n` +
-        `함께 삭제되는 내용: 수업 일정 ${lessons.length}건, 레슨 노트 ${notes.length}건, 연습 기록·질문, 학부모에게 보낸 리포트 링크\n\n` +
+        `함께 삭제되는 내용: 수업 일정 ${lessons.length}건, 레슨 노트 ${notes.length}건, 연습 기록·질문, 학부모 고정 링크 및 공유 리포트 링크\n\n` +
         `삭제하면 되돌릴 수 없어요. 필요하면 먼저 [프로필 & 설정 → 백업]을 받아 두세요.`
       );
       if (!ok) return;
@@ -4884,6 +5020,7 @@
       writeLocal(STORAGE_KEY_QUESTIONS, getQuestions().filter(q => q.studentId !== studentId));
       const practice = getPracticeChecklists(); delete practice[studentId]; writeLocal(STORAGE_KEY_PRACTICE, practice);
       const sessions = getPracticeSessions(); delete sessions[studentId]; writeLocal(STORAGE_KEY_SESSIONS, sessions);
+      const parentLinks = getParentLinksMap(); delete parentLinks[studentId]; saveParentLinksMap(parentLinks);
       if (currentPracticeStudentId === studentId) currentPracticeStudentId = (getStudents()[0] || {}).id || '';
 
       rerenderAllViews();
@@ -4900,6 +5037,8 @@
             supabaseClient.from(STORAGE_KEY_QUESTIONS).delete().eq('user_id', uid).in('studentId', sidList),
             supabaseClient.from(STORAGE_KEY_PRACTICE).delete().eq('user_id', uid).in('studentId', sidList),
             supabaseClient.from(STORAGE_KEY_SESSIONS).delete().eq('user_id', uid).in('studentId', sidList),
+            supabaseClient.from(STORAGE_KEY_PARENT_LINKS).delete().eq('user_id', uid).in('student_id', sidList)
+              .then(r => (r.error && /relation|does not exist|schema cache/i.test(r.error.message || '') ? { error: null } : r)),
             noteIds.length
               ? supabaseClient.from(SHARED_REPORT_TABLE).delete().eq('user_id', uid).in('id', noteIds.flatMap(id => [id, toCloudId(id), toShareReportId(id)]))
               : Promise.resolve({ error: null })
@@ -5584,6 +5723,387 @@
     function previewShareReport(noteId) {
       syncSharedReportToSupabase(noteId);
       window.open(buildShareReportUrl(noteId), '_blank');
+    }
+
+    // ================= 학생별 고정 학부모 링크 관리 (학부모 연결 1단계) =================
+    let currentParentLinkStudentId = '';
+
+    function getParentLinksMap() {
+      try {
+        const parsed = JSON.parse(localStorage.getItem(STORAGE_KEY_PARENT_LINKS) || '{}');
+        return parsed && typeof parsed === 'object' ? parsed : {};
+      } catch (e) {
+        return {};
+      }
+    }
+
+    function saveParentLinksMap(map) {
+      try {
+        localStorage.setItem(STORAGE_KEY_PARENT_LINKS, JSON.stringify(map || {}));
+      } catch (e) { }
+    }
+
+    // 추측 불가능한 128비트 난수 토큰 생성 (p_ + 32자리 16진수)
+    function generateParentLinkToken() {
+      const bytes = new Uint8Array(16);
+      (window.crypto || window.msCrypto).getRandomValues(bytes);
+      return 'p_' + Array.from(bytes, b => b.toString(16).padStart(2, '0')).join('');
+    }
+
+    function buildParentLinkUrl(token, forLocalPreview = false) {
+      const encoded = encodeURIComponent(String(token || ''));
+      if (forLocalPreview && window.location && /^(localhost|127\.0\.0\.1|10\.|172\.(1[6-9]|2\d|3[01])\.|192\.168\.)/.test(window.location.hostname || '')) {
+        let dirPath = (window.location.pathname || '/').replace(/\/index\.html$/i, '');
+        if (!dirPath.endsWith('/')) dirPath += '/';
+        return `${window.location.origin}${dirPath}share.html?p=${encoded}`;
+      }
+      return `https://znno-debug.github.io/practice-fairy/share.html?p=${encoded}`;
+    }
+
+    async function fetchParentLinksFromSupabase() {
+      if (!supabaseClient || !currentAuthUser) return getParentLinksMap();
+      try {
+        const { data, error } = await supabaseClient
+          .from(STORAGE_KEY_PARENT_LINKS)
+          .select('token, student_id, is_active, revoked_at, created_at, updated_at')
+          .eq('user_id', currentAuthUser.id)
+          .order('created_at', { ascending: false });
+        if (error) {
+          if (!/relation|does not exist|schema cache/i.test(error.message || '')) {
+            console.warn('학부모 링크 목록 조회 실패:', error.message || error);
+          }
+          return getParentLinksMap();
+        }
+        const map = {};
+        (data || []).forEach(row => {
+          const sid = fromCloudId(row.student_id);
+          if (!sid) return;
+          if (!map[sid] || (!map[sid].is_active && row.is_active)) {
+            map[sid] = { ...row, student_id: sid };
+          }
+        });
+        saveParentLinksMap(map);
+        return map;
+      } catch (e) {
+        console.warn('fetchParentLinksFromSupabase error:', e);
+        return getParentLinksMap();
+      }
+    }
+
+    async function openParentLinkModal(studentId) {
+      const student = getStudents().find(s => s.id === studentId);
+      if (!student) return;
+      currentParentLinkStudentId = student.id;
+      renderParentLinkModal();
+      openModal('modal-parent-link');
+
+      if (supabaseClient && currentAuthUser) {
+        await fetchParentLinksFromSupabase();
+        if (currentParentLinkStudentId === student.id) {
+          renderParentLinkModal();
+          renderStudentsList();
+        }
+      }
+    }
+
+    function renderParentLinkModal() {
+      const student = getStudents().find(s => s.id === currentParentLinkStudentId);
+      if (!student) return;
+      const isAdult = student.type === 'adult';
+      const link = getParentLinksMap()[student.id] || null;
+      const isLoggedIn = !!(supabaseClient && currentAuthUser);
+
+      const titleEl = document.getElementById('parent-link-modal-title');
+      const subEl = document.getElementById('parent-link-modal-subtitle');
+      const warnEl = document.getElementById('parent-link-login-warn');
+      const emptyBox = document.getElementById('parent-link-empty-box');
+      const activeBox = document.getElementById('parent-link-active-box');
+      const statusBadge = document.getElementById('parent-link-status-badge');
+      const disabledBanner = document.getElementById('parent-link-disabled-banner');
+      const urlInput = document.getElementById('parent-link-url-input');
+      const kakaoBtn = document.getElementById('btn-parent-link-kakao');
+      const toggleBtn = document.getElementById('btn-toggle-parent-link');
+      const copyTextEl = document.getElementById('btn-parent-link-copy-text');
+
+      if (titleEl) titleEl.innerText = `${student.name} ${isAdult ? '님 실시간 현황 링크' : '학부모 고정 링크'}`;
+      if (subEl) subEl.innerText = `${student.subject || '레슨'} • 남은 횟수 ${Math.max(0, (student.totalPass || 8) - (student.usedPass || 0))}회 / 총 ${student.totalPass || 8}회`;
+      if (warnEl) warnEl.classList.toggle('hidden', isLoggedIn);
+      if (copyTextEl) copyTextEl.innerText = '링크 복사';
+
+      if (!link) {
+        if (emptyBox) emptyBox.classList.remove('hidden');
+        if (activeBox) activeBox.classList.add('hidden');
+        return;
+      }
+
+      if (emptyBox) emptyBox.classList.add('hidden');
+      if (activeBox) activeBox.classList.remove('hidden');
+      if (urlInput) urlInput.value = buildParentLinkUrl(link.token, false);
+
+      const active = link.is_active !== false;
+      if (statusBadge) {
+        statusBadge.className = active
+          ? 'text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-700 border border-emerald-200'
+          : 'text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-slate-200 text-slate-600 border border-slate-300';
+        statusBadge.innerText = active ? '● 링크 켜짐 (실시간)' : '○ 링크 꺼짐 (차단됨)';
+      }
+      if (disabledBanner) disabledBanner.classList.toggle('hidden', active);
+      if (kakaoBtn) kakaoBtn.disabled = !active;
+      if (toggleBtn) {
+        toggleBtn.innerText = active ? '⏸️ 링크 끄기' : '▶️ 링크 다시 켜기';
+        toggleBtn.className = active
+          ? 'py-2.5 px-3 bg-white hover:bg-slate-50 text-slate-700 font-bold text-xs rounded-xl border border-slate-200 transition cursor-pointer'
+          : 'py-2.5 px-3 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-bold text-xs rounded-xl border border-emerald-200 transition cursor-pointer';
+      }
+    }
+
+    async function createParentLinkForCurrentStudent() {
+      const student = getStudents().find(s => s.id === currentParentLinkStudentId);
+      if (!student) return;
+      const btn = document.getElementById('btn-create-parent-link');
+      if (btn) btn.disabled = true;
+
+      const nowIso = new Date().toISOString();
+      const token = generateParentLinkToken();
+      const normalizedSid = String(fromCloudId(student.id) || student.id);
+
+      try {
+        if (supabaseClient && currentAuthUser) {
+          const uid = currentAuthUser.id;
+          // 최신 학생·수업·노트·프로필이 클라우드에 반영되어 있도록 먼저 동기화
+          await Promise.all([
+            syncTableToSupabase(STORAGE_KEY_STUDENTS, getStudents(), true),
+            syncTableToSupabase(STORAGE_KEY_LESSONS, getLessons(), true),
+            syncTableToSupabase(STORAGE_KEY_NOTES, getNotes(), true),
+            syncTableToSupabase(STORAGE_KEY_TEACHER, getTeacherProfile(), true)
+          ]);
+          const { error } = await supabaseClient.from(STORAGE_KEY_PARENT_LINKS).insert({
+            token,
+            user_id: uid,
+            student_id: normalizedSid,
+            is_active: true,
+            created_at: nowIso,
+            updated_at: nowIso
+          });
+          if (error) {
+            throw error;
+          }
+        } else {
+          showToast('로그인 후 생성해야 다른 기기에서도 열람할 수 있어요.');
+          return;
+        }
+
+        const map = getParentLinksMap();
+        map[student.id] = {
+          token,
+          student_id: normalizedSid,
+          is_active: true,
+          revoked_at: null,
+          created_at: nowIso,
+          updated_at: nowIso
+        };
+        saveParentLinksMap(map);
+        renderParentLinkModal();
+        renderStudentsList();
+        copyTextWithFallback(buildParentLinkUrl(token, false));
+        showToast('🔗 학부모 고정 링크를 만들고 클립보드에 복사했어요!');
+      } catch (err) {
+        console.error('학부모 링크 생성 실패:', err);
+        const msg = /relation|does not exist|schema cache/i.test(err?.message || '')
+          ? 'DB 설정(docs/sql/2026-11-27_parent_links.sql)을 Supabase에서 먼저 실행해 주세요.'
+          : '링크 생성 중 오류가 발생했어요. 인터넷 연결을 확인해 주세요.';
+        alert(msg);
+      } finally {
+        if (btn) btn.disabled = false;
+      }
+    }
+
+    function copyParentLinkUrl() {
+      const link = getParentLinksMap()[currentParentLinkStudentId];
+      if (!link || !link.token) return;
+      const url = buildParentLinkUrl(link.token, false);
+      const copied = copyTextWithFallback(url);
+      const input = document.getElementById('parent-link-url-input');
+      if (input) {
+        input.focus();
+        input.select();
+        input.setSelectionRange(0, url.length);
+      }
+      const btnText = document.getElementById('btn-parent-link-copy-text');
+      if (btnText) {
+        btnText.innerText = '복사 완료 ✓';
+        setTimeout(() => { btnText.innerText = '링크 복사'; }, 1800);
+      }
+      showToast(copied ? '📋 학부모 고정 링크가 복사되었습니다!' : '링크 주소를 선택했습니다.');
+    }
+
+    function previewParentLinkUrl() {
+      const link = getParentLinksMap()[currentParentLinkStudentId];
+      if (!link || !link.token) return;
+      window.open(buildParentLinkUrl(link.token, true), '_blank');
+    }
+
+    async function toggleParentLinkActive() {
+      const student = getStudents().find(s => s.id === currentParentLinkStudentId);
+      const map = getParentLinksMap();
+      const link = student ? map[student.id] : null;
+      if (!student || !link) return;
+
+      const nextActive = !(link.is_active !== false);
+      const nowIso = new Date().toISOString();
+      const toggleBtn = document.getElementById('btn-toggle-parent-link');
+      if (toggleBtn) toggleBtn.disabled = true;
+
+      try {
+        if (supabaseClient && currentAuthUser) {
+          const { error } = await supabaseClient
+            .from(STORAGE_KEY_PARENT_LINKS)
+            .update({
+              is_active: nextActive,
+              revoked_at: nextActive ? null : nowIso,
+              updated_at: nowIso
+            })
+            .eq('token', link.token)
+            .eq('user_id', currentAuthUser.id);
+          if (error) throw error;
+        }
+        map[student.id] = {
+          ...link,
+          is_active: nextActive,
+          revoked_at: nextActive ? null : nowIso,
+          updated_at: nowIso
+        };
+        saveParentLinksMap(map);
+        renderParentLinkModal();
+        renderStudentsList();
+        showToast(nextActive ? '▶️ 학부모 링크를 다시 켰습니다.' : '⏸️ 학부모 링크를 껐습니다. 이제 열리지 않아요.');
+      } catch (err) {
+        console.error('학부모 링크 상태 변경 실패:', err);
+        alert('링크 상태를 바꾸지 못했어요. 인터넷 연결을 확인한 뒤 다시 시도해 주세요.');
+      } finally {
+        if (toggleBtn) toggleBtn.disabled = false;
+      }
+    }
+
+    async function reissueParentLink() {
+      const student = getStudents().find(s => s.id === currentParentLinkStudentId);
+      const map = getParentLinksMap();
+      const oldLink = student ? map[student.id] : null;
+      if (!student || !oldLink) return;
+
+      const ok = confirm(
+        `${student.name} 학생의 학부모 링크를 새로 발급할까요?\n\n` +
+        `새 링크를 만들면 이전에 보낸 링크는 즉시 열리지 않게 됩니다.`
+      );
+      if (!ok) return;
+
+      const btn = document.getElementById('btn-reissue-parent-link');
+      if (btn) btn.disabled = true;
+
+      const nowIso = new Date().toISOString();
+      const newToken = generateParentLinkToken();
+      const normalizedSid = String(fromCloudId(student.id) || student.id);
+
+      try {
+        if (supabaseClient && currentAuthUser) {
+          const uid = currentAuthUser.id;
+          const sidList = [normalizedSid, toCloudId(normalizedSid)];
+          const { error: delErr } = await supabaseClient
+            .from(STORAGE_KEY_PARENT_LINKS)
+            .delete()
+            .eq('user_id', uid)
+            .in('student_id', sidList);
+          if (delErr) throw delErr;
+
+          const { error: insErr } = await supabaseClient
+            .from(STORAGE_KEY_PARENT_LINKS)
+            .insert({
+              token: newToken,
+              user_id: uid,
+              student_id: normalizedSid,
+              is_active: true,
+              created_at: nowIso,
+              updated_at: nowIso
+            });
+          if (insErr) throw insErr;
+        }
+
+        map[student.id] = {
+          token: newToken,
+          student_id: normalizedSid,
+          is_active: true,
+          revoked_at: null,
+          created_at: nowIso,
+          updated_at: nowIso
+        };
+        saveParentLinksMap(map);
+        renderParentLinkModal();
+        renderStudentsList();
+        copyTextWithFallback(buildParentLinkUrl(newToken, false));
+        showToast('🔄 새 학부모 링크를 발급하고 복사했어요. 예전 링크는 즉시 차단되었습니다.');
+      } catch (err) {
+        console.error('학부모 링크 재발급 실패:', err);
+        alert('새 링크를 발급하지 못했어요. 인터넷 연결을 확인한 뒤 다시 시도해 주세요.');
+      } finally {
+        if (btn) btn.disabled = false;
+      }
+    }
+
+    // 학생별 고정 학부모 링크 전용 카카오톡 카드 공유 (기존 sendKakaoReportCard와 분리)
+    function sendKakaoParentLinkCard(studentId) {
+      const targetId = studentId || currentParentLinkStudentId;
+      const student = getStudents().find(s => s.id === targetId);
+      const link = student ? getParentLinksMap()[student.id] : null;
+      if (!student || !link || !link.token) {
+        showToast('먼저 학부모 고정 링크를 만들어 주세요.');
+        return;
+      }
+      if (link.is_active === false) {
+        alert('현재 링크가 꺼져 있습니다. [링크 다시 켜기]를 누른 뒤 공유해 주세요.');
+        return;
+      }
+
+      const isAdult = student.type === 'adult';
+      const totalPass = student.totalPass || 8;
+      const usedPass = student.usedPass || 0;
+      const remainPass = Math.max(0, totalPass - usedPass);
+      const shareUrl = buildParentLinkUrl(link.token, false);
+      const unifiedLink = { mobileWebUrl: shareUrl, webUrl: shareUrl };
+
+      const payload = {
+        objectType: 'feed',
+        content: {
+          title: isAdult
+            ? `🧚‍♀️ ${student.name}님 • 실시간 레슨 현황`
+            : `🧚‍♀️ ${student.name} 학생 • 실시간 레슨 현황`,
+          description: `[${student.subject || '음악'}] 남은 횟수 ${remainPass}/${totalPass}회\n언제든 열면 최신 출결·다음 수업·납부 안내가 바로 보여요.`,
+          imageUrl: 'https://znno-debug.github.io/practice-fairy/kakao-card.png',
+          imageWidth: 800,
+          imageHeight: 400,
+          link: unifiedLink
+        },
+        buttons: [
+          {
+            title: '실시간 레슨 현황 보기',
+            link: unifiedLink
+          }
+        ]
+      };
+
+      console.log('[KAKAO PARENT LINK PAYLOAD]', JSON.stringify(payload));
+
+      if (!ensureKakaoInitialized() || !window.Kakao || !window.Kakao.Share) {
+        alert('Kakao SDK가 아직 로드되지 않았습니다. 페이지를 새로고침한 뒤 다시 시도해 주세요.');
+        return;
+      }
+
+      try {
+        window.Kakao.Share.sendDefault(payload);
+        showToast('학부모 고정 링크 카톡 공유 창을 열었습니다! 💬');
+      } catch (kakaoErr) {
+        console.error('[Kakao.Share.sendDefault ParentLink Error]', kakaoErr);
+        alert('카카오톡 카드 공유 오류: ' + (kakaoErr?.message || String(kakaoErr)));
+      }
     }
 
     function showToast(msg) {
