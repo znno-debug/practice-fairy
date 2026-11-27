@@ -1,5 +1,5 @@
-// 연습요정 (Practice Fairy) Service Worker - v38.0.0 ('오늘' 날짜를 시연용 11/06 고정에서 실제 한국 날짜로 변경)
-const CACHE_NAME = 'fairy-cache-v38';
+// 연습요정 (Practice Fairy) Service Worker - v39.0.0 (선생님 프로필을 불러올 때 옛 'default' 행 대신 현재 계정 행 사용)
+const CACHE_NAME = 'fairy-cache-v39';
 const STATIC_ASSETS = [
   './',
   './index.html',

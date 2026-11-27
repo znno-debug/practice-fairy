@@ -3549,7 +3549,11 @@
         }
 
         if (resTeacher.data && resTeacher.data.length > 0) {
-          const { id, user_id, updated_at, ...profData } = resTeacher.data[0];
+          // 예전 'default' 행이 함께 남아 있을 수 있으므로, 이 계정 ID로 저장된 행을 먼저 쓰고 없으면 가장 최근 행을 쓴다.
+          // (순서 없는 data[0]을 쓰면 옛 예시 프로필이 뽑혀 다음 저장 때 실제 프로필을 덮어쓸 수 있음)
+          const teacherRow = resTeacher.data.find(r => r.id === uid) ||
+            [...resTeacher.data].sort((a, b) => (Date.parse(b.updated_at || '') || 0) - (Date.parse(a.updated_at || '') || 0))[0];
+          const { id, user_id, updated_at, ...profData } = teacherRow;
           localStorage.setItem(STORAGE_KEY_TEACHER, JSON.stringify(profData));
         }
         if (resStudents.data && resStudents.data.length > 0) {
