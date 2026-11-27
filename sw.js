@@ -1,5 +1,5 @@
-// 연습요정 (Practice Fairy) Service Worker - v36.0.0 (학부모 연결 1단계: 학생별 고정 학부모 링크 & 실시간 현황 RPC)
-const CACHE_NAME = 'fairy-cache-v36';
+// 연습요정 (Practice Fairy) Service Worker - v37.0.0 (클라우드 중복 ID 합치기로 동기화 실패 수정, 학부모 링크 생성 전 저장 확인)
+const CACHE_NAME = 'fairy-cache-v37';
 const STATIC_ASSETS = [
   './',
   './index.html',

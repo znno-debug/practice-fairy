@@ -1,6 +1,6 @@
 # CONTEXT — 연습요정 (Practice Fairy)
 
-> **최종 갱신**: 2026-11-27 · `sw.js` 캐시 `fairy-cache-v36`
+> **최종 갱신**: 2026-11-27 · `sw.js` 캐시 `fairy-cache-v37`
 > **한 줄 요약**: 음악 1:1 레슨 선생님용 출결·수강료·레슨노트 관리 + 수강생 연습일지 PWA. 학부모에게는 카카오톡 카드로 1:1 리포트(`share.html`)를 보냄.
 > **현재 단계**: 기능 시제품 완성, Supabase Auth 연동, GitHub Pages 배포 완료. 지금은 **카카오 공유 마무리와 모바일 다듬기** 단계.
 > 이 문서는 작업 시작 전에 가장 먼저 읽고, 작업이 끝나면 곧바로 갱신한다(→ `CLAUDE.md` / `GEMINI.md`).
@@ -15,7 +15,7 @@
 | Supabase 프로젝트 | `https://zpfcocrqvmrotuiwpkru.supabase.co` (Auth + PostgreSQL + JS SDK v2) | `index.html:1926` (`SUPABASE_URL`, `SUPABASE_ANON_KEY`) |
 | Supabase 테이블 (7개 + 공유 2개) | `fairy_teacher_profile_v1`, `fairy_students_v1`, `fairy_lessons_v1`, `fairy_notes_v1`, `fairy_practice_v1`, `fairy_questions_v1`, `fairy_sessions_v1`, `fairy_shared_reports_v1`, `fairy_parent_links_v1` | `supabase_schema.sql`, `index.html:1950~` (LocalStorage 키와 같은 이름) |
 | 카카오 개발자센터 | 앱 ID `1659300`, JS SDK `2.7.2`, `KAKAO_JS_KEY`는 `index.html:1933` | `index.html:25`, `:1933` |
-| PWA | `sw.js` (현재 `fairy-cache-v36`), `manifest.json`, `icons/`, 루트 `icon-512.png` | |
+| PWA | `sw.js` (현재 `fairy-cache-v37`), `manifest.json`, `icons/`, 루트 `icon-512.png` | |
 | 로컬 테스트 서버 | `python3 server.py` → `http://localhost:8080` (같은 Wi-Fi 기기용 IP 자동 표시) | `server.py` |
 | 기술 스택 | HTML5 + Vanilla JS + Tailwind CSS(CDN) + Supabase + Web Audio API(체크 효과음만) + Service Worker + LocalStorage | |
 
@@ -78,7 +78,7 @@
 - [x] **⑧ 가입 화면 2차 개선** (2026-11-25 완료, v31): 탭 제거 → 첫 화면은 카카오·Google '시작하기' + 이메일 로그인, 회원가입·비밀번호 찾기·인증은 뒤로 가기가 있는 하위 화면. 새 비밀번호 8자+영문+숫자, 확인 칸, 보기 버튼, 실시간 안내. 최근 로그인 방법 배지(`fairy_last_login_method_v1`).
 - [ ] **⑩ 학부모 연결: 링크 + 앱 이원 운영 (2026-11-27 방향 확정)**: 배경은 워킹맘 교수님 피드백("여러 수업의 남은 횟수·납부 시점을 엄마가 알 수 없고, 선생님도 물어보면 그제서야 셈"). GPS·QR 출석은 1:1 레슨에 맞지 않아 **하지 않기로 결정**(도착 ≠ 차감, 미성년자 위치정보 부담). 학생 가입보다 **학부모 가입**이 우선(보호자가 직접 동의 → 만 14세 미만 문제 해결). 앱스토어 앱 기준. 원칙: **데이터는 하나, 보는 창은 두 개**(링크=가입 없이 이 수업의 현재 상태 / 앱=여러 선생님 수업 한 화면 + 푸시 알림), 링크를 일부러 불편하게 만들지 않음, 링크에서 앱 설치 시 자동 연결.
   - [x] 0단계: 공유 리포트 보안 수정 (4장 6번) — **완료** (2026-11-27, v35)
-  - [ ] 1단계: 학생별 고정 학부모 링크 — 코드·SQL 구현 완료 (2026-11-27, v36, `docs/sql/2026-11-27_parent_links.sql`). 2026-11-27 운영 DB에 SQL 실행 완료(Success), 배포 완료. 남은 것: 실제 계정으로 링크를 만들어 실DB 연동 검증(출석 차감 실시간 반영·링크 끄기/재발급 차단).
+  - [ ] 1단계: 학생별 고정 학부모 링크 — 코드·SQL 구현 완료 (2026-11-27, v36, `docs/sql/2026-11-27_parent_links.sql`). 2026-11-27 운영 DB에 SQL 실행 완료(Success), 배포 완료. **실계정 테스트(11-27) 결과: 링크가 열리지 않음** — 원인은 기존 동기화 버그. 클라우드 학생·수업·노트에 옛 ID(`s1`)와 새 ID(`<uid8>_s1`)가 함께 있어, 저장 때 같은 ID가 한 번에 두 번 올라가 upsert가 매번 실패(21000 `ON CONFLICT DO UPDATE command cannot affect row a second time`). 그래서 새 학생이 클라우드에 없고 RPC는 null. (1)(2) 코드 수정 완료(v37): `dedupeCloudRowsByLocalId`(불러올 때 같은 항목은 최신 저장본 1개만), `dedupeRowsByKey`(업로드 직전 같은 ID 1개만), 링크 생성 전 동기화 실패 시 링크를 만들지 않고 안내. 남은 것: (3) 클라우드 옛 ID(접두어 없는) 중복 행 정리(운영 DB 변경, 승인 필요 — 정리 전까지 기존 학생의 학부모 화면은 RPC가 옛 줄을 고를 수 있음), (4) 어사이드 재테스트.
   - [ ] 2단계: 앱 포장(Capacitor 등 기존 HTML/JS 재사용) + Apple 로그인 + 유니버설 링크(앱 있으면 앱, 없으면 웹)
   - [ ] 3단계: 학부모 계정·아이 프로필·여러 선생님 수업 연결(읽기 전용 권한, 선생님이 공개 항목 선택)
   - [ ] 4단계: 푸시 알림(수업 완료·납부 미리 알림·보강), 선생님 카톡 공유와 중복 방지, 연결 해제
@@ -101,6 +101,8 @@
 
 | 날짜 | 내용 |
 | :--- | :--- |
+| 2026-11-27 | **클라우드 동기화 실패 수정**(11-20부터 있던 버그): 옛 ID와 새 ID가 같은 항목으로 합쳐져 upsert가 21000으로 매번 실패하던 문제. `pullAllFromSupabase`에서 `dedupeCloudRowsByLocalId`로 최신 저장본 1개만 남기고, `syncTableToSupabase`에서 `dedupeRowsByKey`로 같은 ID 중복 업로드 차단. `createParentLinkForCurrentStudent`는 사전 동기화 실패 시 링크를 만들지 않고 안내. 캐시 `v37` |
+| 2026-11-27 | 어사이드로 학부모 링크 실계정 테스트(localhost 탭, 로그인 계정). 테스트 학생 추가→링크 생성→출석→끄기/켜기→재발급→삭제까지 진행했으나 공유 화면은 모두 '열람할 수 없는 링크'. 원인: 클라우드 ID 중복으로 동기화 upsert 실패(11-20부터 있던 버그). 테스트 학생·링크는 삭제 완료, 기존 학생 데이터 변경 없음. 코드 변경 없음 |
 | 2026-11-27 | 어사이드로 운영 DB에 `2026-11-27_parent_links.sql` 실행(Success). 확인: `get_parent_student_status` 없는 토큰에 null 반환, `fairy_parent_links_v1` anon 직접 조회 거부(42501), 기존 `get_shared_report` 정상. v36 배포(푸시) |
 | 2026-11-27 | **학부모 연결 1단계(학생별 고정 학부모 링크) 구현**: (B)안 실시간 전용 RPC 채택. `fairy_parent_links_v1` 테이블(anon 차단, 3단계 확장용 `parent_user_id` 포함) + 화이트리스트 `get_parent_student_status(p_token)` RPC 및 `delete_my_account` 연동(`supabase_schema.sql`, `docs/sql/2026-11-27_parent_links.sql`). `index.html` 수강생 카드에 `[학부모 링크]` 관리 모달(생성·복사·`sendKakaoParentLinkCard` 카톡 카드 공유·켜기/끄기·재발급) 및 `deleteStudent` 삭제 연동 추가. `share.html?p=<token>` 실시간 현황 화면(남은 횟수·다음 수업·납부 강조/계좌 복사·최근 5대 출결·최근 레슨 노트·무효 링크 차단 안내) 구현. 캐시 `v36` |
 | 2026-11-27 | 어사이드로 운영 DB에 `2026-11-27_shared_report_lockdown.sql` 실행(Success). anon 목록 조회 차단·기존 링크 열림 확인 후 `share.html` 임시 폴백 제거, 캐시 `v35` |

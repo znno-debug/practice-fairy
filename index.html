@@ -3253,6 +3253,44 @@
       return str.startsWith(prefix) ? str.slice(prefix.length) : str;
     }
 
+    // 같은 항목이 클라우드에 옛 ID(s1)와 새 ID(<uid8>_s1)로 두 번 있으면 하나만 남긴다.
+    // 가장 최근에 저장된 줄을 쓰고, 저장 시각이 같으면 새 ID 줄을 쓴다. 처음 나온 순서는 유지한다.
+    function dedupeCloudRowsByLocalId(rows, idField = 'id') {
+      if (!Array.isArray(rows)) return [];
+      const prefix = currentAuthUser ? currentAuthUser.id.slice(0, 8) + '_' : '';
+      const order = [];
+      const best = new Map();
+      rows.forEach(row => {
+        const rawId = String(row?.[idField] ?? '');
+        const localId = String(fromCloudId(rawId) ?? '');
+        const prev = best.get(localId);
+        if (!prev) {
+          order.push(localId);
+          best.set(localId, row);
+          return;
+        }
+        const tPrev = Date.parse(prev.updated_at || '') || 0;
+        const tCur = Date.parse(row.updated_at || '') || 0;
+        const curIsNewId = !!prefix && rawId.startsWith(prefix);
+        if (tCur > tPrev || (tCur === tPrev && curIsNewId)) best.set(localId, row);
+      });
+      if (order.length < rows.length) {
+        console.warn(`클라우드 중복 항목 ${rows.length - order.length}건을 하나로 합쳤습니다 (${idField}).`);
+      }
+      return order.map(id => best.get(id));
+    }
+
+    // 업로드 직전 안전장치: 같은 클라우드 ID가 한 번에 두 번 올라가면 Supabase upsert 전체가 실패(21000)하므로 첫 번째만 남긴다.
+    function dedupeRowsByKey(rows, keyField = 'id') {
+      const seen = new Set();
+      return rows.filter(row => {
+        const key = String(row?.[keyField] ?? '');
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
+    }
+
     function pickTableColumns(tableKey, obj) {
       const allowed = SUPABASE_TABLE_COLUMNS[tableKey];
       if (!allowed || !obj || typeof obj !== 'object') return obj;
@@ -3351,34 +3389,34 @@
           const { error } = await supabaseClient.from(STORAGE_KEY_TEACHER).upsert(row);
           if (error) throw error;
         } else if (storageKey === STORAGE_KEY_PRACTICE) {
-          const rows = Object.entries(data || {}).map(([studentId, items]) => ({
+          const rows = dedupeRowsByKey(Object.entries(data || {}).map(([studentId, items]) => ({
             studentId: toCloudId(studentId),
             user_id: uid,
             items: Array.isArray(items) ? items : [],
             updated_at: nowIso
-          }));
+          })), 'studentId');
           if (rows.length > 0) {
             const { error } = await supabaseClient.from(STORAGE_KEY_PRACTICE).upsert(rows);
             if (error) throw error;
           }
         } else if (storageKey === STORAGE_KEY_SESSIONS) {
-          const rows = Object.entries(data || {}).map(([studentId, sessions]) => ({
+          const rows = dedupeRowsByKey(Object.entries(data || {}).map(([studentId, sessions]) => ({
             studentId: toCloudId(studentId),
             user_id: uid,
             sessions: Array.isArray(sessions) ? sessions : [],
             updated_at: nowIso
-          }));
+          })), 'studentId');
           if (rows.length > 0) {
             const { error } = await supabaseClient.from(STORAGE_KEY_SESSIONS).upsert(rows);
             if (error) throw error;
           }
         } else if (Array.isArray(data)) {
-          const rows = data.map(item => pickTableColumns(storageKey, {
+          const rows = dedupeRowsByKey(data.map(item => pickTableColumns(storageKey, {
             ...item,
             id: toCloudId(item.id),
             user_id: uid,
             updated_at: nowIso
-          }));
+          })), 'id');
           if (rows.length > 0) {
             const { error } = await supabaseClient.from(storageKey).upsert(rows);
             if (error) throw error;
@@ -3474,21 +3512,21 @@
           localStorage.setItem(STORAGE_KEY_TEACHER, JSON.stringify(profData));
         }
         if (resStudents.data && resStudents.data.length > 0) {
-          const cleanStudents = resStudents.data.map(({ user_id, updated_at, ...rest }) => ({
+          const cleanStudents = dedupeCloudRowsByLocalId(resStudents.data).map(({ user_id, updated_at, ...rest }) => ({
             ...rest,
             id: fromCloudId(rest.id)
           }));
           localStorage.setItem(STORAGE_KEY_STUDENTS, JSON.stringify(cleanStudents));
         }
         if (resLessons.data && resLessons.data.length > 0) {
-          const cleanLessons = resLessons.data.map(({ user_id, updated_at, ...rest }) => ({
+          const cleanLessons = dedupeCloudRowsByLocalId(resLessons.data).map(({ user_id, updated_at, ...rest }) => ({
             ...rest,
             id: fromCloudId(rest.id)
           }));
           localStorage.setItem(STORAGE_KEY_LESSONS, JSON.stringify(cleanLessons));
         }
         if (resNotes.data && resNotes.data.length > 0) {
-          const cleanNotes = resNotes.data.map(({ user_id, updated_at, ...rest }) => ({
+          const cleanNotes = dedupeCloudRowsByLocalId(resNotes.data).map(({ user_id, updated_at, ...rest }) => ({
             ...rest,
             id: fromCloudId(rest.id)
           }));
@@ -3496,13 +3534,13 @@
         }
         if (resPractice.data && resPractice.data.length > 0) {
           const practiceMap = {};
-          resPractice.data.forEach(row => {
+          dedupeCloudRowsByLocalId(resPractice.data, 'studentId').forEach(row => {
             practiceMap[fromCloudId(row.studentId)] = row.items || [];
           });
           localStorage.setItem(STORAGE_KEY_PRACTICE, JSON.stringify(practiceMap));
         }
         if (resQuestions.data && resQuestions.data.length > 0) {
-          const cleanQuestions = resQuestions.data.map(({ user_id, updated_at, ...rest }) => ({
+          const cleanQuestions = dedupeCloudRowsByLocalId(resQuestions.data).map(({ user_id, updated_at, ...rest }) => ({
             ...rest,
             id: fromCloudId(rest.id)
           }));
@@ -3510,7 +3548,7 @@
         }
         if (resSessions.data && resSessions.data.length > 0) {
           const sessionsMap = {};
-          resSessions.data.forEach(row => {
+          dedupeCloudRowsByLocalId(resSessions.data, 'studentId').forEach(row => {
             sessionsMap[fromCloudId(row.studentId)] = row.sessions || [];
           });
           localStorage.setItem(STORAGE_KEY_SESSIONS, JSON.stringify(sessionsMap));
@@ -5871,12 +5909,19 @@
         if (supabaseClient && currentAuthUser) {
           const uid = currentAuthUser.id;
           // 최신 학생·수업·노트·프로필이 클라우드에 반영되어 있도록 먼저 동기화
-          await Promise.all([
+          const syncResults = await Promise.all([
             syncTableToSupabase(STORAGE_KEY_STUDENTS, getStudents(), true),
             syncTableToSupabase(STORAGE_KEY_LESSONS, getLessons(), true),
             syncTableToSupabase(STORAGE_KEY_NOTES, getNotes(), true),
             syncTableToSupabase(STORAGE_KEY_TEACHER, getTeacherProfile(), true)
           ]);
+          // 학생 정보가 클라우드에 없으면 학부모 화면이 열리지 않으므로, 저장 실패 시 링크를 만들지 않는다.
+          if (!syncResults.every(Boolean)) {
+            setCloudSyncBadge('error');
+            const syncErr = new Error('cloud-sync-failed');
+            syncErr.isSyncFailure = true;
+            throw syncErr;
+          }
           const { error } = await supabaseClient.from(STORAGE_KEY_PARENT_LINKS).insert({
             token,
             user_id: uid,
@@ -5909,9 +5954,11 @@
         showToast('🔗 학부모 고정 링크를 만들고 클립보드에 복사했어요!');
       } catch (err) {
         console.error('학부모 링크 생성 실패:', err);
-        const msg = /relation|does not exist|schema cache/i.test(err?.message || '')
-          ? 'DB 설정(docs/sql/2026-11-27_parent_links.sql)을 Supabase에서 먼저 실행해 주세요.'
-          : '링크 생성 중 오류가 발생했어요. 인터넷 연결을 확인해 주세요.';
+        const msg = err?.isSyncFailure
+          ? '수강생 정보를 클라우드에 저장하지 못해서 링크를 만들지 않았어요.\n화면 위 동기화 배지를 눌러 다시 동기화한 뒤 시도해 주세요.'
+          : /relation|does not exist|schema cache/i.test(err?.message || '')
+            ? 'DB 설정(docs/sql/2026-11-27_parent_links.sql)을 Supabase에서 먼저 실행해 주세요.'
+            : '링크 생성 중 오류가 발생했어요. 인터넷 연결을 확인해 주세요.';
         alert(msg);
       } finally {
         if (btn) btn.disabled = false;
