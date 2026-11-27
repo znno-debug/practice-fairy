@@ -1,5 +1,5 @@
-// 연습요정 (Practice Fairy) Service Worker - v37.0.0 (클라우드 중복 ID 합치기로 동기화 실패 수정, 학부모 링크 생성 전 저장 확인)
-const CACHE_NAME = 'fairy-cache-v37';
+// 연습요정 (Practice Fairy) Service Worker - v38.0.0 ('오늘' 날짜를 시연용 11/06 고정에서 실제 한국 날짜로 변경)
+const CACHE_NAME = 'fairy-cache-v38';
 const STATIC_ASSETS = [
   './',
   './index.html',

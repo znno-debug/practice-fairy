@@ -1,6 +1,6 @@
 # CONTEXT — 연습요정 (Practice Fairy)
 
-> **최종 갱신**: 2026-11-27 · `sw.js` 캐시 `fairy-cache-v37`
+> **최종 갱신**: 2026-11-27 · `sw.js` 캐시 `fairy-cache-v38`
 > **한 줄 요약**: 음악 1:1 레슨 선생님용 출결·수강료·레슨노트 관리 + 수강생 연습일지 PWA. 학부모에게는 카카오톡 카드로 1:1 리포트(`share.html`)를 보냄.
 > **현재 단계**: 기능 시제품 완성, Supabase Auth 연동, GitHub Pages 배포 완료. 지금은 **카카오 공유 마무리와 모바일 다듬기** 단계.
 > 이 문서는 작업 시작 전에 가장 먼저 읽고, 작업이 끝나면 곧바로 갱신한다(→ `CLAUDE.md` / `GEMINI.md`).
@@ -15,7 +15,7 @@
 | Supabase 프로젝트 | `https://zpfcocrqvmrotuiwpkru.supabase.co` (Auth + PostgreSQL + JS SDK v2) | `index.html:1926` (`SUPABASE_URL`, `SUPABASE_ANON_KEY`) |
 | Supabase 테이블 (7개 + 공유 2개) | `fairy_teacher_profile_v1`, `fairy_students_v1`, `fairy_lessons_v1`, `fairy_notes_v1`, `fairy_practice_v1`, `fairy_questions_v1`, `fairy_sessions_v1`, `fairy_shared_reports_v1`, `fairy_parent_links_v1` | `supabase_schema.sql`, `index.html:1950~` (LocalStorage 키와 같은 이름) |
 | 카카오 개발자센터 | 앱 ID `1659300`, JS SDK `2.7.2`, `KAKAO_JS_KEY`는 `index.html:1933` | `index.html:25`, `:1933` |
-| PWA | `sw.js` (현재 `fairy-cache-v37`), `manifest.json`, `icons/`, 루트 `icon-512.png` | |
+| PWA | `sw.js` (현재 `fairy-cache-v38`), `manifest.json`, `icons/`, 루트 `icon-512.png` | |
 | 로컬 테스트 서버 | `python3 server.py` → `http://localhost:8080` (같은 Wi-Fi 기기용 IP 자동 표시) | `server.py` |
 | 기술 스택 | HTML5 + Vanilla JS + Tailwind CSS(CDN) + Supabase + Web Audio API(체크 효과음만) + Service Worker + LocalStorage | |
 
@@ -83,6 +83,11 @@
   - [ ] 3단계: 학부모 계정·아이 프로필·여러 선생님 수업 연결(읽기 전용 권한, 선생님이 공개 항목 선택)
   - [ ] 4단계: 푸시 알림(수업 완료·납부 미리 알림·보강), 선생님 카톡 공유와 중복 방지, 연결 해제
 - [ ] (iOS 출시 시) Apple 로그인: `OAUTH_PROVIDERS`의 `apple` 줄 주석 해제 + Apple Developer/Supabase 설정.
+- [ ] **⑪ '오늘'을 실제 날짜로 바꾼 뒤 남은 날짜 관련 결정 (2026-11-27, v38)**:
+  - [ ] 학생 마이 연습실 '오늘 총 누적 연습량'·타임라인이 날짜 구분 없이 **모든 날의 연습 기록을 합침**(`renderPracticeSessionsTimeline`). 예전엔 모든 기록이 11/06이라 티가 안 났음. 오늘 것만 보일지, 날짜별로 묶어 보일지 기획 결정 필요.
+  - [ ] 학부모 화면 '다음 수업'(`get_parent_student_status` RPC)은 날짜와 상관없이 상태가 `예정`인 가장 이른 수업을 고름 → 지난 날짜에 처리 안 한 `예정` 수업이 '다음 수업'으로 보일 수 있음(SQL 수정 시 운영 DB 실행 필요).
+  - [ ] 예시 데이터는 2026-11-06 장면으로 고정(`DEMO_SEED_DATE`). 12월 이후 가입한 새 계정은 캘린더 첫 화면(이번 달)과 '오늘 예정 레슨'에 예시 수업이 안 보이고, 지난달로 넘겨야 보임. 첫인상이 아쉬우면 가입일 기준으로 예시 날짜를 옮기는 방안 검토.
+  - [ ] v38 이전에 남긴 질문 시각·노트 작성 시각(`createdAt`)은 UTC로 저장돼 9시간 이르게 보임(새로 남기는 것부터 한국 시간). 필요하면 기존 값 보정.
 
 - [x] **앱스토어 심사 대비 회원 탈퇴(`delete_my_account`) & 개인정보처리방침(`privacy.html`) 추가**: `supabase_schema.sql`에 `delete_my_account()` RPC 추가, `index.html` 로그인/프로필 모달 연결, 캐시 `v22`. (2026-11-25 실사이트 탈퇴 테스트로 RPC 동작 확인)
 
@@ -101,6 +106,7 @@
 
 | 날짜 | 내용 |
 | :--- | :--- |
+| 2026-11-27 | **'오늘' 날짜를 실제 한국 날짜로 변경**: 예전 시연용 고정값(`todayStr = '2026-11-06'`, `new Date(2026, 10, 6)`)을 `getKoreaTodayStr()`(Asia/Seoul 기준, `toISOString()` UTC 밀림 방지, 옛 브라우저는 기기 시간)로 교체. 캘린더 첫 화면·[오늘] 버튼·대시보드 '오늘 예정 레슨'/'이번 달 수업'·새 노트 기본 날짜·연습 기록 날짜가 실제 오늘 기준. 앱을 켜 둔 채 자정이 지나면 화면 복귀 시 '오늘'을 새로 맞춤(`refreshTodayIfDateChanged`, `visibilitychange`). 질문 시각·노트 작성 시각도 UTC → 한국 시간(`getKoreaNowStamp`). 예시(시드) 데이터는 `DEMO_SEED_DATE = '2026-11-06'`으로 고정해 그대로 유지(기기·가입일마다 예시 날짜가 달라져 동기화 충돌이 나지 않게). 날짜가 6일로 고정돼 숨어 있던 월 이동 버그(31일에서 다음 달 누르면 한 달 건너뜀) 수정. 로컬 확인: 캘린더 11/27로 열림·[오늘] 버튼·월 이동(1/31→2월, 3/31→2월)·주간 보기·자정 경과 흉내 모두 정상, LA 시간대 기기에서도 한국 날짜 계산 확인. 캐시 `v38` |
 | 2026-11-27 | 어사이드로 v37 재테스트(localhost 탭): 학생 목록 8→4명 정상, 저장 후 `☁️ 동기화됨`, 링크 생성→열람(8회)→출석 후 7회·출석 표시→끄기 차단→켜기 열림→재발급(옛 링크 차단·새 링크 열림)→학생 삭제 후 차단까지 모두 성공. 21000 오류 없음. 테스트 데이터 삭제, 기존 학생 횟수 변화 없음. 참고: 앱 '오늘'이 `todayStr = '2026-11-06'`·`new Date(2026, 10, 6)`으로 고정됨(예전 시연용 값) |
 | 2026-11-27 | **클라우드 동기화 실패 수정**(11-20부터 있던 버그): 옛 ID와 새 ID가 같은 항목으로 합쳐져 upsert가 21000으로 매번 실패하던 문제. `pullAllFromSupabase`에서 `dedupeCloudRowsByLocalId`로 최신 저장본 1개만 남기고, `syncTableToSupabase`에서 `dedupeRowsByKey`로 같은 ID 중복 업로드 차단. `createParentLinkForCurrentStudent`는 사전 동기화 실패 시 링크를 만들지 않고 안내. 캐시 `v37` |
 | 2026-11-27 | 어사이드로 학부모 링크 실계정 테스트(localhost 탭, 로그인 계정). 테스트 학생 추가→링크 생성→출석→끄기/켜기→재발급→삭제까지 진행했으나 공유 화면은 모두 '열람할 수 없는 링크'. 원인: 클라우드 ID 중복으로 동기화 upsert 실패(11-20부터 있던 버그). 테스트 학생·링크는 삭제 완료, 기존 학생 데이터 변경 없음. 코드 변경 없음 |

@@ -2103,8 +2103,49 @@
     const STORAGE_KEY_SESSIONS = 'fairy_sessions_v1';
     const STORAGE_KEY_PARENT_LINKS = 'fairy_parent_links_v1';
 
-    // 기준 오늘 날짜 (2026-11-06 금요일)
-    const todayStr = '2026-11-06';
+    // ================= 📅 오늘 날짜 (한국 시간 기준) =================
+    // toISOString()은 UTC 기준이라 한국 오전 0~9시에는 하루 전 날짜가 나오므로 쓰지 않는다.
+    function getKoreaNowParts() {
+      const now = new Date();
+      try {
+        const parts = new Intl.DateTimeFormat('en-CA', {
+          timeZone: 'Asia/Seoul', year: 'numeric', month: '2-digit', day: '2-digit',
+          hour: '2-digit', minute: '2-digit', hourCycle: 'h23'
+        }).formatToParts(now);
+        const get = type => (parts.find(p => p.type === type) || {}).value;
+        const y = get('year'), m = get('month'), d = get('day');
+        let hh = get('hour');
+        const mm = get('minute');
+        if (hh === '24') hh = '00'; // 일부 옛 Safari는 자정을 24시로 표기
+        if (y && m && d && hh && mm) return { y, m, d, hh, mm };
+      } catch (e) { /* 시간대 기능이 없는 옛 브라우저는 아래 기기 시간으로 대체 */ }
+      const pad = n => String(n).padStart(2, '0');
+      return {
+        y: String(now.getFullYear()), m: pad(now.getMonth() + 1), d: pad(now.getDate()),
+        hh: pad(now.getHours()), mm: pad(now.getMinutes())
+      };
+    }
+    function getKoreaTodayStr() {
+      const p = getKoreaNowParts();
+      return `${p.y}-${p.m}-${p.d}`;
+    }
+    // 질문·노트 작성 시각 표기용 'YYYY-MM-DD HH:mm' (한국 시간)
+    function getKoreaNowStamp() {
+      const p = getKoreaNowParts();
+      return `${p.y}-${p.m}-${p.d} ${p.hh}:${p.mm}`;
+    }
+    // 'YYYY-MM-DD' → 그날 0시의 Date (캘린더 계산용)
+    function dateFromYmd(str) {
+      const [y, m, d] = String(str).split('-').map(Number);
+      return new Date(y, m - 1, d);
+    }
+
+    // 실제 오늘 날짜. 앱을 켜 둔 채 날짜가 바뀌면 refreshTodayIfDateChanged()가 새로 맞춘다.
+    let todayStr = getKoreaTodayStr();
+
+    // 예시(시드) 데이터의 기준일. 새 계정에 들어가는 예시 수업·노트·연습 기록은
+    // 실제 오늘과 상관없이 늘 이 날짜의 한 장면으로 고정한다(기기마다 날짜가 달라지지 않게).
+    const DEMO_SEED_DATE = '2026-11-06';
 
     // 기본 선생님 프로필
     const defaultTeacherProfile = {
@@ -2151,7 +2192,7 @@
       's1': [
         {
           id: 'sess_1',
-          date: todayStr,
+          date: DEMO_SEED_DATE,
           startTime: '16:00',
           endTime: '16:20',
           durationMinutes: 20,
@@ -2160,7 +2201,7 @@
         },
         {
           id: 'sess_2',
-          date: todayStr,
+          date: DEMO_SEED_DATE,
           startTime: '16:25',
           endTime: '16:50',
           durationMinutes: 25,
@@ -2169,7 +2210,7 @@
         },
         {
           id: 'sess_3',
-          date: todayStr,
+          date: DEMO_SEED_DATE,
           startTime: '17:00',
           endTime: '17:15',
           durationMinutes: 15,
@@ -2180,7 +2221,7 @@
       's2': [
         {
           id: 'sess_4',
-          date: todayStr,
+          date: DEMO_SEED_DATE,
           startTime: '17:30',
           endTime: '18:00',
           durationMinutes: 30,
@@ -2191,7 +2232,7 @@
       's4': [
         {
           id: 'sess_adult_1',
-          date: todayStr,
+          date: DEMO_SEED_DATE,
           startTime: '07:30',
           endTime: '08:00',
           durationMinutes: 30,
@@ -2210,10 +2251,10 @@
     ];
 
     const defaultLessons = [
-      { id: 'l1', studentId: 's1', date: todayStr, time: '15:30', type: '정규', status: '출석', sessionNum: 5 },
-      { id: 'l2', studentId: 's2', date: todayStr, time: '16:30', type: '정규', status: '결석', sessionNum: 7 },
-      { id: 'l3', studentId: 's3', date: todayStr, time: '17:30', type: '보강', status: '보강', sessionNum: 3 },
-      { id: 'l4', studentId: 's4', date: todayStr, time: '18:30', type: '정규', status: '기타: 회사 야근', sessionNum: 2 },
+      { id: 'l1', studentId: 's1', date: DEMO_SEED_DATE, time: '15:30', type: '정규', status: '출석', sessionNum: 5 },
+      { id: 'l2', studentId: 's2', date: DEMO_SEED_DATE, time: '16:30', type: '정규', status: '결석', sessionNum: 7 },
+      { id: 'l3', studentId: 's3', date: DEMO_SEED_DATE, time: '17:30', type: '보강', status: '보강', sessionNum: 3 },
+      { id: 'l4', studentId: 's4', date: DEMO_SEED_DATE, time: '18:30', type: '정규', status: '기타: 회사 야근', sessionNum: 2 },
       { id: 'l5', studentId: 's1', date: '2026-11-04', time: '15:30', type: '정규', status: '출석', sessionNum: 4 },
       { id: 'l6', studentId: 's2', date: '2026-11-02', time: '16:30', type: '정규', status: '스킵', sessionNum: 6 },
     ];
@@ -2225,7 +2266,7 @@
         studentId: 's1',
         studentName: '이지우',
         subject: '피아노',
-        date: todayStr,
+        date: DEMO_SEED_DATE,
         sessionNum: 5,
         totalPass: 8,
         piece: '모차르트 소나타 K.545 1악장 (32마디까지)',
@@ -4251,9 +4292,26 @@
     }
 
     // 캘린더 상태 변수
-    let currentDate = new Date(2026, 10, 6); // 2026년 11월 6일 기준
+    let currentDate = dateFromYmd(todayStr); // 실제 오늘(한국 시간)에서 시작
     let selectedDateStr = todayStr;
     let calendarViewMode = localStorage.getItem('fairy_calendar_view_mode') || 'month'; // 'month' (월간) | 'week' (주간)
+
+    // 앱을 켜 둔 채 자정이 지나면(밤에 열어 둔 앱을 다음 날 다시 볼 때) '오늘'을 새 날짜로 맞춘다.
+    function refreshTodayIfDateChanged() {
+      const newToday = getKoreaTodayStr();
+      if (newToday === todayStr) return;
+      const wasOnToday = selectedDateStr === todayStr;
+      todayStr = newToday;
+      if (wasOnToday) {
+        selectedDateStr = todayStr;
+        currentDate = dateFromYmd(todayStr);
+      }
+      renderCalendar();
+      renderDashboardStats();
+    }
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') refreshTodayIfDateChanged();
+    });
 
     // 탭 전환
     function switchTab(tab) {
@@ -4319,7 +4377,12 @@
 
     function navigateCalendar(delta) {
       if (calendarViewMode === 'month') {
+        // 31일에서 다음 달로 넘길 때 달을 건너뛰지 않도록(1/31 → 3/3) 그 달의 마지막 날로 맞춘다.
+        const day = currentDate.getDate();
+        currentDate.setDate(1);
         currentDate.setMonth(currentDate.getMonth() + delta);
+        const lastDay = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0).getDate();
+        currentDate.setDate(Math.min(day, lastDay));
       } else {
         currentDate.setDate(currentDate.getDate() + (delta * 7));
       }
@@ -4331,7 +4394,8 @@
     }
 
     function goToToday() {
-      currentDate = new Date(2026, 10, 6);
+      refreshTodayIfDateChanged();
+      currentDate = dateFromYmd(todayStr);
       selectedDateStr = todayStr;
       renderCalendar();
     }
@@ -5321,7 +5385,7 @@
         homework,
         parentMsg,
         youtubeUrl,
-        createdAt: new Date().toISOString().replace('T', ' ').substring(0, 16)
+        createdAt: getKoreaNowStamp()
       };
 
       notes.unshift(newNote);
@@ -6474,7 +6538,7 @@
 
       list.push({
         id: 'sess_' + Date.now(),
-        date: todayStr,
+        date: getKoreaTodayStr(), // 저장하는 순간의 실제 날짜
         startTime,
         endTime,
         durationMinutes: duration,
@@ -6567,7 +6631,7 @@
 
       list.push({
         id: 'sess_' + Date.now(),
-        date: todayStr,
+        date: getKoreaTodayStr(), // 저장하는 순간의 실제 날짜
         startTime: liveTimerStartStr,
         endTime: endStr,
         durationMinutes,
@@ -6671,7 +6735,7 @@
         studentId: currentPracticeStudentId,
         text,
         category: selectedQuestionCat,
-        date: new Date().toISOString().replace('T', ' ').substring(0, 16),
+        date: getKoreaNowStamp(),
         answered: false
       });
 
