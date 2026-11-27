@@ -743,7 +743,7 @@
         </div>
       </div>
 
-      <!-- 메인 2단 그리드 (체크리스트 & 질문 vs 메트로놈 & 칭찬뱃지) -->
+      <!-- 메인 2단 그리드 (체크리스트 & 질문 vs 타임라인 & 칭찬뱃지) -->
       <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
 
         <!-- 왼쪽 7 cols: 연습 체크리스트 & 질문 보관함 -->
@@ -834,7 +834,7 @@
 
         </div>
 
-        <!-- 오른쪽 5 cols: 타임라인 & 메트로놈 & 칭찬 보관함 -->
+        <!-- 오른쪽 5 cols: 타임라인 & 칭찬 보관함 -->
         <div class="lg:col-span-5 space-y-6">
 
           <!-- 3. 오늘 누적 연습 세션 타임라인 (시간대별 나만의 비밀 연습 피드) -->
@@ -927,81 +927,7 @@
             </div>
           </div>
 
-          <!-- 4. 스마트 멀티박자 메트로놈 (2/4, 3/4, 4/4, 6/8 박자 지원 & 접기 지원) -->
-          <div class="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-sm space-y-3">
-            <div class="flex items-center justify-between pb-2 border-b border-slate-100">
-              <div class="flex items-center space-x-2">
-                <span class="text-lg">🎵</span>
-                <div>
-                  <h3 class="text-base font-bold text-slate-900">정밀 멀티박자 메트로놈</h3>
-                  <p class="text-xs text-slate-500">4/4박자 및 6/8박자 첫박 강세 지원</p>
-                </div>
-              </div>
-              <!-- 접기/펼치기 토글 버튼 -->
-              <button onclick="toggleMetronomeCollapse()" id="metro-collapse-btn"
-                class="text-xs text-slate-400 hover:text-slate-700 flex items-center space-x-1">
-                <span id="metro-collapse-text">접기</span>
-                <span id="metro-collapse-icon">▲</span>
-              </button>
-            </div>
-
-            <!-- 메트로놈 바디 (접기 가능 영역) -->
-            <div id="metro-body-content" class="space-y-3.5">
-
-              <!-- 박자 선택 탭 (2/4, 3/4, 4/4, 6/8) -->
-              <div class="flex items-center justify-between bg-slate-100 p-1 rounded-xl text-xs font-bold">
-                <button type="button" onclick="setTimeSignature(2, 4)" id="ts-btn-2-4"
-                  class="ts-btn flex-1 py-1 rounded-lg text-slate-600 transition">2/4박</button>
-                <button type="button" onclick="setTimeSignature(3, 4)" id="ts-btn-3-4"
-                  class="ts-btn flex-1 py-1 rounded-lg text-slate-600 transition">3/4박</button>
-                <button type="button" onclick="setTimeSignature(4, 4)" id="ts-btn-4-4"
-                  class="ts-btn flex-1 py-1 rounded-lg bg-white text-purple-700 shadow-xs transition">4/4박</button>
-                <button type="button" onclick="setTimeSignature(6, 8)" id="ts-btn-6-8"
-                  class="ts-btn flex-1 py-1 rounded-lg text-slate-600 transition">6/8박</button>
-              </div>
-
-              <!-- 비트 인디케이터 라이트 (박자 시각화) -->
-              <div class="flex items-center justify-center space-x-2 py-1.5" id="metro-beat-lights">
-                <!-- JS로 박자별 라이트 동적 생성 -->
-              </div>
-
-              <!-- 템포 표시 및 슬라이더 -->
-              <div class="p-4 bg-slate-50 rounded-xl border border-slate-200 text-center space-y-3">
-                <div class="flex items-baseline justify-center space-x-1">
-                  <span class="text-4xl font-black text-slate-900 font-mono" id="metro-bpm-val">84</span>
-                  <span class="text-xs font-bold text-slate-500">BPM</span>
-                  <span class="text-xs text-purple-600 font-semibold ml-2" id="metro-tempo-term">Andante</span>
-                </div>
-
-                <input type="range" id="metro-slider" min="40" max="208" value="84" oninput="changeBpm(this.value)"
-                  class="w-full accent-purple-600 cursor-pointer">
-
-                <div class="flex items-center justify-center space-x-2">
-                  <button onclick="changeBpmBy(-5)"
-                    class="px-2.5 py-1 rounded-lg bg-white border border-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-100">-5</button>
-                  <button onclick="changeBpmBy(-1)"
-                    class="px-2.5 py-1 rounded-lg bg-white border border-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-100">-1</button>
-                  <button onclick="changeBpmBy(1)"
-                    class="px-2.5 py-1 rounded-lg bg-white border border-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-100">+1</button>
-                  <button onclick="changeBpmBy(5)"
-                    class="px-2.5 py-1 rounded-lg bg-white border border-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-100">+5</button>
-                </div>
-
-                <button onclick="toggleMetronome()" id="metro-play-btn"
-                  class="w-full py-2.5 rounded-xl font-bold text-xs bg-purple-600 hover:bg-purple-700 text-white shadow-md shadow-purple-600/20 transition flex items-center justify-center space-x-2">
-                  <span id="metro-btn-icon">▶</span>
-                  <span id="metro-btn-text">메트로놈 시작</span>
-                </button>
-              </div>
-
-              <div class="flex items-center justify-between text-[11px] text-slate-400 px-1">
-                <span>첫 박 강세(Accent) 적용됨</span>
-                <span>💡 별도 어플 사용 시 상단 '접기' 가능</span>
-              </div>
-            </div>
-          </div>
-
-          <!-- 5. 내 칭찬 뱃지 보관함 (Trophy Collection) -->
+          <!-- 4. 내 칭찬 뱃지 보관함 (Trophy Collection) -->
           <div class="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-sm space-y-3">
             <div class="flex items-center justify-between pb-2 border-b border-slate-100">
               <h3 class="text-sm font-bold text-slate-900 flex items-center space-x-1">
@@ -4975,7 +4901,7 @@
             supabaseClient.from(STORAGE_KEY_PRACTICE).delete().eq('user_id', uid).in('studentId', sidList),
             supabaseClient.from(STORAGE_KEY_SESSIONS).delete().eq('user_id', uid).in('studentId', sidList),
             noteIds.length
-              ? supabaseClient.from(SHARED_REPORT_TABLE).delete().eq('user_id', uid).in('id', noteIds.flatMap(id => [id, toCloudId(id)]))
+              ? supabaseClient.from(SHARED_REPORT_TABLE).delete().eq('user_id', uid).in('id', noteIds.flatMap(id => [id, toCloudId(id), toShareReportId(id)]))
               : Promise.resolve({ error: null })
           ]);
           const failed = results.find(r => r.error);
@@ -5320,7 +5246,73 @@
       const teacher = getTeacherProfile();
       const resolvedId = String((note && note.id) || targetId || 'n1');
       const cloudId = String(toCloudId(resolvedId) || resolvedId);
-      return { targetId, note, student, teacher, resolvedId, cloudId };
+      const shareId = toShareReportId(resolvedId);
+      return { targetId, note, student, teacher, resolvedId, cloudId, shareId };
+    }
+
+    // 학부모 링크 id (2026-11-27 보안 수정): 노트 id만으로는 추측할 수 없도록
+    // 선생님 계정의 전체 고유 ID(공개되지 않음)와 노트 id를 SHA-256으로 섞어 만든다.
+    // 같은 노트는 어느 기기에서 공유해도 같은 링크가 나오고, 다른 노트 링크는 유추할 수 없다.
+    function getShareSecret() {
+      if (currentAuthUser && currentAuthUser.id) return currentAuthUser.id;
+      const key = 'fairy_share_device_secret_v1';
+      let secret = '';
+      try { secret = localStorage.getItem(key) || ''; } catch (e) { }
+      if (!secret) {
+        const bytes = new Uint8Array(16);
+        (window.crypto || window.msCrypto).getRandomValues(bytes);
+        secret = Array.from(bytes, b => b.toString(16).padStart(2, '0')).join('');
+        try { localStorage.setItem(key, secret); } catch (e) { }
+      }
+      return secret;
+    }
+
+    function toShareReportId(localNoteId) {
+      const base = String(fromCloudId(localNoteId) || localNoteId || '');
+      return 'r_' + sha256Hex(getShareSecret() + '|' + base).slice(0, 32);
+    }
+
+    // 동기식 SHA-256 (링크 주소를 바로 만들어야 해서 crypto.subtle(비동기) 대신 사용)
+    function sha256Hex(str) {
+      const K = [0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5, 0x3956c25b, 0x59f111f1, 0x923f82a4, 0xab1c5ed5,
+        0xd807aa98, 0x12835b01, 0x243185be, 0x550c7dc3, 0x72be5d74, 0x80deb1fe, 0x9bdc06a7, 0xc19bf174,
+        0xe49b69c1, 0xefbe4786, 0x0fc19dc6, 0x240ca1cc, 0x2de92c6f, 0x4a7484aa, 0x5cb0a9dc, 0x76f988da,
+        0x983e5152, 0xa831c66d, 0xb00327c8, 0xbf597fc7, 0xc6e00bf3, 0xd5a79147, 0x06ca6351, 0x14292967,
+        0x27b70a85, 0x2e1b2138, 0x4d2c6dfc, 0x53380d13, 0x650a7354, 0x766a0abb, 0x81c2c92e, 0x92722c85,
+        0xa2bfe8a1, 0xa81a664b, 0xc24b8b70, 0xc76c51a3, 0xd192e819, 0xd6990624, 0xf40e3585, 0x106aa070,
+        0x19a4c116, 0x1e376c08, 0x2748774c, 0x34b0bcb5, 0x391c0cb3, 0x4ed8aa4a, 0x5b9cca4f, 0x682e6ff3,
+        0x748f82ee, 0x78a5636f, 0x84c87814, 0x8cc70208, 0x90befffa, 0xa4506ceb, 0xbef9a3f7, 0xc67178f2];
+      const H = [0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a, 0x510e527f, 0x9b05688c, 0x1f83d9ab, 0x5be0cd19];
+      const bytes = Array.from(new TextEncoder().encode(str));
+      const bitLen = bytes.length * 8;
+      bytes.push(0x80);
+      while (bytes.length % 64 !== 56) bytes.push(0);
+      for (let i = 7; i >= 0; i--) bytes.push(Math.floor(bitLen / Math.pow(2, i * 8)) & 0xff);
+      const rotr = (x, n) => (x >>> n) | (x << (32 - n));
+      const w = new Array(64);
+      for (let off = 0; off < bytes.length; off += 64) {
+        for (let i = 0; i < 16; i++) {
+          w[i] = (bytes[off + i * 4] << 24) | (bytes[off + i * 4 + 1] << 16) | (bytes[off + i * 4 + 2] << 8) | bytes[off + i * 4 + 3];
+        }
+        for (let i = 16; i < 64; i++) {
+          const s0 = rotr(w[i - 15], 7) ^ rotr(w[i - 15], 18) ^ (w[i - 15] >>> 3);
+          const s1 = rotr(w[i - 2], 17) ^ rotr(w[i - 2], 19) ^ (w[i - 2] >>> 10);
+          w[i] = (w[i - 16] + s0 + w[i - 7] + s1) | 0;
+        }
+        let [a, b, c, d, e, f, g, h] = H;
+        for (let i = 0; i < 64; i++) {
+          const S1 = rotr(e, 6) ^ rotr(e, 11) ^ rotr(e, 25);
+          const ch = (e & f) ^ (~e & g);
+          const t1 = (h + S1 + ch + K[i] + w[i]) | 0;
+          const S0 = rotr(a, 2) ^ rotr(a, 13) ^ rotr(a, 22);
+          const maj = (a & b) ^ (a & c) ^ (b & c);
+          const t2 = (S0 + maj) | 0;
+          h = g; g = f; f = e; e = (d + t1) | 0; d = c; c = b; b = a; a = (t1 + t2) | 0;
+        }
+        H[0] = (H[0] + a) | 0; H[1] = (H[1] + b) | 0; H[2] = (H[2] + c) | 0; H[3] = (H[3] + d) | 0;
+        H[4] = (H[4] + e) | 0; H[5] = (H[5] + f) | 0; H[6] = (H[6] + g) | 0; H[7] = (H[7] + h) | 0;
+      }
+      return H.map(x => (x >>> 0).toString(16).padStart(8, '0')).join('');
     }
 
     function buildReportSnapshot(noteId) {
@@ -5372,12 +5364,12 @@
           supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
         }
         if (!supabaseClient) return false;
-        const { note, cloudId } = resolveShareNoteContext(noteId);
+        const { note, shareId } = resolveShareNoteContext(noteId);
         if (!note) return false;
         const snapshot = buildReportSnapshot(note.id);
         if (!snapshot) return false;
         const row = {
-          id: cloudId,
+          id: shareId,
           user_id: currentAuthUser ? currentAuthUser.id : null,
           payload: snapshot,
           updated_at: new Date().toISOString()
@@ -5395,8 +5387,8 @@
     }
 
     function buildShareReportUrl(noteId) {
-      const { cloudId } = resolveShareNoteContext(noteId);
-      return `https://znno-debug.github.io/practice-fairy/share.html?id=${encodeURIComponent(cloudId)}`;
+      const { shareId } = resolveShareNoteContext(noteId);
+      return `https://znno-debug.github.io/practice-fairy/share.html?id=${encodeURIComponent(shareId)}`;
     }
 
     function prepareReportCardMeta(noteId) {
@@ -5801,9 +5793,6 @@
 
       // 6. 오늘 누적 연습 세션 타임라인 렌더링
       renderPracticeSessionsTimeline();
-
-      // 7. 메트로놈 비트 라이트 초기화
-      renderMetroBeatLights();
     }
 
     // =======================================================
@@ -6033,114 +6022,6 @@
       }
     }
 
-    // =======================================================
-    // 🎵 정밀 멀티박자 메트로놈 (2/4, 3/4, 4/4, 6/8 박자)
-    // =======================================================
-    let currentTsBeats = 4;
-    let currentTsUnit = 4;
-    let currentBeatIndex = 0;
-    let isMetroCollapsed = false;
-
-    function toggleMetronomeCollapse() {
-      isMetroCollapsed = !isMetroCollapsed;
-      const content = document.getElementById('metro-body-content');
-      const text = document.getElementById('metro-collapse-text');
-      const icon = document.getElementById('metro-collapse-icon');
-
-      if (isMetroCollapsed) {
-        content.classList.add('hidden');
-        text.innerText = '펼치기';
-        icon.innerText = '▼';
-      } else {
-        content.classList.remove('hidden');
-        text.innerText = '접기';
-        icon.innerText = '▲';
-      }
-    }
-
-    function setTimeSignature(beats, unit) {
-      currentTsBeats = beats;
-      currentTsUnit = unit;
-      currentBeatIndex = 0;
-
-      // 버튼 하이라이트 갱신
-      const presets = [
-        { b: 2, u: 4, id: 'ts-btn-2-4' },
-        { b: 3, u: 4, id: 'ts-btn-3-4' },
-        { b: 4, u: 4, id: 'ts-btn-4-4' },
-        { b: 6, u: 8, id: 'ts-btn-6-8' }
-      ];
-
-      presets.forEach(p => {
-        const btn = document.getElementById(p.id);
-        if (p.b === beats && p.u === unit) {
-          btn.className = 'ts-btn flex-1 py-1 rounded-lg bg-white text-purple-700 shadow-xs transition';
-        } else {
-          btn.className = 'ts-btn flex-1 py-1 rounded-lg text-slate-600 hover:text-slate-900 transition';
-        }
-      });
-
-      renderMetroBeatLights();
-
-      if (isMetroRunning) {
-        clearInterval(metroInterval);
-        const ms = (60 / currentBpm) * 1000;
-        metroInterval = setInterval(() => triggerMetroBeat(), ms);
-      }
-    }
-
-    function renderMetroBeatLights() {
-      const container = document.getElementById('metro-beat-lights');
-      if (!container) return;
-      container.innerHTML = '';
-
-      for (let i = 0; i < currentTsBeats; i++) {
-        const isAccent = (i === 0) || (currentTsBeats === 6 && i === 3);
-        const dot = document.createElement('span');
-        dot.id = `beat-light-${i}`;
-        dot.className = `w-3 h-3 rounded-full transition-all duration-75 ${isAccent ? 'border-2 border-purple-500 bg-white ring-1 ring-purple-200' : 'border border-slate-300 bg-white'
-          }`;
-        container.appendChild(dot);
-      }
-    }
-
-    function triggerMetroBeat() {
-      // 1. 비트 램프 하이라이트
-      for (let i = 0; i < currentTsBeats; i++) {
-        const dot = document.getElementById(`beat-light-${i}`);
-        if (!dot) continue;
-        const isAccent = (i === 0) || (currentTsBeats === 6 && i === 3);
-
-        if (i === currentBeatIndex) {
-          if (i === 0) {
-            dot.className = 'w-3.5 h-3.5 rounded-full bg-purple-600 ring-4 ring-purple-300 transition-all duration-75';
-          } else if (currentTsBeats === 6 && i === 3) {
-            dot.className = 'w-3 h-3 rounded-full bg-indigo-500 ring-2 ring-indigo-300 transition-all duration-75';
-          } else {
-            dot.className = 'w-3 h-3 rounded-full bg-purple-400 ring-2 ring-purple-200 transition-all duration-75';
-          }
-        } else {
-          dot.className = `w-3 h-3 rounded-full transition-all duration-75 ${isAccent ? 'border-2 border-purple-400 bg-white' : 'border border-slate-300 bg-white'
-            }`;
-        }
-      }
-
-      // 2. 오디오 틱 사운드 주파수 분기 (강세 적용)
-      let freq = 750;
-      if (currentBeatIndex === 0) {
-        freq = 1200; // 제1박 고음 강세 (Ding!)
-      } else if (currentTsBeats === 6 && currentBeatIndex === 3) {
-        freq = 960;  // 6/8박자의 제4박 중간 강세 (Dong!)
-      } else {
-        freq = 750;  // 일반 박자 (Tok)
-      }
-
-      playMetroClick(freq);
-
-      // 다음 박자로 인덱스 이동
-      currentBeatIndex = (currentBeatIndex + 1) % currentTsBeats;
-    }
-
     // 체크리스트 토글 & 추가
     function toggleChecklistItem(itemId) {
       const allChecklists = getPracticeChecklists();
@@ -6151,8 +6032,8 @@
         savePracticeChecklists(allChecklists);
         renderPracticePortal();
 
-        // 메트로놈 틱 소리로 가벼운 체크 피드백
-        playMetroClick(1200);
+        // 짧은 틱 소리로 가벼운 체크 피드백
+        playTickSound(1200);
 
         if (list.every(i => i.done)) {
           showToast('🎉 대단해요! 오늘의 연습 목표를 모두 완수했습니다! 요정 레벨 UP! 🧚‍♀️');
@@ -6245,14 +6126,11 @@
     }
 
     // =======================================================
-    // ⏱️ Web Audio API 스마트 메트로놈 & 타이머 로직
+    // 🔔 체크 효과음 (Web Audio API)
     // =======================================================
     let audioCtx = null;
-    let metroInterval = null;
-    let isMetroRunning = false;
-    let currentBpm = 84;
 
-    function playMetroClick(freq = 880) {
+    function playTickSound(freq = 880) {
       try {
         if (!audioCtx) {
           audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -6272,54 +6150,6 @@
         osc.stop(audioCtx.currentTime + 0.04);
       } catch (err) {
         console.error(err);
-      }
-    }
-
-    function getTempoTerm(bpm) {
-      if (bpm < 60) return 'Largo';
-      if (bpm < 76) return 'Adagio';
-      if (bpm < 108) return 'Andante';
-      if (bpm < 120) return 'Moderato';
-      if (bpm < 168) return 'Allegro';
-      return 'Presto';
-    }
-
-    function changeBpm(val) {
-      currentBpm = parseInt(val);
-      document.getElementById('metro-bpm-val').innerText = currentBpm;
-      document.getElementById('metro-slider').value = currentBpm;
-      document.getElementById('metro-tempo-term').innerText = getTempoTerm(currentBpm);
-
-      if (isMetroRunning) {
-        clearInterval(metroInterval);
-        const ms = (60 / currentBpm) * 1000;
-        metroInterval = setInterval(() => triggerMetroBeat(), ms);
-      }
-    }
-
-    function changeBpmBy(delta) {
-      let next = Math.max(40, Math.min(208, currentBpm + delta));
-      changeBpm(next);
-    }
-
-    function toggleMetronome() {
-      if (isMetroRunning) {
-        clearInterval(metroInterval);
-        isMetroRunning = false;
-        currentBeatIndex = 0;
-        document.getElementById('metro-btn-icon').innerText = '▶';
-        document.getElementById('metro-btn-text').innerText = '메트로놈 시작';
-        document.getElementById('metro-play-btn').className = 'w-full py-2.5 rounded-xl font-bold text-xs bg-purple-600 hover:bg-purple-700 text-white shadow-md shadow-purple-600/20 transition flex items-center justify-center space-x-2';
-        renderMetroBeatLights();
-      } else {
-        isMetroRunning = true;
-        currentBeatIndex = 0;
-        triggerMetroBeat();
-        const ms = (60 / currentBpm) * 1000;
-        metroInterval = setInterval(() => triggerMetroBeat(), ms);
-        document.getElementById('metro-btn-icon').innerText = '⏸';
-        document.getElementById('metro-btn-text').innerText = '메트로놈 정지';
-        document.getElementById('metro-play-btn').className = 'w-full py-2.5 rounded-xl font-bold text-xs bg-rose-600 hover:bg-rose-700 text-white shadow-md shadow-rose-600/20 transition flex items-center justify-center space-x-2 animate-pulse';
       }
     }
 

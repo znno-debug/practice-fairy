@@ -1,6 +1,6 @@
 # CONTEXT — 연습요정 (Practice Fairy)
 
-> **최종 갱신**: 2026-11-25 · `sw.js` 캐시 `fairy-cache-v32`
+> **최종 갱신**: 2026-11-25 · `sw.js` 캐시 `fairy-cache-v35`
 > **한 줄 요약**: 음악 1:1 레슨 선생님용 출결·수강료·레슨노트 관리 + 수강생 연습일지 PWA. 학부모에게는 카카오톡 카드로 1:1 리포트(`share.html`)를 보냄.
 > **현재 단계**: 기능 시제품 완성, Supabase Auth 연동, GitHub Pages 배포 완료. 지금은 **카카오 공유 마무리와 모바일 다듬기** 단계.
 > 이 문서는 작업 시작 전에 가장 먼저 읽고, 작업이 끝나면 곧바로 갱신한다(→ `CLAUDE.md` / `GEMINI.md`).
@@ -13,11 +13,11 @@
 | :--- | :--- | :--- |
 | 배포 (GitHub Pages) | `https://znno-debug.github.io/practice-fairy/` | `index.html` `buildShareReportUrl()`, `sendKakaoReportCard()` |
 | Supabase 프로젝트 | `https://zpfcocrqvmrotuiwpkru.supabase.co` (Auth + PostgreSQL + JS SDK v2) | `index.html:1926` (`SUPABASE_URL`, `SUPABASE_ANON_KEY`) |
-| Supabase 테이블 (7개) | `fairy_teacher_profile_v1`, `fairy_students_v1`, `fairy_lessons_v1`, `fairy_notes_v1`, `fairy_practice_v1`, `fairy_questions_v1`, `fairy_sessions_v1` | `supabase_schema.sql`, `index.html:1950~` (LocalStorage 키와 같은 이름) |
+| Supabase 테이블 (7개 + 공유 리포트 1개) | `fairy_teacher_profile_v1`, `fairy_students_v1`, `fairy_lessons_v1`, `fairy_notes_v1`, `fairy_practice_v1`, `fairy_questions_v1`, `fairy_sessions_v1` | `supabase_schema.sql`, `index.html:1950~` (LocalStorage 키와 같은 이름) |
 | 카카오 개발자센터 | 앱 ID `1659300`, JS SDK `2.7.2`, `KAKAO_JS_KEY`는 `index.html:1933` | `index.html:25`, `:1933` |
-| PWA | `sw.js` (현재 `fairy-cache-v24`), `manifest.json`, `icons/`, 루트 `icon-512.png` | |
+| PWA | `sw.js` (현재 `fairy-cache-v35`), `manifest.json`, `icons/`, 루트 `icon-512.png` | |
 | 로컬 테스트 서버 | `python3 server.py` → `http://localhost:8080` (같은 Wi-Fi 기기용 IP 자동 표시) | `server.py` |
-| 기술 스택 | HTML5 + Vanilla JS + Tailwind CSS(CDN) + Supabase + Web Audio API + Service Worker + LocalStorage | |
+| 기술 스택 | HTML5 + Vanilla JS + Tailwind CSS(CDN) + Supabase + Web Audio API(체크 효과음만) + Service Worker + LocalStorage | |
 
 ## 2. 파일 구성
 
@@ -36,6 +36,8 @@
 | `README.md` | 기능 소개 (11-06 기준이라 일부 내용이 예전 상태) | |
 | `docs/social_login_setup.md` | 카카오·구글 소셜 로그인 웹 콘솔 설정 가이드 (카카오 개발자센터 / Google Cloud / Supabase) | 콘솔 설정이 바뀌면 함께 갱신 |
 | `docs/email_verification_setup.md` | 이메일 6자리 인증번호 켜기 (Supabase SMTP → 메일 문구 → Confirm email) | Supabase 메일 설정이 바뀌면 함께 갱신 |
+| `docs/sql/` | 운영 DB에 따로 실행할 변경 SQL (날짜별). 내용은 `supabase_schema.sql`에도 반영 | 실행했으면 변경 이력에 기록 |
+| `docs/prompts/` | 다음 세션에 붙여 넣을 작업 지시문 (`parent_link_phase1.md`: 학부모 연결 0~1단계) | 작업이 끝나면 해당 지시문을 지우거나 '완료' 표시 |
 | `docs/handover_notes.md` | 예전 인수인계 문서 (설문 원본 수치·셀링 포인트·결정 이력) | 보관용. 현재 상태는 이 문서(`CONTEXT.md`)가 기준이며, 이 파일은 갱신하지 않음 |
 
 ## 3. 핵심 결정 사항 (요약)
@@ -57,6 +59,7 @@
 3. 카카오 피드 카드는 `imageWidth: 800, imageHeight: 400`으로 선언했지만 실제 `icon-512.png`는 512×512입니다. 카드에서 이미지가 잘리거나 늘어나 보이면 800×400 썸네일을 따로 만드는 것을 검토하세요.
 4. 수강료 골든타임 공유(`executeShareKakaoTuition`)는 Kakao SDK가 아니라 `navigator.share`(텍스트 공유)를 씁니다. 의도된 방식이며 통합 대상이 아닙니다.
 5. `docs/handover_notes.md`에 적힌 내용 중 예전 정보: 캐시 버전(v3/v9 → 실제 v15), 작업 폴더 경로(`클로드작업/practice-fairy` → 실제 `test_1104`), 다음 할 일 중 "호스팅 배포"(이미 GitHub Pages로 완료).
+6. **공유 리포트 전체 조회 문제 — 해결 완료 (2026-11-27)**: `fairy_shared_reports_v1` 읽기 정책이 `USING (true)`라 anon 키로 모든 리포트(학생 이름·노트·입금 계좌)를 목록 조회할 수 있었음(3건 조회 확인). 조치: anon 직접 조회 차단 + id가 정확히 일치하는 1건만 주는 `get_shared_report(p_id)` RPC(운영 DB 실행 완료, `docs/sql/2026-11-27_shared_report_lockdown.sql`), `share.html`은 RPC로만 조회, 새 링크 id는 `r_` + SHA-256(선생님 계정 전체 ID + 노트 id) 32자리(`toShareReportId`). 검증: anon 목록 조회 → `401 permission denied`, 기존 링크 2건 RPC로 열림, 없는 id는 `null`. 남은 참고: 예전 형식 링크 3건(`3752f7d5_n1`, `3752f7d5_n2`, `8dc4777d_n1`, 모두 테스트 데이터)은 앞 8자리를 아는 사람이 번호를 바꿔 볼 수 있는 형식이라, 정식 출시 전 지우는 것을 권장.
 
 ## 5. 남은 마무리 작업
 
@@ -72,6 +75,12 @@
 - [x] **⑦ 이메일 인증번호 켜기** (2026-11-25 완료): Brevo SMTP(`smtp-relay.brevo.com:587`, 발신자 인증된 Gmail 주소, 이름 `연습요정`) 연결 → Confirm signup 메일을 `{{ .Token }}` 문구로 변경 → Confirm email ON(`mailer_autoconfirm: false`). 실제 가입 테스트(`+test2`)에서 인증 메일 발송 확인.
 - [ ] **⑨ 인증 메일 품질**: 인증번호 길이는 2026-11-25 6자리로 변경 완료(Email OTP Length 6). 남은 문제: 메일이 스팸함으로 감(Gmail 발신 → Brevo가 brevosend.com 주소로 바꿔 보냄). 근본 해결은 자체 도메인 구매 + Brevo 도메인 인증.
 - [x] **⑧ 가입 화면 2차 개선** (2026-11-25 완료, v31): 탭 제거 → 첫 화면은 카카오·Google '시작하기' + 이메일 로그인, 회원가입·비밀번호 찾기·인증은 뒤로 가기가 있는 하위 화면. 새 비밀번호 8자+영문+숫자, 확인 칸, 보기 버튼, 실시간 안내. 최근 로그인 방법 배지(`fairy_last_login_method_v1`).
+- [ ] **⑩ 학부모 연결: 링크 + 앱 이원 운영 (2026-11-27 방향 확정)**: 배경은 워킹맘 교수님 피드백("여러 수업의 남은 횟수·납부 시점을 엄마가 알 수 없고, 선생님도 물어보면 그제서야 셈"). GPS·QR 출석은 1:1 레슨에 맞지 않아 **하지 않기로 결정**(도착 ≠ 차감, 미성년자 위치정보 부담). 학생 가입보다 **학부모 가입**이 우선(보호자가 직접 동의 → 만 14세 미만 문제 해결). 앱스토어 앱 기준. 원칙: **데이터는 하나, 보는 창은 두 개**(링크=가입 없이 이 수업의 현재 상태 / 앱=여러 선생님 수업 한 화면 + 푸시 알림), 링크를 일부러 불편하게 만들지 않음, 링크에서 앱 설치 시 자동 연결.
+  - [ ] 0단계: 공유 리포트 보안 수정 (4장 6번) — **완료** (2026-11-27, v35)
+  - [ ] 1단계: 학생별 고정 학부모 링크 — 열 때마다 최신 잔여 횟수·다음 납부 시점·최근 출결·노트, 선생님이 링크 끄기/재발급 가능 (다음 세션 지시문: `docs/prompts/parent_link_phase1.md`)
+  - [ ] 2단계: 앱 포장(Capacitor 등 기존 HTML/JS 재사용) + Apple 로그인 + 유니버설 링크(앱 있으면 앱, 없으면 웹)
+  - [ ] 3단계: 학부모 계정·아이 프로필·여러 선생님 수업 연결(읽기 전용 권한, 선생님이 공개 항목 선택)
+  - [ ] 4단계: 푸시 알림(수업 완료·납부 미리 알림·보강), 선생님 카톡 공유와 중복 방지, 연결 해제
 - [ ] (iOS 출시 시) Apple 로그인: `OAUTH_PROVIDERS`의 `apple` 줄 주석 해제 + Apple Developer/Supabase 설정.
 
 - [x] **앱스토어 심사 대비 회원 탈퇴(`delete_my_account`) & 개인정보처리방침(`privacy.html`) 추가**: `supabase_schema.sql`에 `delete_my_account()` RPC 추가, `index.html` 로그인/프로필 모달 연결, 캐시 `v22`. (2026-11-25 실사이트 탈퇴 테스트로 RPC 동작 확인)
@@ -91,6 +100,10 @@
 
 | 날짜 | 내용 |
 | :--- | :--- |
+| 2026-11-27 | 어사이드로 운영 DB에 `2026-11-27_shared_report_lockdown.sql` 실행(Success). anon 목록 조회 차단·기존 링크 열림 확인 후 `share.html` 임시 폴백 제거, 캐시 `v35` |
+| 2026-11-27 | **공유 리포트 보안 수정**(4장 6번): `get_shared_report` RPC 추가·공개 읽기 정책 삭제(`supabase_schema.sql`, `docs/sql/2026-11-27_shared_report_lockdown.sql`), `share.html` RPC 조회(미실행 DB 폴백), 새 링크 id를 추측 불가한 해시로(`toShareReportId`, 동기식 `sha256Hex`), 수강생 삭제 시 새 id 리포트도 삭제. 쓰이지 않던 `fairy_notes_v1` 직접 조회 폴백 제거. 캐시 `v34` |
+| 2026-11-27 | 기획 결정: GPS·QR 출석 안 함, 학부모 연결을 '링크 + 앱' 이원 운영으로 진행(남은 작업 ⑩). 공유 리포트 테이블 전체 조회 보안 문제 발견(4장 6번). 다음 세션 지시문 `docs/prompts/parent_link_phase1.md` 작성. 코드 변경 없음 |
+| 2026-11-25 | 학생 마이 연습실에서 메트로놈 카드와 관련 코드(박자·BPM·재생) 삭제. 체크리스트를 눌렀을 때 나는 짧은 효과음은 `playTickSound`로 이름만 바꿔 유지. 예시 과제 문구 속 '메트로놈 ♩=84'와 칭찬 뱃지 '완벽한 메트로놈 박자'는 레슨 내용이라 그대로 둠. 캐시 `v33` |
 | 2026-11-25 | 카카오 [상세보기] 실기기 성공(① 완료). 카톡 공유 카드 이미지를 정사각 아이콘에서 800×400 전용 이미지 `kakao-card.png`로 교체(원본 `docs/assets/kakao_card.html`, Chrome headless로 생성). Supabase 서버 지역 확인(인도 뭄바이) → `privacy.html` 위탁 표 반영. 캐시 `v32` |
 | 2026-11-25 | 카카오 [상세보기] 버튼 미동작 원인: 제품 링크 관리 > 웹 도메인 미등록. `https://znno-debug.github.io` 등록(코드 수정 없음) |
 | 2026-11-25 | **가입 화면 2차 개선**: 로그인/회원가입 탭 제거, 첫 화면 '카카오로 시작하기'·'Google로 시작하기' + 이메일 로그인, 회원가입·비밀번호 찾기·이메일 인증·새 비밀번호는 뒤로 가기 있는 하위 화면, 새 비밀번호 규칙 8자 이상+영문+숫자(기존 계정 로그인은 제한 없음)와 확인 칸·보기 버튼·실시간 안내, '최근 로그인' 배지, 입력칸 label 연결. 캐시 `v31` |

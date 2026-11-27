@@ -3,7 +3,8 @@
 -- 사용법: Supabase Dashboard -> SQL Editor -> New Query 에 전체 복사 후 [Run] 클릭
 -- 특징:
 --   1) 1~7번 선생님 업무 테이블은 user_id 컬럼 및 auth.uid() = user_id RLS 적용
---   2) 8번 공유 리포트 스냅샷(fairy_shared_reports_v1)은 학부모 비로그인 열람(SELECT) 허용
+--   2) 8번 공유 리포트 스냅샷(fairy_shared_reports_v1)은 테이블 직접 조회 금지.
+--      학부모는 링크 id 하나로 그 리포트만 받는 get_shared_report() RPC로만 열람
 --   3) 기존 테이블이 이미 있는 경우에도 ADD COLUMN IF NOT EXISTS로 안전하게 반영
 -- ============================================================================
 
@@ -134,7 +135,8 @@ GRANT ALL ON TABLE public.fairy_practice_v1 TO authenticated;
 GRANT ALL ON TABLE public.fairy_questions_v1 TO authenticated;
 GRANT ALL ON TABLE public.fairy_sessions_v1 TO authenticated;
 
-GRANT SELECT ON TABLE public.fairy_shared_reports_v1 TO anon;
+-- 비로그인(anon)은 공유 리포트 테이블을 직접 읽을 수 없음 (전체 목록 조회 차단). 열람은 get_shared_report() RPC로만.
+REVOKE ALL ON TABLE public.fairy_shared_reports_v1 FROM anon;
 GRANT ALL ON TABLE public.fairy_shared_reports_v1 TO authenticated;
 
 ALTER TABLE public.fairy_teacher_profile_v1 ENABLE ROW LEVEL SECURITY;
@@ -189,16 +191,32 @@ CREATE POLICY "Owner access to fairy_sessions_v1"
   ON public.fairy_sessions_v1 FOR ALL TO authenticated
   USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
 
--- 8번 공유 리포트 스냅샷: 비로그인 학부모 열람(SELECT) 허용 + 작성자(authenticated) 쓰기 허용
+-- 8번 공유 리포트 스냅샷: 작성자(authenticated) 본인만 읽기/쓰기.
+-- (2026-11-27 보안 수정) 예전 "Public read shared reports"(USING true)는 anon 키로 전체 리포트를
+-- 한꺼번에 조회할 수 있어 삭제함. 학부모 열람은 아래 get_shared_report(p_id) RPC로만 가능.
 DROP POLICY IF EXISTS "Allow public access to fairy_shared_reports_v1" ON public.fairy_shared_reports_v1;
 DROP POLICY IF EXISTS "Public read shared reports" ON public.fairy_shared_reports_v1;
 DROP POLICY IF EXISTS "Owner write shared reports" ON public.fairy_shared_reports_v1;
-CREATE POLICY "Public read shared reports"
-  ON public.fairy_shared_reports_v1 FOR SELECT TO anon, authenticated
-  USING (true);
 CREATE POLICY "Owner write shared reports"
   ON public.fairy_shared_reports_v1 FOR ALL TO authenticated
   USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
+
+-- ============================================================================
+-- 🔗 학부모 리포트 열람 RPC: 링크 id와 정확히 같은 리포트 1건의 payload만 돌려줌
+-- 목록 조회·검색 불가. 새 링크 id는 앱에서 추측 불가능한 해시(r_ + 32자리)로 만듦.
+-- ============================================================================
+CREATE OR REPLACE FUNCTION public.get_shared_report(p_id TEXT)
+RETURNS JSONB
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = public
+AS $$
+  SELECT payload FROM public.fairy_shared_reports_v1 WHERE id = p_id LIMIT 1;
+$$;
+
+REVOKE ALL ON FUNCTION public.get_shared_report(TEXT) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.get_shared_report(TEXT) TO anon, authenticated;
 
 -- ============================================================================
 -- 🗑️ 앱 내 회원 탈퇴(계정 및 모든 데이터 영구 삭제) RPC 함수

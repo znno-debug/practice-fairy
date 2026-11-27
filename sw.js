@@ -1,5 +1,5 @@
-// 연습요정 (Practice Fairy) Service Worker - v32.0.0 (카카오 공유 카드 800×400 이미지)
-const CACHE_NAME = 'fairy-cache-v32';
+// 연습요정 (Practice Fairy) Service Worker - v35.0.0 (공유 리포트 RPC 전용 조회, 임시 폴백 제거)
+const CACHE_NAME = 'fairy-cache-v35';
 const STATIC_ASSETS = [
   './',
   './index.html',
